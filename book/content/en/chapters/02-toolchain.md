@@ -5,11 +5,11 @@ sourceRevision: 3
 
 # 02 Toolchain: Nix, vp, CDK, cdkd, and Drift
 
-Your account is ready. Next come the tools.
+Your account is ready, so the next step is the tools.
 
-In this chapter you'll get every command in this book running with the same tool versions on anyone's machine. Then you'll define one S3 bucket in TypeScript, create it in AWS, change it, and delete it. By the end you'll be able to check "what is about to change" (diff) and "do the record and the real resource still agree" (drift) as two separate things.
+This chapter first makes every command in the book run with the same tool versions on anyone's machine. You then define one S3 bucket in TypeScript, create it in AWS, change it, and delete it. Finally you learn to run two separate checks: diff, which shows what is about to change, and drift, which is a difference between the record and the real resource.
 
-This chapter builds on [Chapter 01](/en/chapters/01-account.md). The code is in `examples/02-toolchain/`.
+This chapter builds on [chapter 01](/en/chapters/01-account.md). The code is in `examples/02-toolchain/`.
 
 ## The big picture
 
@@ -32,53 +32,53 @@ group machine: your machine = nix, task, app, out
 group aws: AWS account (ap-northeast-1) = state, assets, stack
 ```
 
-Code runs only on your machine. What this chapter creates in AWS is a bucket and the storage that cdkd uses. That's all.
+Code runs only on your machine. All this chapter creates in AWS is one bucket and the storage that cdkd uses.
 
 ## Entering the environment
 
 <!-- section: 02.nix -->
 
-This book pins tool versions with Nix. Nix fetches packages pinned by version and hash. `flake.nix` says which tools are needed, and `flake.lock` records exactly which versions. With these two files, you don't have to install Node.js by hand.
+This book pins tool versions with Nix, which fetches packages pinned by version and hash. You list the tools you need in `flake.nix`, and `flake.lock` records their exact versions. Because the repository has these two files, you don't have to install Node.js by hand.
 
-Nix itself is yours to install. Use the official installer and enable two features, `nix-command` and `flakes`. This book was verified with Nix 2.25.3. That's all the Nix you need to know.
+Nix itself is yours to install. Use the official installer, then enable two features, `nix-command` and `flakes`. This book was verified with Nix 2.25.3. You need no more knowledge of Nix than this.
 
-Run this at the repository root.
+Run this command at the repository root.
 
 ```bash
 nix develop
 ```
 
-You're now in a shell that contains the tools at their pinned versions. This shell is called the devShell. The first run has downloads to do, so it takes a little while.
+It puts you in a shell that contains the tools at their pinned versions. This shell is called the devShell. The first run downloads the tools, so you wait a little.
 
 <<< @/flake.nix
 
-It provides Node.js 24.21.0, pnpm 10.34.5, AWS CLI 2.35.11, git, and `vp` 1.1.0. The exact list of versions is in [Toolchain](/en/reference/toolchain.md).
+The devShell provides Node.js 24.21.0, pnpm 10.34.5, AWS CLI 2.35.11, git, and `vp` 1.1.0. The exact list of versions is in [Toolchain](/en/reference/toolchain.md).
 
-`vp` is not in nixpkgs, so this book carries its own Nix expression for it. It fetches the per-platform binary that the publisher releases on npm, with the hash pinned.
+`vp` is not in nixpkgs, so this repository carries a Nix expression for it. The expression fetches the per-platform binary that the publisher releases on npm, with the hash pinned.
 
 <<< @/nix/vp.nix
 
-The `shellHook` does two things.
+The `shellHook` in `flake.nix` does two things.
 
-First, it points `vp`'s configuration directory (`VP_HOME`) at `.vp-home/` inside the repository instead of your home directory. Your `~/.vite-plus` is neither read nor written.
+It points `vp`'s configuration directory (`VP_HOME`) at `.vp-home/` inside the repository instead of your home directory, so `vp` neither reads nor writes `~/.vite-plus`.
 
-Second, it sets `VP_SELF_SETUP_NO_MODIFY_PATH`. On its first run with a new `VP_HOME`, `vp` 1.1.0 installs itself there and, unless told otherwise, appends a line to shell configuration files such as `~/.zshrc`. This variable stops that. You wouldn't want entering a devShell to rewrite files in your home directory, would you? Note that this first run uses the network.
+It also sets `VP_SELF_SETUP_NO_MODIFY_PATH`. On its first run with a new `VP_HOME`, `vp` 1.1.0 installs itself there and, unless told otherwise, appends a line to shell configuration files such as `~/.zshrc`. Entering a devShell should not rewrite files in your home directory, so this variable stops the append. This first run uses the network.
 
-The configuration placed in `.vp-home/` is the one file below. It tells `vp` not to download Node.js and pnpm itself, and to use the ones on PATH (the ones Nix installed).
+The configuration placed in `.vp-home/` is the one file below. It tells `vp` not to download Node.js and pnpm itself, and to use the ones on PATH, which are the ones Nix installed.
 
 <<< @/nix/vp-home.json
 
-Let's check that the intended Node.js is in use.
+You can check that the intended Node.js is in use with this command.
 
 ```bash
 vp env which node
 ```
 
-If it prints a path that starts with `/nix/store/`, it's the Node.js from Nix.
+A path that starts with `/nix/store/` means it is the Node.js that Nix installed.
 
-To be honest, the only combination that has been checked is macOS (Apple silicon, `aarch64-darwin`). `nix/vp.nix` also has definitions for Intel Mac and Linux, but they haven't been run and confirmed.
+The only combination that has been checked is macOS (Apple silicon, `aarch64-darwin`). `nix/vp.nix` also has definitions for Intel Mac and Linux, but they have not been run and confirmed.
 
-There are also things Nix does not provide: AWS credentials, the Docker daemon, and the network. Part of Chapter 04 uses Docker, but entering the devShell doesn't start the daemon.
+Nix does not provide three things: AWS credentials, the Docker daemon, and the network. Part of chapter 04 uses Docker, and entering the devShell does not start the daemon.
 
 ## Installing dependencies
 
@@ -88,8 +88,8 @@ There are also things Nix does not provide: AWS credentials, the Docker daemon, 
 vp install --frozen-lockfile
 ```
 
-`vp install` calls the package manager named in the `packageManager` field of `package.json`. In this book that's pnpm 10.34.5. `--frozen-lockfile` means "install only the versions written in `pnpm-lock.yaml`, and don't rewrite the lockfile."
+`vp install` calls the package manager named in the `packageManager` field of `package.json`, which in this book is pnpm 10.34.5. With `--frozen-lockfile`, it installs only the versions written in `pnpm-lock.yaml` and does not rewrite the lockfile.
 
-You still need a lockfile when you use `vp`. `vp` has no lockfile of its own. pnpm's `pnpm-lock.yaml` is the lockfile.
+You still need a lockfile when you use `vp`. `vp` has no lockfile of its own, and pnpm's `pnpm-lock.yaml` does that job.
 
-Both the CDK CLI and cdkd are installed by this `vp install`. The split is that Nix installs up to Node.js, and pnpm manages the npm packages. That way no tool is managed in two places.
+The CDK CLI and cdkd are also installed by this `vp install`. So that no tool is managed in two places, Nix installs up to Node.js and pnpm manages the npm packages.

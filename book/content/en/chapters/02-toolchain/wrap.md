@@ -4,15 +4,17 @@ title: "02 Toolchain: Costs, Pitfalls, and Cleanup"
 
 # 02 Toolchain: Costs, Pitfalls, and Cleanup
 
+To close the chapter, this page covers what the things you created cost, how to clean them up, and where you might get stuck.
+
 ## What it costs
 
-This chapter creates an empty S3 bucket and the storage for cdkd.
+This chapter creates an empty S3 bucket and cdkd's storage.
 
-When idle, what you pay for is the amount stored in S3. That's 0 if the bucket is empty. cdkd's state and templates are small JSON files (their size was not measured).
+While idle, the charge is for the amount stored in S3. For an empty bucket that is 0. cdkd's state and templates are small JSON files, though their size has not been measured.
 
-When you run an operation, S3 request charges apply. The number of requests per deploy has not been measured.
+When you operate on them, S3 request charges apply. The number of requests per deploy has not been measured.
 
-After you delete the stack, cdkd's three storage locations remain (the next section cleans them up).
+After you delete the stack, cdkd's three storage locations remain. The next section explains how to clean them up.
 
 S3 Standard storage in the Tokyo Region costs USD 0.025 per GB per month for the first 50 TB (AWS Price List, checked 2026-10-11). The list of unit prices is in [Pricing Worksheets](/en/reference/pricing.md).
 
@@ -24,35 +26,35 @@ S3 Standard storage in the Tokyo Region costs USD 0.025 per GB per month for the
 vp run hello:infra:destroy
 ```
 
-cdkd asks for confirmation. The practice bucket is empty, so it is deleted as is.
+cdkd asks for confirmation when you run it. The practice bucket is empty, so it is deleted as it is.
 
-Deleting the stack leaves the three things bootstrap created. If you plan to continue with this book, keep them. Chapter 03 onward uses them too.
+Deleting the stack leaves the three things bootstrap created. Chapter 03 and later chapters use them, so keep them if you are reading on.
 
-When you're completely done and want to delete them, do it in the console in the following order. There is no task for this procedure. The state bucket holds the records of every stack you created with cdkd, and that's not something we want deleted mechanically.
+When you have finished the book and want to delete those three as well, work in the console in the following order. There is no task for this procedure. The state bucket holds the records of every stack you created with cdkd, and we do not want it to be something a script deletes mechanically.
 
-1. Delete every stack you created with cdkd, with `vp run hello:infra:destroy` and the like
-2. On the S3 page, empty `cdkd-assets-...` and delete it
-3. On the S3 page, empty `cdkd-state-...` and delete it. Versioning is enabled, so use "Empty" to delete all versions
-4. On the ECR page, delete `cdkd-container-assets-...`
+1. Delete every stack you created with cdkd, using `vp run hello:infra:destroy` and the like
+2. On the S3 pages, empty `cdkd-assets-...` and delete it
+3. On the S3 pages, empty `cdkd-state-...` and delete it. Versioning is enabled, so use "Empty" to delete every version
+4. On the ECR pages, delete `cdkd-container-assets-...`
 
 If you delete the state bucket while a stack still exists, cdkd can no longer delete that stack.
 
 ## Where you might get stuck
 
-| If this happens | Look here |
+| Symptom | What to check |
 | --- | --- |
-| `nix develop` says it does not know flakes | Are `nix-command` and `flakes` enabled in your Nix configuration? |
-| `vp run` says `Task "..." not found` | Are you running it from the repository root? |
-| synth stops on a configuration error | The message names the field. Review the `-c` value |
-| Deploy stops and says the state bucket does not exist | Have you run `vp run infra:bootstrap`? Does the Region match? |
-| Deploy stops on a permissions error | cdkd creates resources directly with your credentials. Does the identity from Chapter 01 have the permissions it needs? |
-| Resources were created in a different Region | Running cdkd directly, not through this book's tasks, uses `us-east-1` when `AWS_REGION` is not set |
+| `nix develop` says it doesn't know flakes | Whether `nix-command` and `flakes` are enabled in your Nix configuration |
+| `vp run` says `Task "..." not found` | Whether you are running it at the repository root |
+| synth stops on a configuration error | The message names the field, so review the `-c` values |
+| A deploy stops and says the state bucket doesn't exist | Whether you have run `vp run infra:bootstrap`, and whether the Region is right |
+| A deploy stops with a permissions error | cdkd creates resources directly with your credentials. Whether the identity from chapter 01 has the permissions it needs |
+| Resources were created in a different Region | If you run cdkd directly instead of through this book's tasks, it uses `us-east-1` when `AWS_REGION` is missing |
 
 ## If you take this to production
 
-- Make the AWS CDK CLI and CloudFormation the deployment path. cdkd itself recommends this. The same CDK code works unchanged
-- Set `RemovalPolicy.RETAIN` on resources that hold data. The sample's `prod` is an example
-- Don't deploy with a person's credentials. Run from CI with short-lived credentials ([Chapter 20](/en/chapters/20-shipping.md))
+- Make the AWS CDK CLI and CloudFormation the deployment path. cdkd itself recommends this. You can use the same CDK code as it is
+- Use `RemovalPolicy.RETAIN` for resources that hold data. The sample's `prod` stage is an example
+- Don't deploy with a person's credentials. Run from CI with short-lived credentials ([chapter 20](/en/chapters/20-shipping.md))
 - Run drift detection on a schedule. An example is in `docs/examples/drift-schedule.yml`
 
 ::: details Verification notes for this chapter
@@ -69,7 +71,7 @@ If you delete the state bucket while a stack still exists, cdkd can no longer de
 | Installing dependencies | `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml` | (`vp install`) |
 | Every command is `vp run` | `vite.config.ts` | `check:all` |
 | What types protect, and what they don't | `examples/02-toolchain/lib/config.ts`, `examples/02-toolchain/test/config.test.ts` | `test:unit` |
-| construct, stack, app | `examples/02-toolchain/lib/hello-stack.ts`, `examples/02-toolchain/bin/app.ts` | `hello:infra:synth` |
+| Construct, stack, app | `examples/02-toolchain/lib/hello-stack.ts`, `examples/02-toolchain/bin/app.ts` | `hello:infra:synth` |
 | synth | `examples/02-toolchain/cdk.json`, `examples/02-toolchain/test/hello-stack.test.ts` | `hello:infra:synth`, `hello:infra:synth:cdk`, `test:unit` |
 | cdkd | `tools/src/infra/cdkd-args.ts`, `tools/src/infra/cdkd.ts`, `tools/src/infra/run-cdkd.ts` | `infra:bootstrap` |
 | Deploying | Same as above | `hello:infra:diff`, `hello:infra:deploy` |

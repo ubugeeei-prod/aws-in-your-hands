@@ -5,32 +5,32 @@ sourceRevision: 1
 
 # 11 Network: VPC, Subnets, NAT, and Endpoints
 
-So far you haven't designed a single line of network. This is the chapter where you build your own.
+None of the chapters so far asked you to design a network. In this one you build your own for the first time.
 
-What you'll build is a small VPC that spans two Availability Zones. The containers in chapter 12, the databases in chapter 13, and the EC2 instance in chapter 23 all sit on top of it.
+You build a small VPC that spans two Availability Zones. The containers in chapter 12, the databases in chapter 13, and the EC2 instance in chapter 23 all go on top of it.
 
-One thing about money first. The default layout in this chapter contains **nothing that costs money just by existing**. It was built to be that way. There's also a switch that adds a NAT gateway or interface endpoints, though, and those are billed by the hour whether you use them or not. One NAT gateway comes to about USD 49 a month, and three interface endpoints to about USD 61 (Tokyo, 730 hours; the breakdown is in "What costs money just by existing"). If you try them, please remove them the same day.
+A word on cost before anything else. The default layout in this chapter contains **nothing that costs money just by existing**, and it was built to be that way. One setting adds a NAT gateway or interface endpoints, though, and those parts are billed by the hour whether you use them or not. One NAT gateway comes to about USD 49 a month, and three interface endpoints to about USD 61 (Tokyo, 730 hours; the breakdown is under "What costs money just by existing" in [Design and Build](/en/chapters/11-network/build.md)). If you try them, remove them the same day.
 
 The only prerequisite is [chapter 02](/en/chapters/02-toolchain.md). The code is in `examples/11-network/`.
 
-## When do you need a VPC?
+## When you need a VPC
 
 <!-- section: 11.when -->
 
-Chapters 03 through 06 used CloudFront, S3, API Gateway, Lambda, DynamoDB, and Cognito. Every one of them is a service you talk to over HTTPS at a front door that AWS provides. You need no network on your side. Lambda, too, can reach the internet when you configure nothing.
+Chapters 03 through 06 used CloudFront, S3, API Gateway, Lambda, DynamoDB, and Cognito. You talk to every one of them over HTTPS at an entrance that AWS provides, so you need no network of your own, and a Lambda function with nothing configured can reach the internet.
 
-A VPC (Virtual Private Cloud) is your own IP network inside a Region. You need one when you use **something that can only live inside a VPC**.
+A VPC (Virtual Private Cloud) is your own IP network inside a Region. You need one when you use something that can only be placed inside a VPC, such as these.
 
 - RDS and Aurora databases (chapter 13)
 - Node-based ElastiCache clusters ([chapter 14](/en/chapters/14-kv-cache.md); ElastiCache Serverless also offers a public endpoint that needs no VPC configuration)
 - ECS tasks (chapter 12)
 - EC2 instances (chapter 23)
 
-These have IP addresses and live in a subnet somewhere. They need a place to live.
+Each of these has an IP address and sits in a subnet, so it needs a VPC to sit in.
 
-Put the other way around: if Lambda, DynamoDB, S3, and API Gateway are enough for you, the right move is not to create a VPC. It makes nothing faster or safer. It only adds things to design and parts that cost money.
+If Lambda, DynamoDB, S3, and API Gateway cover what you need, the better layout is one without a VPC. A VPC makes nothing faster or safer, and it adds things to design and parts that cost money.
 
-A VPC itself has no charge. Some of the parts you put inside it do. Most of the second half of this chapter is about that.
+A VPC itself has no charge. Some of the parts you put inside it do, and [Design and Build](/en/chapters/11-network/build.md) keeps coming back to which ones and how much.
 
 ## The big picture
 
@@ -55,41 +55,41 @@ group vpc: VPC AihNetwork 10.20.0.0/16 = pub1, pub2, priv1, priv2, nat, iface, i
 group opt: not created unless asked for (billed by the hour) = nat, iface
 ```
 
-Just three terms.
+You need three terms to read the figure.
 
-A **subnet** is a slice of the VPC's address range. One subnet lives in one Availability Zone (AZ). An AZ is a group of data centers inside a Region with its own power and its own networking.
+A subnet is a slice of the VPC's address range. Each subnet sits in one Availability Zone (AZ), and an AZ is a group of data centers inside a Region with its own power and its own networking.
 
-A **public subnet** is a subnet with a route to the internet. A **private subnet** is one without. That's the whole difference, and as you'll see, a single route decides it.
+A public subnet has a route to the internet, and a private subnet has none. The only difference between the two is one route in a route table, which [Design and Build](/en/chapters/11-network/build.md) shows.
 
-By default, the private subnets in this chapter have no route out of the VPC at all. The AWS documentation calls that an isolated subnet, and keeps "private subnet" for one that can get out through NAT. Since a switch here adds NAT, this book calls both of them private.
+By default, the private subnets in this chapter have no route out of the VPC at all. The AWS documentation calls a subnet with no route out an isolated subnet, and keeps "private subnet" for one that can get out through NAT. Because a setting here adds NAT, this book calls both of them private.
 
-Here are the VPC and its door to the internet.
+This is the code for the VPC and its way in and out of the internet.
 
 <<< @/examples/11-network/infra/lib/network-stack.ts{vpc}
 
-An internet gateway is the door you attach to a VPC, and it has no charge of its own. The two DNS settings are needed later, when you add interface endpoints, so they're on from the start.
+An internet gateway is the entrance and exit you attach to a VPC, and it has no charge of its own. The two DNS settings are needed later, when you add interface endpoints, so they are on from the start.
 
-### Why this is written with L1 constructs
+### Why L1 constructs
 
 CDK has a high-level construct called `Vpc` that builds something similar in a few lines. This chapter doesn't use it. It lines up `CfnVPC`, `CfnSubnet`, and the other constructs that map one to one onto CloudFormation resources (L1).
 
-There are two reasons. One is that I didn't want to hide the point that one line in a route table decides what a subnet is. The other is a default of `Vpc`. The type definitions of the pinned version (aws-cdk-lib 2.273.0) say that `natGateways` defaults to "one per Availability Zone". Write `new ec2.Vpc(...)` without thinking, and for this chapter's layout you quietly get about USD 98 a month of NAT gateways.
+There are two reasons. The first is that `Vpc` would hide the fact that one line in a route table decides what kind of subnet you have. The second is a default of `Vpc`. The type definitions of the pinned version (aws-cdk-lib 2.273.0) say that `natGateways` defaults to "one per Availability Zone". If you write `new ec2.Vpc(...)` without checking the defaults, this chapter's layout gets about USD 98 a month of NAT gateways that you never asked for.
 
-Once you know how the pieces work, production code is shorter with `Vpc`, given `natGateways: 0` and the subnet types.
+Once you know how the parts work, production code is shorter with `Vpc`, given `natGateways: 0` and the subnet types.
 
-## Carving up the addresses
+## Allocating the addresses
 
 <!-- section: 11.cidr -->
 
-The first thing you decide for a VPC is its address range, written like `10.20.0.0/16` (CIDR notation). `/16` means "the first 16 bits are shared", which leaves room for 65,536 addresses.
+The first thing you decide for a VPC is its address range, written like `10.20.0.0/16` (CIDR notation). `/16` means "the first 16 bits are shared", so the range holds 65,536 addresses.
 
 The settings come in through a Zod schema.
 
 <<< @/examples/11-network/src/config.ts{schema}
 
-Quite a few things here are beyond what types can guard. The type of `cidr` is `string`, but `"10.20.1.0/16"` (not the first address of its range) is a `string`, and so is `"8.8.0.0/16"` (not a private range). The schema rejects both. It also checks that the subnets are small enough for the number of zones.
+The schema holds several conditions that types alone can't guard. The type of `cidr` is `string`, but so is `"10.20.1.0/16"`, which isn't the first address of its range, and so is `"8.8.0.0/16"`, which isn't a private range. The schema rejects both. It also checks that the subnets are small enough for the number of zones.
 
-Zones are given by name (`ap-northeast-1a`). One caveat: in the Tokyo Region, for accounts created before November 2025, the same name points to a different location in each account. This command shows the names your account can use (it needs credentials).
+You give zones by name (`ap-northeast-1a`). In the Tokyo Region, though, for accounts created before November 2025, the same name points to a different location in each account. This command shows the names your account can use (it needs credentials).
 
 ```bash
 aws ec2 describe-availability-zones --region ap-northeast-1
@@ -97,15 +97,15 @@ aws ec2 describe-availability-zones --region ap-northeast-1
 
 If they differ from the two defaults, pass `-c availabilityZones=...`.
 
-### CIDR arithmetic as plain functions
+### CIDR arithmetic as pure functions
 
-"Do these two ranges overlap?" and "how many /20 blocks fit in this range?" are arithmetic that has nothing to do with AWS. So they're pure functions, with tests.
+"Do these two ranges overlap?" and "how many /20 blocks fit in this range?" are arithmetic that has nothing to do with AWS, so they are pure functions with tests.
 
 <<< @/examples/11-network/src/cidr.ts{relations}
 
-It's unglamorous, but there's one trap. Bitwise operators in JavaScript work on signed 32-bit integers, so building a large address such as `192.168.0.0` with `<<` gives you a negative number. This code multiplies and divides instead, and the tests round-trip addresses above `128.0.0.0`.
+This arithmetic has one trap. Bitwise operators in JavaScript work on signed 32-bit integers, so building a large address such as `192.168.0.0` with `<<` gives a negative number. This code multiplies and divides instead, and the tests check that addresses above `128.0.0.0` survive the trip to a number and back.
 
-A subnet has five fewer usable addresses than it appears to. AWS keeps the first four and the last one of every subnet for itself.
+A subnet has five fewer usable addresses than its size suggests, because AWS reserves the first four and the last one of every subnet.
 
 <<< @/examples/11-network/src/cidr.ts{usable}
 
@@ -113,8 +113,8 @@ A subnet has five fewer usable addresses than it appears to. AWS keeps the first
 
 <<< @/examples/11-network/src/plan.ts{plan}
 
-The VPC is split in half: the lower half is public, the upper half private. Inside each half, every zone gets one /20. In `10.20.0.0/16` that uses only 4 of the 16 available /20 blocks.
+The VPC's range is split in two. The half with the lower addresses is public and the half with the higher addresses is private, and inside each half every zone gets one /20. In `10.20.0.0/16` that uses only 4 of the 16 available /20 blocks.
 
-They aren't packed together, so that there's room to add things later. A third zone, or a new tier (say, subnets just for databases), can be added without renumbering the subnets that exist. Changing a subnet's CIDR later means replacing the subnet, along with everything living in it. Leaving room at the start is the cheapest option.
+The subnets aren't packed together, so that you can add to them later. A third zone, or a new tier such as subnets just for databases, fits in without renumbering the subnets that exist. Changing a subnet's CIDR later means replacing the subnet along with everything in it, so leaving room at the start is the cheapest option.
 
-`planNetwork` calls no AWS API. It only turns settings into a plan, and the stack turns that plan into resources as is. The tests vary the settings and check that no two subnets ever overlap and that all of them stay inside the VPC.
+`planNetwork` calls no AWS API. It only turns settings into a plan, and the stack turns that plan into resources as it stands. The tests vary the settings and check that no two subnets ever overlap and that all of them stay inside the VPC.

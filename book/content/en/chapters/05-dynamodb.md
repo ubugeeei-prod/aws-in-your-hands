@@ -5,15 +5,15 @@ sourceRevision: 4
 
 # 05 KV Store: DynamoDB
 
-The chapter 04 API kept its notes in memory. A different execution environment gave a different answer, and after a while the notes were gone. In this chapter, let's save them properly.
+The chapter 04 API kept its notes in memory, so the answer changed with the execution environment that replied, and after a while the notes were gone. This chapter saves the notes in a DynamoDB table, so a read from any execution environment returns the same answer.
 
-The notes go into a DynamoDB table, so a read from any execution environment returns the same answer. Along the way you'll deal with the things you can't avoid once you save data. Two people editing the same note at the same time, without the later save silently overwriting the earlier one. A save that is retried because its response never arrived, and is not applied twice. A list that pages through without dropping notes as their number grows. And the function gets permission for five operations on this one table, nothing more.
+Saving data brings problems you can't avoid. When two people edit the same note at the same time, the later save must not silently overwrite the earlier one. A save that is retried because its response never arrived must not be applied twice. The list has to page through every note without dropping any as the number grows. And the function gets permission for five operations on this one table and nothing else.
 
-This chapter builds on [chapter 04](/en/chapters/04-http-api.md). The code is in `examples/05-dynamodb/`. It carries over the chapter 04 API and extends it, and it runs on its own.
+This chapter builds on [chapter 04](/en/chapters/04-http-api.md). The code is in `examples/05-dynamodb/`. It carries the chapter 04 API over and extends it, and the directory runs on its own.
 
-There's still no authentication. Anyone who knows the URL can read and write, and delete too (authentication is [chapter 06](/en/chapters/06-auth.md)). There is a lid on volume: at most 10 requests a second, at most 100 notes, and at most 20 summaries in a page of the list. Please don't put in data you'd mind other people seeing, or deleting.
+There is still no authentication. Anyone who knows the URL can read, write, and delete notes ([chapter 06](/en/chapters/06-auth.md) adds authentication). Volume is limited: the API accepts at most 10 requests a second, holds at most 100 notes, and returns at most 20 summaries in a page of the list. Don't put in data you would mind other people seeing or deleting.
 
-If your data is something you want to query with SQL, you can skip this chapter and go on to [chapter 13](/en/chapters/13-sql.md). The section "When DynamoDB doesn't fit", later on, gives some guidance for deciding.
+If you want to work with your data in SQL, you can skip this chapter and go on to [chapter 13](/en/chapters/13-sql.md). "When DynamoDB doesn't fit", on the [Costs, Pitfalls, and Cleanup](/en/chapters/05-dynamodb/wrap.md) page, gives some guidance for deciding.
 
 ## The big picture
 
@@ -31,40 +31,40 @@ edge fn -> table: execution role: GetItem, PutItem, UpdateItem, DeleteItem, Quer
 mark table
 ```
 
-What changed from chapter 04 is the bottom layer. The owner of the state used to be each individual execution environment; now it's the table. However many execution environments there are, and whenever one disappears, it no longer hurts.
+The difference from chapter 04 is the DynamoDB table, highlighted in the figure. The table now owns the notes, where each execution environment owned its own before. However many execution environments there are, and whenever one is discarded, the notes are not lost.
 
-### Why DynamoDB?
+### Why DynamoDB
 
-DynamoDB is a database in which you read and write items by specifying a key. There are three reasons for choosing it in this chapter.
+DynamoDB is a database in which you read and write items by key. This chapter chooses it for three reasons.
 
-- There are no connections to manage. You call an HTTPS API and that's it. When the number of Lambda execution environments grows, you don't have to think about connection limits or pools
-- It needs no network design. It doesn't have to sit inside a VPC, so you add one table to the chapter 04 architecture and you're done
-- While it isn't being used, the only charge is for what is stored. For an on-demand table, the request charge is 0 when there are no requests
+- You have no connections to manage. You call an HTTPS API, so a growing number of Lambda execution environments doesn't make you think about connection limits or pools
+- You have no network to design. The table doesn't have to sit inside a VPC, so you add one table to the chapter 04 architecture
+- While nobody uses it, you pay only for what is stored. An on-demand table has a request charge of 0 when there are no requests
 
-In exchange, you have to **decide first how you will read**. You can't filter freely by a condition you think of later, the way you can in SQL. The second half of the chapter covers the cases where this doesn't fit.
+In exchange, you have to **decide first how you will read**. You can't filter freely by a condition you think of later, the way you can in SQL. The [Costs, Pitfalls, and Cleanup](/en/chapters/05-dynamodb/wrap.md) page covers the cases where that constraint doesn't fit.
 
 ## Derive the keys from how you read
 
 <!-- section: 05.model -->
 
-DynamoDB table design starts from "how do you read and write?", not from "what data is there?". This API reads and writes in two ways.
+You design a DynamoDB table from how you read and write, not from what data you have. This API reads and writes in two ways.
 
 1. List one owner's notes, newest first
 2. Given an owner and a note ID, read, update, or delete that one note
 
-A DynamoDB item is uniquely identified by the pair of its partition key and its sort key. Items with the same partition key are stored together and, within that group, ordered by sort key. Let's map the two access patterns onto this property.
+A DynamoDB item is identified by the pair of its partition key and its sort key. Items with the same partition key are stored together and ordered by sort key within that group. The two access patterns map onto this property.
 
 <<< @/examples/05-dynamodb/src/dynamodb-repository.ts{keys}
 
-With the owner as the partition key, "all of one owner's notes" can be read with a single Query. With the note ID as the sort key, "one note" can be read by an exact match on the key.
+With the owner as the partition key, a single `Query` reads all of one owner's notes. With the note ID as the sort key, an exact match on the key reads one note.
 
 That leaves "newest first". The creation time goes at the front of the ID, so that sort key order is creation order.
 
 <<< @/examples/05-dynamodb/src/id.ts{id}
 
-Now listing is only a matter of reading in reverse sort key order, and you need no index for sorting. The order of two notes created in the same millisecond is decided by the random part.
+With IDs in this form, listing means reading in reverse sort key order, and no index is needed for sorting. The random part of the ID decides the order of two notes created in the same millisecond.
 
-There's no authentication yet, so the owner is a fixed value shared by everyone. Chapter 06 replaces it with the signed-in user, but the shape of the key doesn't change.
+There is no authentication yet, so the owner is a fixed value shared by everyone. Chapter 06 replaces it with the signed-in user, and the shape of the key stays the same.
 
 <<< @/examples/05-dynamodb/src/notes.ts{service}
 
@@ -74,10 +74,10 @@ There's no authentication yet, so the owner is a fixed value shared by everyone.
 
 <<< @/examples/05-dynamodb/src/contract.ts{note}
 
-A note now has a `version`. It is 1 at creation and increases by exactly 1 each time a save succeeds. When updating, the caller sends "the version I was looking at" as `expectedVersion`.
+A note now has a `version`. It is 1 at creation and increases by exactly 1 each time a save succeeds. To update a note, the caller sends the `version` it was looking at as `expectedVersion`.
 
-`expectedVersion` is required. If it could be omitted, an update that doesn't say what it was based on would go through, and you couldn't prevent overwrites.
+`expectedVersion` is required. If it could be omitted, an update that doesn't say which version it was based on would go through, and overwrites could no longer be prevented.
 
-The error codes gain `conflict`, which returns the note as it is stored now as `current`.
+The error codes gain `conflict`. This error returns the note as it is stored now, as `current`.
 
 <<< @/examples/05-dynamodb/src/contract.ts{error}

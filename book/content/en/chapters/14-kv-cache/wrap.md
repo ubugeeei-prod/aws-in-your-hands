@@ -8,27 +8,29 @@ title: "14 Cache: Costs, Pitfalls, and Cleanup"
 
 <!-- section: 14.cloudflare -->
 
-Cloudflare doesn't have just one KV either. Here is what I could confirm.
+This last page of the chapter covers how Cloudflare's products correspond, how to choose among the four places to store data, what they cost, and how to clean up.
 
-**Workers KV** is, in its documentation's words, "an eventually-consistent edge key-value store". A change is usually visible at once where it was made and may take 60 seconds or more elsewhere. It suits read-heavy, cacheable data, and the documentation says it is not ideal where you need atomic operations and points to Durable Objects.
+Cloudflare does not have a single KV either. This is what I was able to confirm.
 
-It is tempting to map that onto one of the three on AWS. I won't, because each overlaps in a different way.
+Workers KV is, in the words of its documentation, "an eventually-consistent edge key-value store". A write is usually visible at once in the location where it was made, and can take 60 seconds or more to reach other locations. It suits data that is read often and caches well, and the documentation says it is not a fit where you need atomic operations and suggests considering Durable Objects.
 
-- DynamoDB shares "the code that plays the Worker's part reads and writes it". But it lives in one Region and offers strongly consistent reads and conditional updates. It is far more of a database than KV is
-- CloudFront KeyValueStore shares "read at the edge" and "arrives late". But functions cannot write to it, and it is orders of magnitude smaller (1 KB per value, against 25 MiB in KV)
+It is tempting to map Workers KV onto one of the three on AWS, but each overlaps with it in a different way, so this chapter does not.
+
+- DynamoDB is the same in that the code playing the Worker's part can read and write it. It is in one Region, however, and it offers strongly consistent reads and conditional updates. In character it is much closer to a database than Workers KV is
+- CloudFront KeyValueStore is similar in that it is read at the edge and its updates arrive late. Functions cannot write to it, however, and it holds data that is smaller by orders of magnitude (a value of up to 1 KB, against up to 25 MiB in Workers KV)
 - Valkey resembles neither. It is a server in memory in one Region
 
-A job like a rate limit, counting accurately, isn't Workers KV's job on Cloudflare either. **Durable Objects** are small single-threaded instances, each uniquely identified by a name and each with its own strongly consistent storage. By handling one thing at a time they give, in another form, the guarantee this chapter got from a DynamoDB condition expression and a Valkey script. AWS has no part that corresponds directly.
+Counting accurately, as a rate limit must, is not a job for Workers KV on Cloudflare either. Durable Objects are small single-threaded instances, each uniquely identified by a name and each with its own strongly consistent storage. They handle requests that arrive together one at a time, and so reach in another form the guarantee this chapter got from a DynamoDB condition expression and a Valkey script. AWS has no component that corresponds directly to Durable Objects.
 
-Workers also have a binding made for rate limiting. Its documentation says limits are counted per Cloudflare location and that the API is "permissive, eventually consistent", and not meant as an accurate accounting system. This chapter's DynamoDB version chooses the opposite: one Region, one write per request, an exact count. The binding wins on speed and ease, this wins on strictness. Which you need depends on what you are protecting.
+Workers also has a binding dedicated to rate limiting, the Rate Limiting binding. According to its documentation, it counts per Cloudflare location and is "permissive, eventually consistent", not designed as an accurate accounting system. This chapter's DynamoDB variant makes the opposite choice and counts exactly, in one Region, with one write per request. The binding is ahead on speed and ease, and the DynamoDB variant is ahead on strictness. Which one you need depends on what you want to protect.
 
-The pricing has a different shape as well. Workers KV includes 100,000 reads and 1,000 writes a day on the Free plan, and 10 million reads and 1 million writes a month on the Paid plan, then USD 0.50 per million reads and USD 5.00 per million writes. Nothing is charged for merely having it until you store more than 1 GB. "A KV that costs money just sitting there" is probably the strangest part when you come from Cloudflare. I did not check Durable Objects pricing for this chapter.
+The pricing has a different shape as well. Workers KV includes 100,000 reads and 1,000 writes a day on the Free plan, and 10 million reads and 1 million writes a month on the Paid plan, and beyond that costs USD 0.50 per million reads and USD 5.00 per million writes. There is no charge for data that merely sits there until you store more than 1 GB. If you come from Cloudflare, ElastiCache charging money just for existing is probably the part that feels strangest. I did not check Durable Objects pricing for this chapter.
 
 ## Which one to choose
 
 <!-- section: 14.choose -->
 
-All of the above on one page.
+The table below sums up the chapter so far.
 
 | | DynamoDB | ElastiCache Serverless (Valkey) | CloudFront KeyValueStore | Lambda memory |
 | --- | --- | --- | --- | --- |
@@ -39,23 +41,23 @@ All of the above on one page.
 | Price while unused | Storage only (USD 0.00 for this chapter's setup) | From USD 7.37 a month | 0 in this chapter (chapter 10) | 0 |
 | Writable from Lambda | Yes | Yes | No | By that environment only |
 
-From this table the decisions mostly follow.
+From this table, the decisions come out roughly as follows.
 
-**When in doubt, DynamoDB.** It costs next to nothing idle, needs no VPC, and is protected by the same permission system as Lambda. Both the rate limit and the cache can be built on it, as you saw. It has two weak spots: one operation takes from a few to a dozen milliseconds (around 10 ms against the local DynamoDB Local, which is not a figure for the real service), and every write is billed.
+When in doubt, choose DynamoDB. It costs almost nothing while idle, needs no VPC, and is protected by the same permission system as Lambda. You can build both the rate limit and the cache on it, as this chapter showed. Its weaknesses are that one operation takes from a few milliseconds to a little over ten, and that every write is billed. One operation took around 10 ms against DynamoDB Local on my machine, but that is not a figure for the real service.
 
-**Valkey, when you can say why.** You read and write many times per request. A millisecond matters. You need operations DynamoDB lacks, such as sorted sets or pub/sub. Or you write so much that DynamoDB's per-request price goes well past USD 7.37 a month. If one of those holds, Valkey has a job. If none does, you are taking on a standing charge, data that can vanish, and one more thing to operate, for no reason.
+Choose Valkey when you can say why. You read and write many times in one request. A single millisecond matters. You need operations DynamoDB does not have, such as sorted sets or pub/sub. You write so much that DynamoDB's pay-per-request charge goes well beyond USD 7.37 a month. Any one of these is a reason to use Valkey. If none applies, you take on a standing charge, data that can disappear, and one more thing to operate, without a reason.
 
-**KeyValueStore, only for configuration that edge functions read.**
+Use CloudFront KeyValueStore only for configuration that edge functions read.
 
-**Memory is the first cache layer you get for free.** Don't trust it with correctness.
+Lambda memory is a first cache layer that comes at no extra charge, and you do not rely on it for correctness.
 
 ## The money
 
 <!-- section: 14.cost -->
 
-Amounts are in USD, for the Tokyo Region, pay-as-you-go, before tax. The working is in [Pricing calculations](/en/reference/pricing.md).
+Amounts are in USD, for the Tokyo Region, pay-as-you-go, before tax. The calculations are in [Pricing calculations](/en/reference/pricing.md).
 
-**A month of sitting there.**
+**A month of sitting idle.**
 
 | Setup | Per month (730 hours) |
 | --- | --- |
@@ -63,13 +65,13 @@ Amounts are in USD, for the Tokyo Region, pay-as-you-go, before tax. The working
 | `-c store=valkey` (ElastiCache Serverless, Valkey) | 7.37 |
 | For comparison: node-based Valkey, one `cache.t4g.micro` | 14.60 |
 
-Serverless's 7.37 is the minimum charge. Serverless Valkey is metered as 100 MB even when it stores less. At USD 0.101 per GB-hour, 0.1 GB x 730 hours x 0.101 comes to 7.37. For Redis OSS and Memcached the minimum is 1 GB and the rate is higher, USD 0.151. That is one of the reasons for picking Valkey.
+The 7.37 for Serverless is the minimum charge. Serverless Valkey is billed as 100 MB even when it stores less than 100 MB. The rate is USD 0.101 per GB-hour, so 0.1 GB x 730 hours x 0.101 comes to 7.37. For Redis OSS and Memcached the minimum is 1 GB, and the rate is higher at USD 0.151. That is one reason this chapter uses Valkey.
 
-The node-based 14.60 is not something this chapter's stack creates; it is there to compare. It is a single node without a replica, so when that node fails the cache is empty.
+The 14.60 for node-based is not a setup this chapter's stack creates. It was calculated for comparison. It is a single node with no replica, so when that node fails the cache is empty.
 
-On free tiers: according to the ElastiCache pricing page, accounts created before July 15, 2025 get 750 hours of `cache.t3.micro` for 12 months, which excludes Serverless. Newer accounts get credits instead. Neither is deducted in this table.
+A note on the free tier. According to the ElastiCache pricing page, accounts created before July 15, 2025 get 750 hours of `cache.t3.micro` for 12 months, but Serverless is not covered. Accounts created later get credits instead. This table deducts neither.
 
-**A month with one million requests.** Assuming Lambda on arm64 with 256 MB and 30 ms on average, and 0.5 KB of logs per request.
+**A month with one million requests.** The assumptions are Lambda on arm64 with 256 MB and 30 ms on average, and 0.5 KB of logs per request.
 
 | Item | DynamoDB, list price | Valkey, list price |
 | --- | --- | --- |
@@ -83,19 +85,19 @@ On free tiers: according to the ElastiCache pricing page, accounts created befor
 | Subtotal (list) | **2.94** | **9.36** |
 | Subtotal (after monthly free allowances) | **2.27** | **8.69** |
 
-Only the Lambda and CloudWatch Logs allowances are deducted (they are shared across the account). I could not confirm a free allowance for HTTP API, so none is deducted.
+Only the free allowances for Lambda and CloudWatch Logs are deducted (both are shared across the whole account). I could not confirm a free allowance for HTTP API, so none is deducted.
 
-The DynamoDB writes are one million rate limit increments plus 87,600 cache refills x 3 (take the lock, write the copy, release the lock). The refill count rests on a generous assumption: a refill happens every single time the 30-second TTL runs out. A sliding window adds one strongly consistent read per request, another million read units (USD 0.14).
+The DynamoDB writes consist of one million rate limit increments and 87,600 cache refills x 3 writes (take the lock, write the copy, release the lock). The number of refills comes from a generous assumption, that a refill happens every time the 30-second TTL runs out. A sliding window adds one strongly consistent read per request, which adds one million read units (USD 0.14).
 
-The Valkey ECPUs assume 10 per request, on the generous side. A simple read or write is 1 ECPU per KB, but I have not measured what a script uses. Even so it is USD 0.03; at this scale the storage minimum is almost the whole bill.
+The ECPUs for the Valkey variant are set generously at 10 ECPUs per request. A simple read or write is 1 ECPU per KB, but I have not measured how many a script consumes. Even at that generous figure the cost is USD 0.03, so at this scale the minimum charge for storage is almost the whole amount.
 
-Compare the two subtotals. At a million requests a month, DynamoDB is far cheaper. DynamoDB writes reach USD 7.37 a month at roughly 10 million writes. Before assuming "cache means Valkey", it is worth doing this sum once.
+Comparing the two subtotals, the DynamoDB variant is far cheaper at one million requests a month. DynamoDB writes reach USD 7.37 a month at roughly 10 million writes. It is worth doing this calculation once before deciding that a cache means Valkey.
 
-Some things are not in the table (not zero, just not included): data transfer of the responses out to the internet, and data transfer to the public endpoint, which the pricing page puts at USD 0.01 per GB on the application side within the same Region.
+Some things are not in the table. That means they were not included, not that they are zero. One is data transfer for sending responses to the internet. The other is data transfer to the public endpoint, which according to the pricing page costs the application side USD 0.01 per GB within the same Region.
 
-**A month of being hammered.** This API has no authentication. Anyone who knows the URL can call it. Three things stand in the way: the stage throttle (10 requests a second in total), the rate limit in the app (5 a minute per address), and the cap on the table.
+**When it gets hammered.** This API has no authentication, and anyone who knows the URL can call it. Three things stop a flood of requests. They are the stage throttling (10 requests a second in total), the rate limit in the app (5 calls a minute per address), and the cap on the table.
 
-Suppose the full 10 requests a second arrive for 30 days. That is 25.92 million requests. Under the same assumptions as the table above (30 ms on average, 0.5 KB of logs), the list price of the DynamoDB variant comes to this.
+Suppose 10 requests a second, the full amount the throttling allows, continue for 30 days. That is 25.92 million requests. Under the same assumptions as the table above (30 ms on average, 0.5 KB of logs), the list price of the DynamoDB variant is as follows.
 
 | Item | List price |
 | --- | --- |
@@ -106,45 +108,45 @@ Suppose the full 10 requests a second arrive for 30 days. That is 25.92 million 
 | DynamoDB reads (13,003,800 units) | 1.85 |
 | Total (list price) | **71.18** |
 
-About USD 71 a month. As long as the throttle holds, that is roughly this stack's ceiling. A request the app refuses with 429 still pays for API Gateway, for Lambda, and for the write whose condition failed, so the figure barely drops even if almost everything is a 429. Whether API Gateway bills a request it throttles with 429 has not been checked. Data transfer of the responses is not included either.
+That is about USD 71 a month. As long as the throttling is working, this amount is a rough ceiling for the stack. A request the app refuses with 429 is still charged for API Gateway, for Lambda, and for the write whose condition failed. The amount therefore drops very little even when most requests get a 429. Whether API Gateway charges for a 429 returned by throttling has not been checked. Data transfer for the responses is not included either.
 
-Against a caller who keeps changing addresses, the rate limit in the app does nothing: every address has a fresh budget. What grows then is counter items, at most 10 a second. They are small and TTL deletes them within days, but how far they pile up has not been measured.
+The rate limit in the app does nothing against a caller who keeps calling from changing addresses, because every address has a fresh budget. What grows in that case is the number of counter items, at most 10 a second. The items are small and TTL deletes them within a few days, but how far they pile up has not been measured.
 
-If the throttle is not in effect (unknown until someone deploys and looks), what remains is the cap on the table: 40 write units and 60 read units a second. Pinned at the cap for 30 days, the DynamoDB part stops at USD 74.13 for writes and USD 22.16 for reads. The API Gateway and Lambda parts do not stop. After deploying, look at the stage's throttling values in the console once.
+If the throttling is not working (which is not known until someone deploys and looks), what remains is the cap on the table, at 40 write units and 60 read units a second. Even pinned at the cap for 30 days, the DynamoDB part stops at USD 74.13 for writes and USD 22.16 for reads. The API Gateway and Lambda parts do not stop. After you deploy, check the stage's throttling values once in the console.
 
-In the Valkey variant the counting moves to ElastiCache, where the ceiling is `cacheUsageLimits`. Pinned at 1,000 ECPUs a second for 30 days, that is USD 7.00; with storage at its 1 GB maximum, USD 73.73 for 730 hours.
+In the Valkey variant, the counting moves to ElastiCache and the ceiling is `cacheUsageLimits`. Pinned at 1,000 ECPUs a second for 30 days, the cost is USD 7.00, and with storage staying at its 1 GB limit it is USD 73.73 for 730 hours.
 
-Before real users arrive, add authentication (chapter 06) and, if you need it, AWS WAF. WAF cannot be attached to an HTTP API, so that means putting CloudFront in front. The web ACL of [chapter 21](/en/chapters/21-security.md), with its three rules, is USD 8.00 a month plus USD 0.60 per million requests. This book does not build an HTTP API behind CloudFront.
+Before real users arrive, add authentication (chapter 06) and, if you need it, AWS WAF. WAF cannot be attached to an HTTP API, however, so that means a setup with CloudFront in front. The web ACL of [chapter 21](/en/chapters/21-security.md), with three rules, is USD 8.00 a month, plus USD 0.60 per million requests. This book does not build a setup with an HTTP API behind CloudFront.
 
-Delete the stack and this chapter's charges stop.
+Deleting the stack stops this chapter's charges.
 
 ## Where it goes wrong
 
 | If this happens | Look here |
 | --- | --- |
-| `dev:kv` stops with `Invalid environment` | Is there an `examples/14-kv-cache/.env`? Each `KV_STORE` needs different variables |
-| Locally the sixth call gets 429, deployed more get through | Did you deploy with `KV_STORE=memory`? Each execution environment counts on its own |
-| A 429 without a `ratelimit-limit` header | API Gateway's throttle refused it, not the app. The API as a whole went past 10 requests a second |
-| A 429 before you have made five calls | Someone behind the same exit IP address called first. The count is per address, not per person |
-| Expired items are still in the DynamoDB console | That is normal. TTL deletion can be days late. The reader checks the expiry |
+| `dev:kv` stops with `Invalid environment` | Check that `examples/14-kv-cache/.env` exists. The variables needed differ for each `KV_STORE` |
+| Locally the sixth call gets 429, but more get through after deploying | Check whether you deployed with `KV_STORE=memory`. With memory, each execution environment counts separately |
+| A 429 without a `ratelimit-limit` header | API Gateway's throttling refused it, not the app. The API as a whole went past 10 requests a second |
+| A 429 before you have made 5 calls | Someone using the same exit IP address called first. The count is per address, not per person |
+| Expired items are still in the DynamoDB console | This is normal. TTL deletion can be days late, and the reader checks the expiry |
 | `x-cache` stays `miss` | Nothing is being written to the cache. Search `vp run kv:logs` for `cache store failed` |
-| `WRONGPASS` in the logs | Per the official troubleshooting table: an expired token, the wrong user name, missing `elasticache:Connect`, or a cache name that is not lowercase |
-| `NOAUTH` in the logs | The client sent a command before authenticating. iovalkey sends `AUTH` first as far as its source shows, but that is unconfirmed on a real cache |
-| The TLS handshake fails | A public endpoint speaks TLS 1.3 only. Is the client pinned to an older version? |
-| `Valkey did not answer within 1000 ms` | The cache is unreachable or slow. The API keeps answering from the source |
-| A sliding window refuses one request earlier than expected | Fractions are rounded down. It approximates; it does not guarantee exactly the limit |
+| `WRONGPASS` in the logs | According to the official troubleshooting table, the cause is an expired token, the wrong user name, missing `elasticache:Connect`, or a cache name that is not lowercase |
+| `NOAUTH` in the logs | The client sent a command before authenticating. As far as its source shows, iovalkey sends `AUTH` first, but that is unconfirmed on a real cache |
+| The TLS handshake fails | A public endpoint accepts TLS 1.3 only. Check whether the client is pinned to an older version |
+| `Valkey did not answer within 1000 ms` | The cache is not being reached, or it is answering slowly. The API keeps answering from the source |
+| A sliding window refuses one request sooner than expected | Fractions are rounded down. It is an approximation and does not guarantee exactly the limit |
 
 ## Before production
 
-- **To tell users apart, count by a verified ID.** An IP address lumps together everyone behind one exit and counts a caller with many addresses separately (chapter 06)
-- **Fit the throttle to your API.** 10 requests a second is a practice value. Raise the cap on the table along with it. AWS WAF cannot be attached to an HTTP API, so needing it means choosing the layout again ([chapter 04](/en/chapters/04-http-api.md)). A rate limit in the app shares capacity fairly; it does not absorb an attack
-- **Fit `RATE_ON_ERROR` to what you protect.** `allow` for a list, `deny` for anything like login attempts where a missing guard hurts
-- **Reconsider the table's `removalPolicy`.** This chapter's table holds only disposable items, but in a table shared with data it owns, that is `RETAIN`
-- **Choose a TTL you can put into words.** Can you say "the list is at most 36 seconds old" (30 seconds plus 20% jitter)?
-- **Watch the hit rate.** `x-cache` is in the logs. For counting from logs and alarming on the result, see [chapter 19](/en/chapters/19-observability.md)
-- **If you use Valkey, decide whether a public endpoint is acceptable.** It is protected by IAM, but some organizations rule out any data store reachable from the internet. Then the connection type is VPC and the function moves into chapter 11's VPC. The `elasticache:ConnectionType` condition key can forbid creating public caches at all
-- **Give Valkey users one purpose each.** This chapter uses `default.iam-user`, which may do anything. In production, create users limited to the commands and keys they need
-- **Deploy through the AWS CDK CLI and CloudFormation.** As chapter 02 said
+- To tell users apart, count by a verified ID. An IP address lumps together everyone behind the same exit and counts a caller with many addresses separately (chapter 06)
+- Set the throttling values to fit your API. 10 requests a second is a practice value, and if you raise it, raise the cap on the table with it. AWS WAF cannot be attached to an HTTP API, so if you need it you have to choose the setup again ([chapter 04](/en/chapters/04-http-api.md)). The rate limit in the app is for sharing out calls fairly, not for absorbing an attack
+- Set `RATE_ON_ERROR` to fit what you protect. Use `allow` for a list, and `deny` for something like login attempts, where missing protection does harm
+- Review the table's `removalPolicy`. This chapter's table holds only data that can be lost, but if it shares a table with data it owns, use `RETAIN`
+- Make the TTL a length you can explain in words. With this chapter's settings you can say that the list is at most 36 seconds old (30 seconds plus 20% of jitter)
+- Watch the cache hit rate. `x-cache` is written to the logs. [Chapter 19](/en/chapters/19-observability.md) shows how to count from logs and raise an alarm
+- If you use Valkey, decide whether a public endpoint is acceptable. It is protected by IAM, but some organizations do not allow a data store that can be reached from the internet. In that case, set the connection type to VPC and put the function into chapter 11's VPC with it. The `elasticache:ConnectionType` condition key can also prevent public caches from being created
+- Separate Valkey users by purpose. This chapter uses `default.iam-user`, which can do anything. In production, create users restricted to the commands and keys they need
+- Deploy through the AWS CDK CLI and CloudFormation, for the reason given in chapter 02
 
 ## Cleaning up
 
@@ -154,13 +156,13 @@ Delete the stack and this chapter's charges stop.
 vp run kv:infra:destroy
 ```
 
-If you deployed the Valkey variant, pass the same context.
+If you deployed the Valkey variant, add the same context.
 
 ```bash
 vp run kv:infra:destroy -c store=valkey
 ```
 
-The table, the function, the role, the API, the log group, and the ElastiCache cache are deleted. No final snapshot name is set, so no snapshot is meant to remain. To be sure it is gone, check that the list of caches in the ElastiCache console is empty. If the cache is still there, so is the charge.
+The table, the function, the role, the API, the log group, and the ElastiCache cache are deleted. No final snapshot name is set, so the configuration leaves no snapshot. To confirm the deletion, check that the list of caches in the ElastiCache console is empty. If the cache remains, the charge continues.
 
 Stop the local containers too.
 
@@ -168,44 +170,44 @@ Stop the local containers too.
 vp run kv:local:stop
 ```
 
-What remains is the storage that cdkd's bootstrap created (chapter 02) and the deployment files in it.
+All that remains is the storage created by cdkd's bootstrap (chapter 02) and the deployment files in it.
 
 ## As a distributed system
 
-This chapter has two owners of state. The shared store (DynamoDB or Valkey) owns the rate limit counts. The source of truth owns the list. The cache owns nothing.
+This chapter has two owners of state. The shared store (DynamoDB or Valkey) owns the rate limit counts, and the source of truth owns the list. The cache owns nothing.
 
-Here is what must hold, one sentence each.
+Here is what has to hold, one sentence each.
 
-- **A window lets through at most the limit, however many requests arrive at once.** Tests that try to break it: two requests through a read-then-write store; 50 at once against a real store
-- **The caller does not choose whose count a request lands on.** Tests that try to break it: calls from one address under a different claimed name and `x-forwarded-for` each time; an address that cannot be read
-- **A copy past its expiry is never returned, even while the store still holds it.** Test that tries to break it: a DynamoDB that returns the expired item
-- **With the cache absent, slow, or broken, the response equals the source.** Tests that try to break it: a store whose reads and writes always fail, a store holding unreadable values, a lock holder that never returns
-- **A copy is never older than the TTL.** Test that tries to break it: a slow read that straddles an update and its invalidation
+- A window lets through at most the limit, however many requests arrive at once. The tests that try to break it pass two requests at once through a store that reads and then writes, and send 50 at once to a real store
+- The caller cannot choose whose count a request is added to. The tests that try to break it call from the same address with a different claimed name and `x-forwarded-for` each time, and pass an address that cannot be read
+- A copy past its expiry is not returned even if it is still in the store. The test that tries to break it is a DynamoDB that returns an expired item
+- With the cache missing, slow, or broken, the response is the same as the source. The tests that try to break it are a store whose reads and writes always fail, a store holding a value that cannot be read, and a lock holder that never returns
+- A copy is never older than the TTL. The test that tries to break it is a slow read that straddles an update and a delete
 
-Note that the last one is not "never returns an old value". It does. There is a bound, that's all.
+The last one does not mean that an old value is never returned. Old values are returned, and their age has an upper bound.
 
-The second carries a caveat too. What the caller cannot choose is which address a request appears to come from; a caller with many addresses has that many budgets. The lid on everyone's total is the stage throttle, not the app.
+The second also carries a caveat. What the caller cannot choose is which address a request appears to come from, and a caller with several addresses has that many budgets. The total for everyone is held down by the stage throttling, not by the app.
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** Unit tests (rate limiter boundaries and concurrency, the store contracts, the requests sent to DynamoDB and Valkey, the read-side TTL check, stale reads, stampedes, jitter, the token signature, the app, stack assertions). Type checking. Synth (default and `-c store=valkey`, including the esbuild bundle). Loading the bundled handler in Node.js and invoking it with an API Gateway shaped event. The 22 store contract tests against Valkey 9.1.2 and DynamoDB Local 3.3.1. Starting `dev:kv` with memory, valkey, and dynamodb, and running the `curl` commands from the text. After the count moved to the source address, I started it again with memory and confirmed that changing headers lands on the same budget (not rerun with valkey and dynamodb).
+**Checked locally.** Unit tests (rate limiter boundaries and concurrency, the store contracts, the shape of the requests sent to DynamoDB and Valkey, the read-side TTL check, stale reads, stampedes, jitter, the token signature, the app, stack assertions). Type checking. Synth (default and `-c store=valkey`, including the esbuild bundle). Loading the bundled handler in Node.js and invoking it with an event in the API Gateway shape. Running the 22 store contract tests against Valkey 9.1.2 and DynamoDB Local 3.3.1. Starting `dev:kv` with memory, valkey, and dynamodb, and running the `curl` commands from the text. After the count was changed to the source address, I started it again with memory and confirmed that requests with different headers are counted in the same budget (not rerun with valkey and dynamodb).
 
-**Not checked yet.** `kv:infra:deploy`, `kv:smoke`, `kv:logs`, `kv:infra:drift`, and `kv:infra:destroy` have not been run against real AWS. For the stage throttle and the table cap, a test pins that they are in the template, and I read that the source of cdkd 0.296.28 passes them to the AWS API; that is all. That they take effect, what a throttled 429 looks like and whether it is billed, what happens at the table cap, and the actual `sourceIp` in an API Gateway event are unchecked. `kv:local:start` and `kv:local:stop` were not run, for lack of a Docker daemon (Valkey and DynamoDB Local ran as processes, from nixpkgs' `valkey-server` and the jar AWS distributes). Nothing about ElastiCache was checked on a real cache: that CloudFormation and Cloud Control API accept `ConnectionType: public` with `UserGroupId: default.iam-user-group`; that 1,000 is a valid ECPU maximum in `CacheUsageLimits` (the documentation gives no smallest maximum, and 1,000 is the value its own example uses for a minimum); that the hand-signed SigV4 token is accepted; that iovalkey's `Cluster` can read the topology through a public endpoint; the TLS 1.3 connection; what a script costs in ECPUs; how long the cache takes to create and delete. For DynamoDB: how long TTL really takes to delete an item, and response times on the real service. `@valkey/valkey-glide` was only read about on npm, neither installed nor run. Durable Objects pricing was not checked.
+**Not checked yet.** `kv:infra:deploy`, `kv:smoke`, `kv:logs`, `kv:infra:drift`, and `kv:infra:destroy` have not been run against real AWS. For the stage throttling and the table cap, a test pins that they are in the template, and I read that the source of cdkd 0.296.28 passes them to the AWS API, and that is all. That they take effect, the shape of a 429 returned by throttling and whether it is billed, the behavior when the table cap is reached, and the actual value of `sourceIp` in an API Gateway event have not been checked. `kv:local:start` and `kv:local:stop` were not run, because there was no Docker daemon (Valkey and DynamoDB Local were started as processes, from nixpkgs' `valkey-server` and the jar AWS distributes). Nothing about ElastiCache has been checked on a real cache. In detail, that covers CloudFormation and Cloud Control API accepting `ConnectionType: public` with `UserGroupId: default.iam-user-group`, 1,000 being a valid ECPU maximum in `CacheUsageLimits` (the documentation gives no smallest value for the maximum, and 1,000 is the value the official example uses as a minimum), the hand-written SigV4 token being accepted, iovalkey's `Cluster` reading the cluster topology through a public endpoint, the TLS 1.3 connection, how many ECPUs a script consumes, and how long the cache takes to create and delete. For DynamoDB, the actual time until TTL deletes an item and the response time of the real service have not been checked. `@valkey/valkey-glide` was only read about on npm, and was neither installed nor run. Durable Objects pricing was not checked.
 
 **Where the code is.**
 
 | Section | Files | Tasks |
 | --- | --- | --- |
-| Two exercises, swappable backends | `examples/14-kv-cache/src/stores.ts`, `test/store-contracts.ts` | `test:unit` |
+| Two exercises, swappable stores | `examples/14-kv-cache/src/stores.ts`, `test/store-contracts.ts` | `test:unit` |
 | Counting for a rate limit | `examples/14-kv-cache/src/rate-limit.ts`, `test/rate-limit.test.ts` | `test:unit` |
 | Read, then write, and you miscount | `examples/14-kv-cache/src/dynamodb-store.ts`, `test/dynamodb-store.test.ts`, `test/rate-limit.test.ts` | `test:unit`, `kv:test:local` |
-| TTL does not mean "delete now" | `examples/14-kv-cache/src/dynamodb-store.ts`, `test/dynamodb-store.test.ts` | `test:unit` |
+| TTL deletes late | `examples/14-kv-cache/src/dynamodb-store.ts`, `test/dynamodb-store.test.ts` | `test:unit` |
 | The same thing on Valkey | `examples/14-kv-cache/src/valkey-store.ts`, `test/valkey-store.test.ts`, `test/local-stores.test.ts` | `test:unit`, `kv:test:local` |
 | What ElastiCache adds | `examples/14-kv-cache/src/elasticache-token.ts`, `src/valkey-client.ts`, `test/elasticache-token.test.ts` | `test:unit` |
 | Cache only what you can afford to lose | `examples/14-kv-cache/src/read-through.ts`, `src/catalog.ts`, `src/contract.ts`, `test/read-through.test.ts` | `test:unit` |
-| The moment it expires, everyone arrives at once | `examples/14-kv-cache/src/read-through.ts`, `test/read-through.test.ts` | `test:unit` |
-| Lambda memory is a cache too | `examples/14-kv-cache/src/memory-store.ts`, `src/lambda.ts`, `test/memory-store.test.ts` | `test:unit` |
-| Edge configuration is chapter 10's KeyValueStore | `examples/10-edge/` | - |
+| Reads that pile up when the copy expires | `examples/14-kv-cache/src/read-through.ts`, `test/read-through.test.ts` | `test:unit` |
+| Lambda memory as a cache | `examples/14-kv-cache/src/memory-store.ts`, `src/lambda.ts`, `test/memory-store.test.ts` | `test:unit` |
+| Edge configuration and CloudFront KeyValueStore | `examples/10-edge/` | - |
 | Running it locally | `examples/14-kv-cache/src/app.ts`, `src/caller.ts`, `test/caller.test.ts`, `src/compose.ts`, `src/env.ts`, `src/dev.ts`, `scripts/local-stores.ts`, `scripts/test-local.ts`, `.env.example` | `dev:kv`, `kv:local:start`, `kv:local:migrate`, `kv:test:local`, `kv:local:stop` |
 | Getting ready for AWS | `examples/14-kv-cache/infra/lib/kv-cache-stack.ts`, `infra/bin/app.ts`, `infra/test/kv-cache-stack.test.ts`, `cdk.json` | `kv:infra:synth`, `test:unit` |
 | Deploy and check | `examples/14-kv-cache/scripts/smoke.ts`, `scripts/logs.ts` | `kv:infra:diff`, `kv:infra:deploy`, `kv:smoke`, `kv:logs`, `kv:infra:drift` |

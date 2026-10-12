@@ -4,7 +4,9 @@ title: "13 SQL: Run It Locally"
 
 # 13 SQL: Run It Locally
 
-## Running it locally
+This page runs the API built on the [previous page](/en/chapters/13-sql/build.md) on your own machine, without connecting to AWS. It needs no credentials and costs nothing.
+
+## Starting and checking it
 
 <!-- section: 13.local -->
 
@@ -18,7 +20,7 @@ vp run sql:db:seed:local
 vp run dev:sql
 ```
 
-The API comes up at <http://localhost:8787>.
+The API starts at <http://localhost:8787>.
 
 ```bash
 curl -s http://localhost:8787/notes
@@ -27,34 +29,34 @@ curl -s -X PUT http://localhost:8787/notes/<id> -H 'content-type: application/js
 curl -s -X PUT http://localhost:8787/notes/<id> -H 'content-type: application/json' -d '{"title":"stale","expectedVersion":1}'
 ```
 
-Replace `<id>` with the `id` in the create response. The last call is an update from an old `version`. It answers 409 with `code` `conflict` and the note as it is now.
+Replace `<id>` with the `id` from the create response. The last `curl` is an update with an old `version`, so it returns a 409 with `code` set to `conflict`, along with the note as it is now.
 
-To start over:
+To return the database to its initial state, use this task.
 
 ```bash
 vp run sql:db:reset:local
 ```
 
-It deletes the database directory and runs the migrations and the seed again.
+The task deletes the database directory and runs the migrations and the seed again.
 
-### What the local database really is
+### The local database
 
-No Docker. It is PGlite, an npm package that runs PostgreSQL, compiled to WebAssembly, inside the Node.js process. The data lives in `examples/13-sql/.pglite/`.
+Docker is not used. The database is PGlite, an npm package that compiles PostgreSQL to WebAssembly and runs it inside the Node.js process. The data is stored in `examples/13-sql/.pglite/`.
 
 <<< @/examples/13-sql/src/pglite.ts{pglite}
 
-It is probably the closest thing to `wrangler dev` handing you a local D1. But where D1's local mode runs the same D1 as production, this is a **stand-in**. It is not Aurora DSQL. Here is what it does not reproduce.
+It feels close to `wrangler dev` providing a local D1, but D1's local mode runs the same D1 as production, while PGlite is a **stand-in** and is not Aurora DSQL. The following are not reproduced locally.
 
-- **Conflicts.** One connection, so `40001` never occurs. See the previous section
-- **Authentication.** No tokens, no IAM, no database roles. Being refused for lack of permission does not happen locally
-- **DSQL's limits.** 3,000 rows, 5 minutes, one DDL statement, mandatory `ASYNC`. PGlite cares about none of them. The lint watches some in its place
-- **Version.** When run here, PGlite 0.5.8 reported PostgreSQL 18.3. DSQL is compatible with PostgreSQL 16. SQL that exists only in the newer version passes locally and nowhere else
-- **The network.** No connection setup, no drops, no latency
+- Conflicts. There is one connection, so `40001` never occurs. ["Causing a conflict on purpose" on the previous page](/en/chapters/13-sql/build.md) explains why the tests cause it deliberately
+- Authentication. There are no tokens, no IAM, and no database roles, so a request is never refused locally for lack of permission
+- DSQL's constraints. PGlite ignores the 3,000-row limit, the 5-minute limit, the one-DDL-statement rule, and the `ASYNC` requirement. The lint checks some of them in its place
+- The version. When run here, PGlite 0.5.8 reported itself as PostgreSQL 18.3. DSQL is compatible with PostgreSQL 16, so SQL that exists only in the newer version passes locally and nowhere else
+- The network. There is no connection setup, no dropped connection, and no latency
 
-One more finding from trying it. PGlite does not stop two processes from opening the same directory. Left alone that corrupts it, so a lock file does the refusing. Run `sql:db:reset:local` while `dev:sql` is up and it tells you to stop the dev server first, and exits.
+Trying it locally also turned up one thing. PGlite does not stop two processes from opening the same directory. That would corrupt the data, so this chapter's code uses a lock file to stop the second process. If you run `sql:db:reset:local` while `dev:sql` is running, it prints a message asking you to stop the dev server and exits.
 
-And `dev:sql` does not run migrations for you. If some are not applied, it names them and stops. Same manners as `wrangler dev`.
+`dev:sql` does not run migrations automatically. If some have not been applied, it prints their names and stops, which is the same policy as `wrangler dev`.
 
 <<< @/examples/13-sql/src/dev.ts{dev}
 
-Set `NOTES_DB` to `dsql` in `.env` and the same dev server connects to a deployed cluster with your own credentials. That is billed, and it has not actually been tried yet.
+If you set `NOTES_DB` to `dsql` in `.env`, the same dev server connects to a deployed cluster with your own credentials. Using it this way is billed, and it has not actually been tried yet.

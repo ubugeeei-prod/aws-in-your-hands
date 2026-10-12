@@ -4,37 +4,37 @@ title: "03 Static Hosting: Design and Build"
 
 # 03 Static Hosting: Design and Build
 
+This page first runs the SPA on your machine, then goes through the AWS side in order: the bucket, the function that rewrites URLs, and the distribution.
+
 ## Run it locally
 
 <!-- section: 03.app -->
-
-Let's get it running first.
 
 ```bash
 vp run dev:spa
 ```
 
-<http://localhost:5173> opens. Write a note and save it, and it appears in the list. Change the source and the screen updates right away. No AWS credentials are needed and nothing is billed.
+<http://localhost:5173> opens. A note you write and save appears in the list, and the screen updates as soon as you change the source. You need no AWS credentials, and nothing is billed.
 
-For now, notes are saved in the browser's localStorage. They are not visible from another browser. Saving them on a server comes in chapters 04 and 05.
+At this point notes are saved in the browser's localStorage, so another browser can't see them. Chapters 04 and 05 move them to a server.
 
-The shape of a note is defined as a schema, and the type is derived from it.
+The shape of a note is defined by a schema, and the type is derived from the schema.
 
 <<< @/examples/03-spa/src/notes/note.ts{schema}
 
-The storage sits behind an interface, so that it can be replaced with an API later.
+The place notes are saved is hidden behind an interface so that it can be swapped for an API later.
 
 <<< @/examples/03-spa/src/notes/store.ts{interface}
 
-localStorage is outside the type system. Another tab, an older version of this app, or a user with the developer tools open may have written anything into it. So every value read from it goes through the schema, and values that do not match are discarded.
+The types do not protect what is in localStorage. Another tab, an older version of this app, or a user with the developer tools open may have written anything there. So every value read from it is checked against the schema, and values that don't match are discarded.
 
 <<< @/examples/03-spa/src/notes/store.ts{read}
 
-The router is a function of about 20 lines. It maps the URL path to one of three screens.
+The router is a function of about 20 lines that maps the URL path to one of three screens.
 
 <<< @/examples/03-spa/src/router/route.ts{route}
 
-One thing to keep in mind here: the only thing that knows about the path `/notes/abc` is **this code inside the browser**. All the server side has is `index.html` and the files under `assets/`. The SPA fallback, which comes later, closes that gap.
+The point to remember is that **only this code in the browser** knows about the path `/notes/abc`. All the server side has is `index.html` and the files under `assets/`. SPA fallback, explained later on this page, bridges that gap.
 
 ### Type checking and tests
 
@@ -46,46 +46,46 @@ vp run typecheck:vue
 vp run test:unit
 ```
 
-`check` formats and lints, and `typecheck` type-checks `.ts` files. Vue single-file components (`.vue`) are handled by Vize. Vize is a Vue toolchain written in Rust, and it has three jobs in this SPA: the Vite plugin that compiles `.vue` files at build time, a type check that reaches inside `<template>` (`typecheck:vue`), and a linter for `<template>` (`lint:vue`). `vp run check:all` runs all of them together.
+`check` is format and lint, and `typecheck` type-checks the `.ts` files. Vue single-file components (`.vue`) are handled by Vize, a Vue toolchain written in Rust. It has three roles in this SPA: a Vite plugin that compiles `.vue` at build time, a type check that looks inside `<template>` (`typecheck:vue`), and a lint for `<template>` (`lint:vue`). `vp run check:all` runs all of them together.
 
-`lint:vue` reports one warning, about the `:href` on the link to a note: a dynamic URL could hold a value that starts with `javascript:`. Here the value always starts with `/notes/`, so it is left as it is.
+`lint:vue` reports one warning about the `:href` of the link to a note. It points out that a dynamic URL could hold a value starting with `javascript:`. In this app the value always starts with `/notes/`, so the code is left as it is.
 
-The tests pass the clock and the ID generator in from outside, so that the result does not change from run to run. The storage is also a stand-in built on a `Map`. Here is what they check.
+The tests pass in the clock and the ID generator from outside, so that results do not change from run to run. Storage is also a stand-in built on a `Map`. The tests check the following.
 
 - A newly saved note comes first in the list
 - A note without a title is not saved
-- An invalid value that was in storage is not treated as a note
-- An unknown path leads to "not found", not to the list screen
+- An invalid value found in storage is not treated as a note
+- An unknown path leads to the "not found" screen, not the list screen
 
 ## The bucket stays private
 
 <!-- section: 03.bucket -->
 
-Now for the AWS side. The bucket comes first.
+From here on, the page covers the definitions on the AWS side, starting with the bucket.
 
 <<< @/examples/03-spa/infra/lib/spa-stack.ts{bucket}
 
-`BLOCK_ALL` turns on all four Block Public Access settings. With it in place, S3 refuses if someone later tries by mistake to attach a bucket policy that makes the bucket public.
+`BLOCK_ALL` turns on all four Block Public Access settings. With them on, S3 refuses if someone later tries to attach a public bucket policy by mistake.
 
-`removalPolicy` is `DESTROY`, because the contents can be rebuilt from the repository at any time. For a bucket that holds things that cannot be recreated, such as images uploaded by users, use `RETAIN` (it comes up again under "Before production" in [chapter 07](/en/chapters/07-uploads.md)).
+`removalPolicy` is `DESTROY` because the contents can be rebuilt from the repository at any time. A bucket that holds things that cannot be recreated, such as images uploaded by users, should use `RETAIN`. [Chapter 07](/en/chapters/07-uploads/wrap.md) comes back to `RETAIN` as a change for production.
 
-## What if someone opens /notes/abc directly?
+## When /notes/abc is opened directly
 
 <!-- section: 03.fallback -->
 
-A reader opens `https://.../notes/abc` directly, or reloads on that screen. The browser then asks CloudFront for `/notes/abc`. But S3 has no object named `notes/abc`. If you do nothing, the result is an error.
+When a reader opens `https://.../notes/abc` directly, or reloads on that screen, the browser asks CloudFront for `/notes/abc`. S3 has no object named `notes/abc`, so without some handling the request ends in an error.
 
-So URLs that do not correspond to a file get `index.html`, and the router inside the browser takes it from there. This is SPA fallback.
+The answer is to return `index.html` for any URL that does not correspond to a file and leave the rest to the router in the browser. This is called SPA fallback.
 
-A commonly described way to do this is CloudFront's custom error responses: replace 403 and 404 with `index.html` and 200. This book does not use it, because that setting replaces **every** error. A browser that asks for an old JavaScript file removed by a deploy also gets 200 and HTML. The browser tries to execute that HTML as JavaScript and fails, and the real cause (the file is missing) is hidden.
+The method you often see described uses CloudFront's custom error responses to replace 403 and 404 with `index.html` and a 200. This book does not use it, because that setting replaces **every** error. A browser that asks for an old JavaScript file removed by a deploy also gets a 200 and HTML. The browser tries to run that HTML as JavaScript and fails, and the real cause, a missing file, is hidden.
 
-Instead, the URL is rewritten before the request reaches the origin.
+This book rewrites the URL before the request reaches the origin.
 
 <<< @/examples/03-spa/infra/functions/spa-fallback.js
 
-This function runs on a mechanism called CloudFront Functions. It executes at the edge location, once per request. There is one rule. If the last segment of the path has no `.`, rewrite the path to `/index.html`. If it has a `.`, treat the request as a request for a file and do nothing. A file that does not exist goes through to S3 as it is and becomes a 404.
+The function runs on CloudFront Functions, at an edge location, once per request. It has one rule. If the last segment of the path has no `.`, it rewrites the path to `/index.html`. If there is a `.`, it treats the request as one for a file and does nothing. A request for a file that does not exist goes through to S3 and comes back as 404.
 
-CloudFront Functions is an execution environment that is limited on purpose. According to the official documentation, there is no network access, no file system, no environment variables, and no timers; the request body cannot be read; and execution time is capped. It is not Node.js. It is meant for small rewrites of headers and URLs like this function. It is not a replacement for Cloudflare Workers, so keep the two apart in your head.
+CloudFront Functions is an execution environment that is limited on purpose. According to the official documentation, it has no network, file system, environment variables, or timers, it can't read the request body, and execution time is capped. It is not Node.js either. It exists for small rewrites of headers and URLs like this one, and it is not a substitute for Cloudflare Workers.
 
 The test loads and runs the very file that gets deployed.
 
@@ -93,7 +93,7 @@ The test loads and runs the very file that gets deployed.
 vp run test:unit
 ```
 
-`examples/03-spa/infra/test/spa-fallback.test.ts` checks that a client-side URL becomes `index.html`, that a file URL is left unchanged, and that a missing asset does not turn into `index.html`. What runs the test, though, is Node.js. The limits of the CloudFront Functions execution environment (allowed syntax, size, execution time) are beyond what this test can check.
+`examples/03-spa/infra/test/spa-fallback.test.ts` checks that a client-side URL becomes `index.html`, that a file URL is unchanged, and that a request for a missing asset is not rewritten to `index.html`. The test runs on Node.js, though. It cannot check the limits of the CloudFront Functions environment, such as the supported syntax, the size, and the execution time.
 
 ## Define the distribution
 
@@ -101,24 +101,24 @@ vp run test:unit
 
 <<< @/examples/03-spa/infra/lib/spa-stack.ts{distribution}
 
-The star of this chapter is `origins.S3BucketOrigin.withOriginAccessControl`. Origin access control (OAC) is a mechanism in which CloudFront signs its requests to S3 and the bucket allows only requests from that distribution. From this one line, CDK creates the OAC resource and a bucket policy like this:
+The center of this definition is `origins.S3BucketOrigin.withOriginAccessControl`. With origin access control (OAC), CloudFront signs its requests to S3, and the bucket allows only requests from that distribution. From this one line, CDK creates the OAC resource and a bucket policy that says the following.
 
-- The principal that is allowed is the CloudFront service (`cloudfront.amazonaws.com`)
+- The principal allowed is the CloudFront service (`cloudfront.amazonaws.com`)
 - But only when the request comes from this distribution (the `AWS:SourceArn` condition)
 
-If someone else's distribution names your bucket as its origin, it does not meet this condition and cannot read the bucket.
+If someone else's distribution names your bucket as its origin, it does not meet this condition and can't read the bucket.
 
-`LIST` is added to `originAccessLevels` because of which error comes back. When an object does not exist, S3 returns 404 if the requester has permission to list the bucket (`s3:ListBucket`) and 403 if it does not. This keeps S3 from telling a requester without permission that no file has that name. Allowing `LIST` makes a missing file a proper 404. You might wonder whether readers can now list the bucket. They cannot: the fallback function rewrites every non-file URL to `/index.html`, so there is no URL through which a reader can retrieve the listing itself.
+`LIST` is added to `originAccessLevels` so that a missing file returns 404. When an object does not exist, S3 returns 404 if the requester has permission to list the bucket (`s3:ListBucket`) and 403 if it does not. That keeps S3 from telling a requester without permission that no file has that name. Allowing `LIST` makes missing files return 404. Granting the list permission does not expose the listing, because the fallback function rewrites every URL that is not a file to `/index.html`, so no URL lets a reader fetch the listing itself.
 
 `viewerProtocolPolicy` redirects readers who arrive over HTTP to HTTPS.
 
-`cachePolicy` and `responseHeadersPolicy` are managed policies provided by AWS. The first decides caching behavior and the second decides the security-related response headers. How long each individual file is cached is decided by the `Cache-Control` header attached at publish time (coming up shortly).
+`cachePolicy` and `responseHeadersPolicy` are set to managed policies that AWS provides. `cachePolicy` decides how the cache behaves, and `responseHeadersPolicy` decides the security-related response headers. How long each file is cached is decided by the `Cache-Control` header attached at publish time, which is explained under "Cache policy" on the [Deploy page](/en/chapters/03-spa/deploy.md).
 
 The tests check the following against the template.
 
-- The bucket is private and website hosting is off
+- The bucket is private, and website hosting is disabled
 - Only this distribution can read the bucket
-- HTTPS only, with the fallback function attached
-- Custom error responses are not used
+- It is HTTPS only, and the fallback function is attached
+- Error response replacement is not used
 
-The last check is there to keep someone from switching back to the "usual way" in the future.
+The last check keeps someone from going back to the commonly described method later.

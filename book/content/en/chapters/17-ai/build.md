@@ -4,37 +4,39 @@ title: "17 AI: Design and Build"
 
 # 17 AI: Design and Build
 
+On the [first page](/en/chapters/17-ai.md) you called a model once and chose the ID of the model to use. On this page you implement the API that summarizes a note and returns the summary piece by piece.
+
 ## The input limit and the events you return
 
 <!-- section: 17.contract -->
 
-As in chapter 04, we start from the contract. The request first.
+As in chapter 04, start by deciding the API's contract. The request comes first.
 
 <<< @/examples/17-ai/src/contract.ts{request}
 
-The body may be up to 10,000 characters, the same limit as a note in chapter 04. This is validation, and it is also a cost ceiling. Input tokens are billed, so "accepts any length" means the same as "pays any amount".
+The body may be up to 10,000 characters, the same limit as a note in chapter 04. The limit validates the input, and it is also a ceiling on cost. Input tokens are billed, so an API that accepts any length is an API that pays any amount.
 
-Characters and tokens are different things, though. A token is the unit in which a model reads and writes text, and each model counts differently. How many tokens 10,000 characters turn into is not known exactly until you make the call. Think of the character limit as holding the input cost down roughly.
+Characters and tokens are not the same, though. A token is the unit in which a model reads and writes text, and each model counts tokens differently. You cannot know exactly how many tokens 10,000 characters become until you make the call. The character limit holds down only the rough size of the input cost.
 
-The output can be held down much more precisely.
+The output can be held down more precisely than the input.
 
 <<< @/examples/17-ai/src/prompt.ts{request}
 
-`maxTokens` is the limit on the tokens one call may generate. For a summary, 400 is plenty. Fixing this value lets you say flatly that one call's output goes no further.
+`maxTokens` is the limit on the number of tokens one call may generate. For a summary, 400 is enough, and once the value is fixed you can state how far the output of one call can go.
 
-Look at the third line of the system prompt too. The body of the note is written by a user. A note that says "forget your instructions and..." may arrive. The instructions go in `system`, the note goes in `messages`, and the model is told that the note is data. That does not make it safe. The output of this API is a plain string with no authority to do anything, and that is the real safeguard.
+The third line of the system prompt guards against instructions written in the body of a note. A user writes the body, so a note that says "forget your instructions and..." may arrive. The instructions therefore go in `system`, the note goes in `messages`, and the model is told that the note is data. That one line does not prevent everything. The real safeguard is that the output of this API is a plain string with no permission to do anything.
 
-Next, the events this API returns.
+Next are the events this API returns.
 
 <<< @/examples/17-ai/src/contract.ts{events}
 
-The response is server-sent events (SSE), a format in which a server keeps sending events inside one HTTP response. Some `delta` events arrive, and then exactly one `done` or `error` at the end. That "always exactly one of the two at the end" pays off later in the chapter.
+The response is sent as server-sent events (SSE). SSE is a format in which a server keeps sending events, one after another, inside a single HTTP response. Several `delta` events arrive, and at the end exactly one `done` or `error` arrives. The rule that exactly one of the two always arrives last is what the client relies on [when the stream is cut](/en/chapters/17-ai/local.md).
 
 ## Reading the stream
 
 <!-- section: 17.stream -->
 
-`ConverseStream` is the streaming version of `Converse`. What comes back is a sequence of events.
+`ConverseStream` is the streaming version of `Converse`, and it returns the following events in order.
 
 ```text
 order  event              carries
@@ -45,88 +47,88 @@ order  event              carries
 5      metadata           usage: inputTokens, outputTokens
 ```
 
-It is not SSE. It arrives in AWS's own format, and the SDK turns it into an async iterable.
+This sequence of events is not SSE. It arrives in AWS's own format, and the SDK hands it to you as an async iterable.
 
-First, the part that calls the model is closed off behind one interface.
+First, put the part that calls the model behind one interface.
 
 <<< @/examples/17-ai/src/summarize.ts{gateway}
 
-The real one is only this.
+The real implementation, which calls Bedrock, is only the following code.
 
 <<< @/examples/17-ai/src/bedrock.ts{bedrock}
 
-It's the same idea as `NoteRepository` in chapter 04. Tests swap this interface for something else.
+This is the same idea as `NoteRepository` in chapter 04, and the tests replace the implementation of this interface.
 
-The event shapes become a schema as well.
+The shape of the events becomes a schema too.
 
 <<< @/examples/17-ai/src/converse-stream.ts{schema}
 
-Event kinds it does not know pass through and are ignored, so that nothing breaks when Bedrock adds a new one. An event it does know, with the wrong shape, stops everything. A `delta` whose `text` is not a string should not flow on to the caller.
+Events of a kind the schema does not know pass through and are ignored, so that the code does not break when Bedrock adds a new event. An event the schema does know, arriving in the wrong shape, stops the relay, so that a `delta` whose `text` is not a string is never passed on to the caller.
 
-And now the relay.
+Next is the relay.
 
 <<< @/examples/17-ai/src/summarize.ts{relay}
 
-The lines to look at are the last few. If the stream ends without a `messageStop`, the relay answers `error`, not `done`. However plausible the text that arrived, if the model never said "that's all", you cannot call it finished.
+The last few lines matter most. If the stream ends without a `messageStop`, the relay returns `error`, not `done`. However plausible the text that arrived, it cannot be called finished when the model never signalled the end.
 
-It checks `stopReason` too. A summary that stopped for anything other than `end_turn`, say `max_tokens`, is cut in the middle of a sentence. It still gets a `done`, but `complete` is `false`.
+The relay also checks `stopReason`. A summary that stopped for any reason other than `end_turn`, such as `max_tokens`, is cut in the middle of a sentence. The relay still returns `done` in that case, with `complete` set to `false`.
 
-`MAX_SUMMARY_CHARS` is a backstop. `maxTokens` is passed, so normally it is never reached. Even so, you don't want to write code that keeps forwarding a string from outside with no limit at all.
+`MAX_SUMMARY_CHARS` is a backstop. `maxTokens` is passed, so the output does not normally reach this limit. Even so, the code does not keep passing on a string from outside with no limit at all.
 
-## Stop, wait, try again
+## Stopping, waiting, retrying
 
 <!-- section: 17.failures -->
 
-A model call fails in many ways. It's busy, you went over a limit, you lack permission, it was cut midway. Fold them all into one "error" and you can no longer tell what is worth retrying from what is not.
+A model call can fail in several ways: the service is busy, a limit was exceeded, a permission is missing, the stream was cut. If the code treats them all as the same error, it cannot tell a failure worth retrying from one where a retry changes nothing.
 
 <<< @/examples/17-ai/src/failure.ts{classify}
 
-There is one criterion: if you sent the same request again, could it pass?
+There is a single test for sorting them, which is whether the same request could pass if you sent it again.
 
-`ThrottlingException` comes back when you exceed your account's quota (a limit on token usage, set per model). It may pass after a short wait. `ServiceUnavailableException` is a capacity problem on Bedrock's side, also worth waiting for. `AccessDeniedException` and `ValidationException`, on the other hand, will be the same however often you send them. The role, the model ID, or the request is wrong.
+`ThrottlingException` is returned when you exceed your account's quota. A quota is a limit on token usage set for each model, and the request may pass after a short wait. `ServiceUnavailableException` is a capacity problem on Bedrock's side, so it is also worth waiting for. `AccessDeniedException` and `ValidationException`, on the other hand, mean that the role, the model ID, or the request is wrong, so the result is the same however often you send the request.
 
-About an error whose name it does not know, the code says nothing (`undefined`). It will not decide on its own that the unknown is retryable.
+For an error whose name it does not know, the code returns no classification (`undefined`), so that it never decides on its own that an unknown error can be retried.
 
-Here is how it waits.
+The wait is decided as follows.
 
 <<< @/examples/17-ai/src/failure.ts{backoff}
 
-The ceiling of the wait doubles each time, and the actual wait is picked at random below it. The randomness keeps callers who failed together from retrying together and failing together again. The random number comes in as an argument, so in tests the waits are fixed values.
+The upper bound of the wait doubles with each attempt, and the actual wait is picked at random from the range up to that bound. The randomness keeps callers that failed at the same time from retrying at the same time and failing together again. The random number comes in as an argument, so in tests the waits are fixed values.
 
-And here is the code that uses it.
+The following code uses this wait.
 
 <<< @/examples/17-ai/src/summarize.ts{start}
 
-Three points.
+This code settles three things.
 
-**It retries only while nothing has been sent yet.** A failure before the stream opens is invisible to the caller, so it can be retried silently. Once even one `delta` has gone out, a retry would send the start of the same text a second time. What was sent cannot be taken back, so from there on it answers `error` and leaves the decision to retry with the caller.
+The first is how far retries go. The code retries only while nothing has been sent to the caller. A failure before the stream opens is invisible to the caller, so the code can retry without saying anything. Once even one `delta` has been sent, though, a retry would send the start of the same text a second time. What has been sent cannot be taken back, so from that point the code returns `error` and leaves the decision to retry with the caller.
 
-**There is one deadline for all attempts together.** Give each attempt its own 30 seconds and three attempts keep the caller waiting 90. One `AbortSignal.timeout` is created at the start and shared by every attempt.
+The second is the deadline. There is one deadline for all attempts together, because a 30-second deadline for each attempt would keep the caller waiting 90 seconds over three attempts. One `AbortSignal.timeout` is created at the start and shared by every attempt.
 
-**Whatever the reason for stopping, the request to the model is aborted.** The caller left, the deadline passed, the relay ended: three signals are combined with `AbortSignal.any` and handed to the SDK. A model bills for text nobody will read just the same.
+The third is aborting. Whatever the reason for stopping, the code aborts the request to the model. Three signals, for the caller going away, the deadline passing, and the relay ending, are combined with `AbortSignal.any` and passed to the SDK. A model that keeps writing text nobody will read is still billed.
 
-Left alone, the SDK also retries, up to 3 attempts. This chapter turns that off (`maxAttempts: 1`) and keeps retries in its own code, where they share the deadline and can be tested.
+Left at its defaults, the SDK retries too, up to 3 attempts. This chapter turns the SDK's retries off (`maxAttempts: 1`) and keeps retries in its own code, where they are managed together with the deadline and can be tested.
 
 ## Making it an API
 
 <!-- section: 17.app -->
 
-Now the pieces go onto Hono.
+The parts built so far now go into a Hono app.
 
 <<< @/examples/17-ai/src/app.ts{route}
 
-A failure before the stream starts gets an ordinary HTTP error: 429 for throttling, 504 for the deadline. Nothing has been sent yet, so the status code can carry it.
+A failure before the stream starts is returned as an ordinary HTTP error: 429 for throttling, 504 for the deadline. Nothing has been sent yet, so the status code can report the failure.
 
-After it starts, the status code has already gone out as 200. So a failure is reported by an `error` event inside the stream. In other words, this is an API where "it answered 200" does not mean "it worked". A caller cannot decide the outcome before it has seen the last event.
+After the stream starts, the status code has already been sent as 200, so a failure is reported by an `error` event inside the stream. With this API, then, a 200 does not mean success, and the caller cannot judge the result before it has seen the last event.
 
-At the end it writes one log line called `summary`: the outcome, the number of attempts, and the token counts the model reported. That line is the record of what one summary cost.
+At the end, the handler writes one log line named `summary`. It holds the outcome, the number of attempts, and the token counts the model reported, which makes it the record of what one summary cost.
 
-Settings are checked at startup, as in chapter 04.
+As in chapter 04, the settings are checked against a schema at startup.
 
 <<< @/examples/17-ai/src/env.ts{env}
 
-`AI_BACKEND` has no default on purpose. Whether you are running with the billed setting should never be a "probably".
+`AI_BACKEND` has no default on purpose, so that whether the app is running with the billed setting is never left to a guess.
 
-Everything is assembled in this one place.
+The parts are assembled in the following one place.
 
 <<< @/examples/17-ai/src/compose.ts{compose}

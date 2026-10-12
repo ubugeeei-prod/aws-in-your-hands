@@ -4,6 +4,8 @@ title: "16 Workflow: Run It Locally"
 
 # 16 Workflow: Run It Locally
 
+This page runs the workflow definition from [the previous page](/en/chapters/16-long-jobs/build.md) on your machine before it goes to AWS.
+
 ## Running it locally
 
 <!-- section: 16.local -->
@@ -13,9 +15,9 @@ vp run export:local
 vp run export:local --notes 450 --lose 2 --break 4
 ```
 
-The first line exports 250 notes held in memory, using the same definition that gets deployed. The second breaks two things on purpose. `--lose 2` drops the answer of the second call of `ExportPages`: the work is done, and to the workflow it looks like a timeout. `--break 4` refuses the write of the fourth part four times in a row, so the retries run out and the execution fails. Then the run is resumed from the failed state, and it ends by checking that the manifest's line count and the number of distinct notes match.
+The first line exports 250 notes held in memory, using the same definition that gets deployed. The second breaks two things on purpose. `--lose 2` drops the answer of the second call of `ExportPages`, so the work is done but to the workflow it looks like a timeout. `--break 4` refuses the write of the fourth part four times in a row, so the retries run out and the execution fails. The run is then resumed from the failed state, and it ends by checking that the manifest's line count matches the number of distinct notes.
 
-No Docker and no AWS credentials are needed.
+You need neither Docker nor AWS credentials.
 
 ### Walking the definition as it is
 
@@ -23,13 +25,13 @@ No Docker and no AWS credentials are needed.
 
 <<< @/examples/16-long-jobs/src/local-workflow.ts{task}
 
-What stands in for Step Functions is a function of about a hundred lines. Of ASL it knows only what this chapter uses: `Task` with `Retry` and `Catch`, a `Choice` on one boolean, `Succeed`, `Fail`. Nothing more.
+A function of about a hundred lines stands in for Step Functions. It handles only the parts of ASL that this chapter uses, which are `Task` with `Retry` and `Catch`, a `Choice` on one boolean, `Succeed`, and `Fail`.
 
-It exists so that the wiring of the definition can be tested. Getting the order of the retriers wrong so that `ExportCorrupt` is retried three times, or pointing a `Catch` at the wrong state: no amount of careful testing of the step functions finds mistakes like those.
+The runner exists so that the wiring of the definition can be tested. A wrong order of retriers that lets `ExportCorrupt` be retried three times, or a `Catch` that points at the wrong state, is the kind of mistake that no amount of careful testing of the step functions will find.
 
 <<< @/examples/16-long-jobs/src/local.ts{local}
 
-What gets called is what the Lambda handlers do, minus Lambda: pass the input through a schema and call the step function.
+What the runner calls is what the Lambda handlers do, minus Lambda. It passes the input through a schema and calls the step function.
 
 On this runner, the tests check that:
 
@@ -39,7 +41,7 @@ On this runner, the tests check that:
 - with a part missing, `Finish` is tried once, `Discard` runs, and the execution ends as `ExportDiscarded`
 - `Discard` too is retried when it fails
 
-This is not an emulation of Step Functions. Here is what it does not reproduce.
+The runner is not an emulation of Step Functions. Here is what it does not reproduce.
 
 - Waiting. Retry intervals, `TimeoutSeconds`, and the timeout of the whole execution are all ignored. A timeout is represented by a test throwing "an error named timeout"
 - Persisted state. The runner is a loop in one process, and everything is gone if it dies
@@ -54,4 +56,4 @@ This is not an emulation of Step Functions. Here is what it does not reproduce.
 vp run test:unit
 ```
 
-The tests of the durable-function variant run here too. They use the runner that comes with the SDK.
+The tests of the durable-function version run in this task too. They use the runner that comes with the SDK.

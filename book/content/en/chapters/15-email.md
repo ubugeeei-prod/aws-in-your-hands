@@ -5,15 +5,15 @@ sourceRevision: 2
 
 # 15 Email: SES
 
-In chapter 04 you built an API. In this chapter you'll put another one next to it: an API that sends a single "someone shared a note with you" notification email. The sending is done by Amazon SES.
+In this chapter you put a second API next to the one from chapter 04. It sends one notification email that says someone shared a note with you, and it sends it through Amazon SES.
 
-The awkward thing about email is that sending it isn't the end of the story. The address didn't exist. The recipient reported it as spam. You can't even tell whether it went out. This chapter takes care of all of that. And as long as you're only running it locally, you need neither an AWS account nor a real email address.
+Calling the send API does not finish the job with email. The address may not exist, the recipient may report the message as spam, and sometimes the sender cannot tell whether the message went out at all. This chapter builds the part that receives those outcomes and records them. To run it locally you need neither an AWS account nor a real email address.
 
-Three things before we start.
+Three things to know before you start.
 
-- The prerequisite is [chapter 04](/en/chapters/04-http-api.md). Records are kept in DynamoDB, but everything you need to know is explained here (the details are in [chapter 05](/en/chapters/05-dynamodb.md))
-- The outline placed this chapter behind the queue of [chapter 08](/en/chapters/08-async.md). As it turned out, this is a recipe that works on its own. Where a queue would connect is pointed out along the way
-- Run it in AWS and real mail goes out. Verifying the sender, setting up DNS, and requesting that the sending limits be lifted are things a person does by hand. This chapter gives you the steps and the commands. It doesn't do them for you
+- The prerequisite is [chapter 04](/en/chapters/04-http-api.md). Records are kept in DynamoDB, and this chapter explains what you need to know about it (the details are in [chapter 05](/en/chapters/05-dynamodb.md))
+- The outline placed this chapter behind the queue of [chapter 08](/en/chapters/08-async.md), but it ended up as a recipe that works on its own. The text points out where a queue would connect
+- Running it in AWS sends real mail. Verifying the sender, setting up DNS, and requesting that the sending limits be lifted are jobs a person does by hand. This chapter gives you the steps and the commands, and it does not do them for you
 
 The code is in `examples/15-email/`.
 
@@ -42,113 +42,113 @@ edge events -> table: suppress, advance state
 mark ses
 ```
 
-The top half is the sending path. The bottom half is how the outcome comes back.
+The figure shows two paths. The sending path runs from the caller through the API and the function to SES. The path the outcome takes runs from SES through SNS back to the table.
 
-The caller gives each notification a name of its own (`notificationId`) and asks the API to send it. The function first records in DynamoDB that "this notification is mine to send", and only then hands the mail to SES. SES takes it from there and tries to deliver it to the recipient's mail server.
+The caller gives each notification a name of its own (`notificationId`) and asks the API to send it. The function first records in DynamoDB that this notification is its to send, and then hands the mail to SES. SES takes the mail and tries to deliver it to the recipient's mail server.
 
-Whether it arrived, came back (a bounce), or was reported as spam (a complaint) is something SES tells you later. That news travels through an SNS topic to a second function, which writes two things to the table: the list of addresses you'll no longer mail (the suppression list), and the state of each notification.
+SES tells you later whether the mail arrived, came back (a bounce), or was reported as spam (a complaint). That news travels through an SNS topic to a second function, which writes the list of addresses you will no longer mail (the suppression list) and the state of each notification to the table.
 
-The table is the owner of the state in this design. As you saw in chapter 04, nothing can live in a function's memory.
+The table is the only place in this design that holds state. As you saw in chapter 04, nothing can live in a function's memory.
 
 ### Don't leave the door open
 
-The API in chapter 04 could be called by anyone who knew the URL. Do that with an API that sends mail, and it becomes a relay: strangers get to send mail to whatever address they like.
+Anyone who knew the URL could call the API in chapter 04. An API that sends mail and is open in the same way becomes a relay that strangers use to mail any address they like.
 
-So every route in this chapter has IAM authorization. To call one, you have to sign the request with AWS credentials (SigV4). Nothing in a browser is meant to call it, and there's no CORS configuration. The thing that sends a notification is the code that shared the note, which is another backend.
+Every route in this chapter therefore requires IAM authorization, which means the caller has to sign the request with AWS credentials (SigV4). The code that sends a notification is the code that shared the note, which is another backend, so nothing in a browser is meant to call this API and CORS is not configured.
 
-There is one brake on authorized callers too: throttling on the stage, 10 requests a second across the whole API with a burst of up to 20. If a script with the permission gets stuck in a loop, API Gateway refuses whatever goes past that with 429, and neither the function nor SES is called.
+Authorized callers have one brake on them as well. Throttling on the stage holds the whole API to 10 requests a second with a burst of up to 20. If a script that has the permission gets stuck in a loop, API Gateway refuses everything past that limit with 429, and neither the function nor SES is called.
 
-One more thing you should know. `GET /share-notifications/{id}` returns the recipient's address along with the notification's state. The ID is a string the caller chose. So anyone who may call this API, and who knows or guesses an ID, can read whom that notification went to. The chapter does this on the assumption that the only caller is the backend that sent the notification. With several callers, stop returning the recipient.
+`GET /share-notifications/{id}` returns the recipient's address along with the notification's state. The ID is a string the caller chose, so anyone who is allowed to call this API and who knows or can guess an ID can read whom that notification went to. The chapter does this on the assumption that the only caller is the backend that sent the notification. If you have more than one caller, change the route so that it does not return the recipient.
 
-The JWT authorizer from [chapter 06](/en/chapters/06-auth.md) is another option. If you go that way, make sure the server decides the recipient. Otherwise you've built "anyone who is signed in can mail anyone".
+The JWT authorizer from [chapter 06](/en/chapters/06-auth.md) is another option. If you use it, have the server decide the recipient. As long as the caller names the recipient, anyone who is signed in can mail anyone.
 
 ### Other shapes this could take
 
-- **No API: send from a queue.** The sharing code puts a message on a queue, and a function takes it off and sends. The caller no longer waits on SES being slow or failing. How to build the queue and the worker is in [chapter 08](/en/chapters/08-async.md). `sendShareNotification` in this chapter is written so that it can sit behind a queue as it is
-- **A queue between SNS and the function.** It lets you keep the events that failed to process. Also a chapter 08 topic
-- **Not SES.** If you'd rather not manage your sender reputation or request a limit increase yourself, an email SaaS is easier in some situations. SES is cheap and is managed with the same permissions as the rest of AWS. In exchange, it comes with the work in the second half of this chapter
+- **Send from a queue, with no API.** The sharing code puts a message on a queue, and a function takes it off and sends. The caller no longer waits when SES is slow or fails. [Chapter 08](/en/chapters/08-async.md) shows how to build the queue and the worker. `sendShareNotification` in this chapter is written so that it can sit behind a queue as it is
+- **Put a queue between SNS and the function.** Passing events through a queue, not straight from SNS to Lambda, lets you keep the events that failed to process. Chapter 08 covers this too
+- You can also choose not to use SES. If you would rather not manage your sender reputation or request a limit increase yourself, an email SaaS is easier in some situations. SES is cheap and is managed with the same permissions as the rest of AWS, but it comes with the verification and request work on the [deploy page](/en/chapters/15-email/deploy.md)
 
 ## Build the email first
 
 <!-- section: 15.message -->
 
-Before any AWS, let's make the email itself. Here's the shape of a request.
+Before any AWS, you build the email itself. A request to the API has this shape.
 
 <<< @/examples/15-email/src/contract.ts{request}
 
-Exactly one recipient. No link URL: the request carries the note's ID, and the server builds the URL from its own configuration. If the caller could pass a URL, this API would be a tool for producing "mail from your domain with a link to anywhere".
+A request names exactly one recipient. It carries the note's ID and no link URL, and the server builds the URL from its own configuration. If the caller could pass a URL, this API would be a tool for sending mail from your domain with a link to anywhere.
 
 ### Keep line breaks out of the headers
 
-An email is text: headers such as `Subject: ...` and `To: ...`, one per line, followed by the body. Which means that if a string destined for the subject contains a line break, whatever comes after it may be read as the next header.
+An email is text. Headers such as `Subject: ...` and `To: ...` come first, one per line, and the body follows. If a string that goes into the subject contains a line break, whatever comes after the break may be read as the next header.
 
-What if a note's title were `Trip plan\r\nBcc: attacker@example.com`? Titles are written by users. This is header injection.
+Users write note titles. A title of `Trip plan\r\nBcc: attacker@example.com`, placed in the subject as it is, adds a `Bcc` header. This attack is called header injection.
 
 <<< @/examples/15-email/src/contract.ts{header-safe}
 
-A title or a name that contains a line break or a control character is refused. Not silently cleaned: the fact that such input arrived is something the caller should hear about. The recipient passes only if it reads as one address. A comma-separated list doesn't, and neither does the `Name <address>` form.
+A title or a name that contains a line break or a control character is refused. The schema does not strip the characters silently, because the caller should hear that such input arrived. The recipient passes only if it reads as one address. A comma-separated list does not pass, and neither does the `Name <address>` form.
 
-Assembling the email is a pure function.
+A pure function assembles the email.
 
 <<< @/examples/15-email/src/message.ts{build}
 
-The values the schema checked at the door are checked here once more. If someone later writes code that calls this function without going through the schema, a line break still doesn't reach a header.
+This function checks again the values that the schema checked on the way in. If someone later writes code that calls it without going through the schema, a line break still does not reach a header.
 
-To be honest, what SES does with such a line break hasn't been checked. With the way this chapter sends (the `Simple` format, coming up), SES assembles the headers and the code writes none of them. Refusing on your own side first still means you don't depend on how SES behaves.
+What SES does with such a line break has not been checked. With the way this chapter sends (the `Simple` format, described below), SES assembles the headers and this code writes none of them. Refusing the input on your own side first still means you do not depend on how SES behaves.
 
-The HTML body has a hole of its own. A title containing `<script>` or `<a href=...>` would be interpreted as HTML.
+The HTML body has a hole of its own. A title that contains `<script>` or `<a href=...>` would be interpreted as HTML.
 
 <<< @/examples/15-email/src/message.ts{escape}
 
-Every user-written string goes through this before it's placed in HTML. The tests throw in a title with a line break, a list of recipients, and a name containing `<script>`, one by one.
+Every string a user wrote goes through this function before it is placed in HTML. The tests pass in a title with a line break, a list of recipients, and a name containing `<script>`, one at a time.
 
 ## Make the sending part swappable
 
 <!-- section: 15.adapters -->
 
-Chapter 04 put note storage behind an interface. Sending mail gets the same treatment.
+Chapter 04 put note storage behind an interface, and this chapter does the same for sending mail.
 
 <<< @/examples/15-email/src/mailer.ts{mailer}
 
-The important part is that there are three outcomes.
+A send has three possible outcomes.
 
 - `accepted`: the provider took the message
 - `rejected`: the provider said no. Nothing was sent
 - an exception: nobody knows what happened
 
-The third one is never folded into the other two. That distinction pays off later.
+The design depends on never treating an exception as a `rejected`. The next section uses that difference to decide whether a resend is allowed.
 
-Locally, you use an implementation that sends nothing.
+Locally you use an implementation that sends nothing.
 
 <<< @/examples/15-email/src/mailer.ts{outbox}
 
-Mail that would have been sent just piles up in an array. The dev server and the tests use this.
+Mail that would have been sent collects in an array. The dev server and the tests use this implementation.
 
-Here's the one that calls SES.
+The implementation that calls SES looks like this.
 
 <<< @/examples/15-email/src/ses-mailer.ts{ses}
 
-It uses `SendEmail` from the SES API v2. With the `Simple` format you pass a subject and a body, and SES does the work of turning them into an email.
+It calls `SendEmail` from the SES API v2. With the `Simple` format you pass a subject and a body, and SES turns them into an email.
 
-Look at how errors are read. A 4xx answer means SES read the request and refused it, so that's `rejected`. Anything else (a timeout, a dropped connection, a 5xx) leaves you unable to tell whether SES took the message. So it's thrown on as an exception.
+Errors are read in two ways. A 4xx answer means SES read the request and refused it, so the result is `rejected`. Anything else (a timeout, a dropped connection, a 5xx) leaves you unable to tell whether SES took the message, so the error is thrown on as an exception.
 
-Which implementation is used depends on an environment variable.
+An environment variable decides which implementation is used.
 
 <<< @/examples/15-email/src/compose.ts{adapters}
 
-Notice `maxAttempts: 1`. Left alone, the AWS SDK retries automatically on timeouts and 5xx errors (three attempts in total by default). Usually that's a help. For sending mail it's a problem: if the first attempt did get through, the SDK's retry sends a second email, and your records know nothing about it. Whether to retry is decided by the mechanism in the next section.
+`maxAttempts: 1` is there for a reason. Unless you say otherwise, the AWS SDK retries on timeouts and 5xx errors (three attempts in total by default). That usually helps, but when sending mail, if the first attempt did reach SES, the SDK's retry sends a second email and your records show nothing about it. Whether to retry is decided by the mechanism in the next section.
 
-## Record first, or send first?
+## Record first, or send first
 
 <!-- section: 15.order -->
 
-This is the heart of the chapter.
+This section is the center of the chapter.
 
-SES's `SendEmail` has no way to say "if this is the same request, ignore the second one" (an idempotency token). Send the same content twice, and two emails arrive.
+SES's `SendEmail` has no mechanism for ignoring the second copy of the same request (an idempotency token). If you send the same content twice, two emails arrive.
 
-And the send API returning success is a different event from the email arriving. Success only means "SES took it". The reverse holds too: no response doesn't mean nothing was sent. The SES documentation itself says that, on rare occasions, a send request returns an error even though the email was accepted.
+The send API returning success is also a different event from the email arriving. Success means only that SES took the message. In the other direction, a missing response does not mean nothing was sent. The SES documentation itself says that, on rare occasions, a send request returns an error even though the email was accepted.
 
-A caller that lost the response will normally retry. What happens then depends on which you do first: record, or send.
+A caller that lost the response normally retries. What happens then depends on whether you record first or send first, and the next three figures compare the two.
 
 ```figure
 caption: Send first and record after, and a retry after a lost response delivers two mails
@@ -203,27 +203,27 @@ note fn: nothing is sent
 note ses: no mail arrives
 ```
 
-Send first, and a failure can deliver two emails. Record first, and a failure can deliver none. There's no way to rule out both. Recording and sending are separate calls to separate services, and nobody can prevent the process from stopping in between.
+If you send first, a failure can deliver two emails. If you record first, a failure can deliver none. You cannot rule out both, because recording and sending are separate calls to separate services and nobody can prevent the process from stopping between them.
 
-This chapter **records first**. Here's the invariant it protects.
+This chapter **records first**. The invariant it protects is this one.
 
 > No `notificationId` ever causes more than one email to be sent.
 
-If a share notification doesn't arrive, the person who shared can just ask "did you see it?". The same notification arriving twice, or three times, is the bigger nuisance for the recipient. Repeated mail invites complaints, and complaints damage your reputation as a sender. For mail like a password reset, where the user is stuck until it arrives, the opposite choice can be right. Then you need something else, such as wording that makes a duplicate recognizable.
+If a share notification does not arrive, the person who shared the note can simply tell the recipient. The same notification arriving two or three times is the bigger nuisance for the person receiving it. Repeated mail invites complaints, and complaints damage your reputation as a sender. For mail such as a password reset, where the user is stuck until it arrives, sending first can be the right choice. In that case you need something else, such as wording that lets the recipient recognize a duplicate.
 
 <<< @/examples/15-email/src/notify.ts{notify}
 
-`claim`, in step 1, is the idempotency key. The record saying "this notification is mine to send" is taken before sending. If it can't be taken, someone else already holds it, and nothing is sent.
+Idempotency rests on `claim`, in step 1. The function takes the record that says this notification is its to send before it sends anything. If it cannot take the record, another request already holds it, and nothing is sent.
 
 ### Claim in a single operation
 
-Split "read whether a record exists, and write one if not" into two operations, and two requests arriving together will both read "no" and both write.
+If you read whether a record exists and then write one when it does not, as two operations, two requests that arrive together both read "no" and both write.
 
-DynamoDB lets you attach a condition to a write. The check and the write happen as one operation, so even when requests arrive together, only one gets through.
+DynamoDB lets you attach a condition to a write. It checks the condition and writes as one operation, so only one of the requests that arrive together gets through.
 
 <<< @/examples/15-email/src/dynamodb-store.ts{claim}
 
-The condition is "there is no record yet", or "the last attempt was refused, and this is the same email". The second half is explained in a moment.
+The condition is that there is no record yet, or that the last attempt was refused and this is the same email. "The states of a notification", below, explains why the second part is needed.
 
 ### The states of a notification
 
@@ -258,56 +258,56 @@ edge sent -> bounced
 edge delivered -> bounced
 ```
 
-This is where the three outcomes of `mailer` part ways.
+Each of the three outcomes of `mailer` leads to a different state.
 
-When it's taken (`accepted`), the record becomes `sent`, with the message ID SES returned. If that write fails, the caller still gets a success. The email is already out, and reporting a failure here would tell the caller it wasn't sent.
+When SES took the message (`accepted`), the record becomes `sent` and stores the message ID that SES returned. If that write fails, the caller still gets a success. The email is already out, and reporting a failure at this point would tell the caller that it was not sent.
 
-When it's refused (`rejected`), the record becomes `rejected`. Nothing went out, so asking again with the same request claims it again and sends. This is what hitting the sending rate limit looks like.
+When SES refused (`rejected`), the record becomes `rejected`. Nothing went out, so making the same request again claims the notification again and sends it. The second part of the claim condition exists to let that retry through. Hitting the sending rate limit is a case of this.
 
-When the outcome is unknown (an exception), nothing is done. The record stays `claimed`, and that is what blocks a resend. A function that dies partway, or is cut off by the Lambda timeout, ends up in the same place.
+When the outcome is unknown (an exception), the function does nothing. The record stays `claimed`, and that record is what blocks a resend. A function that dies partway, or that the Lambda timeout cuts off, leaves the same state.
 
-That last one is the price of recording first. A record stuck at `claimed` is a notification that "may have been sent, or may not". The code in this chapter doesn't resend it automatically. If a delivery event shows up later, the record moves to `delivered`, and you know it went out. If none does, a person looks and decides.
+A record stuck at `claimed` is the price of recording first. It stands for a notification that may or may not have been sent. The code in this chapter does not resend such a notification automatically. If a Delivery event arrives later, the record moves to `delivered` and you know the mail went out. If no event arrives, a person looks at the record and decides.
 
-`rejected` has a small hole left in it, too. When the "returned an error but was accepted" case happens, the retry produces a second email. If the delivery event gets there first, the record moves to `delivered` and the retry is stopped. A retry that comes before the event can't be stopped. Closing this completely means treating every error as "unknown" and never retrying automatically.
+`rejected` has a small hole left in it as well. When SES returns an error but did accept the mail, the retry produces a second email. If the Delivery event arrives first, the record moves to `delivered` and the retry is stopped. A retry that comes before the event cannot be stopped. Closing this hole means treating every error as "unknown" and never retrying automatically.
 
 ### Same name, different email
 
-A request with the same `notificationId` but a different recipient or title isn't a retry. It's a bug. The record carries a hash of the email's content, and a mismatch gets a 409. Quietly answering "already sent" would claim that an email went out which never did.
+A request with the same `notificationId` but a different recipient or title is a bug in the caller, not a retry. The record carries a hash of the email's content, and a request whose hash differs gets a 409. Answering "already sent" would claim that an email went out when it never did.
 
 ### How long records are kept
 
-Keep claim records forever and the table only grows. Each record has an expiry written into it (30 days later by default), and DynamoDB's TTL feature deletes the ones that are past it. If the same `notificationId` shows up after that, it's sent as a new notification. In other words, "the same notification" means "within 30 days".
+If claim records were never deleted, the table would only grow. Each record therefore carries an expiry time (30 days later by default), and DynamoDB's TTL deletes records that are past it. If the same `notificationId` arrives after the record is gone, it is sent as a new notification. Two requests count as the same notification for 30 days.
 
-An expired record isn't deleted right away. According to the official documentation, deletion typically happens within a few days, and until then the record can still be read. For this chapter's purpose, a record staying longer does no harm.
+An expired record is not deleted right away. According to the official documentation, deletion typically happens within a few days, and until then the record can still be read. For this chapter's purpose, a record that stays longer does no harm.
 
 ## Break it to check it
 
 <!-- section: 15.faults -->
 
-Once the invariant is written down, go and try to break it.
+Once the invariant is written down, it gets tests that try to break it.
 
 ```bash
 vp run test:unit
 ```
 
-List every place the flow can stop: checking the recipient, claiming, sending, recording after the send. For each there are two ways to fail: "it failed before it ran" and "it ran, and only the response was lost".
+Start by listing every place the flow can stop. There are four of them, which are checking the recipient, claiming, sending, and recording after the send. Each can fail in two ways, either before the call ran, or after it ran with only the response lost.
 
 <<< @/examples/15-email/test/setup.ts{faults}
 
-For each of those eight, the first request is made to fail, and the same request is made twice more. Then the sent emails are counted.
+For each of those eight cases, the test makes the first request fail, makes the same request twice more, and then counts the emails that were sent.
 
 <<< @/examples/15-email/test/notify.test.ts{fault-table}
 
-Every row is 1 or less. No row is 2.
+Every row is 1 or less, and no row is 2.
 
-Two rows are 0: the claim was written but its response was lost, and the send call failed before reaching SES. In both, only the record is left, and no email went out. The "price" from the diagram, showing up as a number.
+Two rows are 0. In one, the claim was written but its response was lost. In the other, the send call failed before it reached SES. In both, only the record is left and no email went out. This is the price of recording first that the third sequence figure drew, now showing up as a number.
 
-For comparison, the opposite order is written out too.
+For comparison, there is a test of the opposite order too.
 
 <<< @/examples/15-email/test/notify.test.ts{send-first}
 
-Send first, and losing one response is enough to make it two. That test expects the 2.
+When you send first, losing one response is enough to produce two emails. That test expects the 2.
 
-Other tests check that five simultaneous copies of a request send once, that a refused send can be retried, and that a notification which was supposedly refused isn't sent again once a delivery event has arrived for it.
+Other tests check that five simultaneous copies of a request send once, that a refused send can be retried, and that a notification which was supposedly refused is not sent again once a Delivery event has arrived for it.
 
-One caveat. What these tests exercise is the in-memory implementation. Whether DynamoDB's conditional write really lets only one of several simultaneous requests through hasn't been checked against the real thing. What has been checked is that the request sent to DynamoDB carries the right condition, and no further.
+These tests run against the in-memory implementation, however. Whether DynamoDB's conditional write really lets only one of several simultaneous requests through has not been checked against the real service. What has been checked is that the request sent to DynamoDB carries the right condition, and no more than that.

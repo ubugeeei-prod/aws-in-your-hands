@@ -8,13 +8,13 @@ title: "22 Backup: Run It Locally"
 
 <!-- section: 22.local -->
 
-You can watch the whole flow without an AWS account.
+You can watch the flow from accident to repair locally, without an AWS account.
 
 ```bash
 vp run recovery:demo
 ```
 
-It goes from accident to repair on an in-memory table and bucket. The output looks like this.
+The task goes from accident to repair on an in-memory table and bucket. This is its output.
 
 ```text
 09:04:00  two notes, one inspected image each. This is the point to return to.
@@ -39,16 +39,16 @@ raised the version of 1 rolled-back note past the number the live table had reac
 not restored, and not found by any check: "diary, written after the point". It exists only in the old table.
 ```
 
-With only the table restored, four findings. Restore the bucket to the same time, and there are none. The repair had nothing to do.
+With only the table restored, there are four findings. After the bucket is restored to the same time there are none, and the repair has nothing left to do.
 
-That is the order to prefer. **First bring both as close to the same time as you can. Use the repair only for what is still left.** Repair first, and it rewrites the inspection record to match the overwritten bytes; then you restore the bucket, and they disagree all over again.
+This is the order to follow. **First bring both as close to the same time as you can, and use the repair only for what is still left.** If you repair first, the repair rewrites the inspection record to match the overwritten bytes, and when you then restore the bucket, the two disagree again.
 
-Look at the last line, too. The diary written after the restore point shows up in no check. Lost data is something the difference tells you, not the check.
+Look at the last line of the output as well. The diary written after the restore point appears in no check. The difference between the tables tells you what data was lost, and the check does not.
 
-The tests run as always.
+The tests run with the same task as in other chapters.
 
 ```bash
 vp run test:unit
 ```
 
-Here is what these two do not reproduce. How long a restore takes. The lag of `LatestRestorableDateTime`. The granularity of S3's timestamps. The events S3 sends when a delete marker is removed or a version is copied. IAM. All of these can only be checked against the real thing.
+`recovery:demo` and the tests do not reproduce how long a restore takes, the lag of `LatestRestorableDateTime`, the granularity of S3's timestamps, the events S3 sends when a delete marker is removed or a version is copied, or IAM. All of these can only be checked against the real service.

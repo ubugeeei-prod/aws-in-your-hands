@@ -4,33 +4,35 @@ title: "12 Containers: しくみと実装"
 
 # 12 Containers: しくみと実装
 
-## handler から、ずっと動くサーバーへ
+このページでは、04章のアプリを動き続けるサーバーにして、イメージにまとめ、ECR に置き、タスクを置くサブネットを決めるところまで進めます。ロール、ALB、更新中の動きは[次のページ](/ja/chapters/12-containers/more.md)で扱います。
+
+## handler から、動き続けるサーバーへ
 
 <!-- section: 12.server -->
 
-04章のアプリは、最初から「必要なものを全部、引数でもらう」形で書いてありました。おかげで、アプリ本体には 1 行も手を入れずに済みます。
+04章のアプリは、必要なものをすべて引数で受け取る形で書いてあったので、アプリ本体には 1 行も手を入れずに済みます。
 
 <<< @/examples/12-containers/src/compose.ts{compose}
 
-`createApp` は 04章のものをそのまま import しています。足したのは、まわりの 2 つだけです。
+`createApp` は 04章のものをそのまま import しています。足したのは、アプリを包む 2 つの関数だけです。
 
 <<< @/examples/12-containers/src/compose.ts{wrap}
 
-`quietHealth` は、成功した health check をログに書かないための包み。ALB は 10 秒おきに、AZ ごとの node から、task ごとに `/health` を呼びます。全部書くと、ログのほとんどが health check になってしまうので。失敗したものは残します。
+`quietHealth` は、成功したヘルスチェックをログに書かないようにします。ALB は 10 秒おきに、AZ ごとのノードから、タスクごとに `/health` を呼ぶので、全部を書くとログのほとんどがヘルスチェックで埋まってしまいます。失敗したヘルスチェックはログに残します。
 
-`withVersion` は、応答に `x-app-version` というヘッダーを足します。中身は image の tag。更新中は 2 つの版が同時に応答するので、「いま答えたのはどっち？」が見えるようにしておきたいんです。
+`withVersion` は、レスポンスに `x-app-version` ヘッダーを足します。値はイメージのタグです。更新中は 2 つの版が同時に応答するので、どちらの版が答えたのかをレスポンスから見分けられるようにしました。
 
 環境変数は 2 つ増えました。
 
 <<< @/examples/12-containers/src/env.ts{env}
 
-そして、これが入口です。
+サーバーの入口は次のとおりです。
 
 <<< @/examples/12-containers/src/server.ts{main}
 
-Lambda の handler との違いは、最後の `for` に出ています。Lambda では、関数がいつ止まるかを気にする場面がほとんどありませんでした。ずっと動くプロセスは、**止められ方を自分で決めます**。次の節でやります。
+Lambda の handler との違いは、最後の `for` に出ています。Lambda では、関数がいつ止まるかを気にする場面がほとんどありませんでした。動き続けるプロセスでは、**止められたときにどう振る舞うかを自分で決めます**。その実装は次の節で説明します。
 
-動かしてみましょう。`examples/12-containers/.env.example` を、同じ場所に `.env` という名前でコピーします。
+手元で動かすには、まず `examples/12-containers/.env.example` を、同じ場所に `.env` という名前でコピーします。
 
 <<< @/examples/12-containers/.env.example
 
@@ -44,45 +46,43 @@ curl -s -X POST http://localhost:8080/notes -H 'content-type: application/json' 
 curl -s http://localhost:8080/notes
 ```
 
-1 つ目の応答に `x-app-version: dev` と `Keep-Alive: timeout=65` が付いているはずです。65 という数字の理由は、あとで出てきます。Ctrl-C で止めると、`draining`、`stopped` の 2 行がログに出てから終わります。
+1 つ目のレスポンスには `x-app-version: dev` と `Keep-Alive: timeout=65` が付きます。65 秒にした理由は、次のページの[時間の関係](/ja/chapters/12-containers/more.md)で説明します。Ctrl-C で止めると、`draining`、`stopped` の 2 行がログに出てから終了します。
 
-## 止められ方を決める
+## 止められたときの振る舞い
 
 <!-- section: 12.shutdown -->
 
-ECS は、task をしょっちゅう止めます。新しい版への入れ替え、scale in、health check の失敗。そのたびに、コンテナの中のプロセスへ **SIGTERM** という signal を送ります。「終わってほしい」というお願いです。そして `stopTimeout`（Fargate の既定は 30 秒、最大 120 秒）だけ待って、まだ動いていたら SIGKILL を送ります。こちらは断れません。
+ECS は、新しい版への入れ替え、スケールイン、ヘルスチェックの失敗のたびにタスクを止めます。止めるときは、コンテナの中のプロセスへ **SIGTERM** というシグナルを送って終了を求め、`stopTimeout`（Fargate の既定は 30 秒、最大 120 秒）だけ待ちます。それでもプロセスが動いていれば SIGKILL を送り、プロセスはこれを拒めません。
 
-SIGTERM を受けたときの処理を何も書いていなければ、進行中のリクエストは守られません。プロセスがその場で終了すれば、応答をもらえないまま接続が切れます。コンテナの中でいちばん最初のプロセス（PID 1）として動いている Node.js は、処理を書いていない signal に反応しない、と Node.js の Docker image のドキュメントは書いています。その場合は 30 秒待たされたあと、SIGKILL で同じことになります。
+SIGTERM を受けたときの処理を書いていなければ、進行中のリクエストは守られません。プロセスがその場で終了すると、クライアントはレスポンスを受け取れないまま接続を切られます。一方、コンテナの中で最初のプロセス（PID 1）として動く Node.js は、処理を書いていないシグナルに反応しないと、Node.js の Docker イメージのドキュメントに書かれています。その場合は 30 秒待たされたあとで SIGKILL が届き、結果は同じになります。
 
-やりたいのは、こうです。新しいリクエストは受けない。進行中のものは最後まで答える。それから終わる。これを graceful shutdown と呼びます。
+実現したいのは、新しいリクエストを受けるのをやめ、進行中のリクエストには最後まで答え、それから終了する動きです。この止まり方を graceful shutdown と呼びます。
 
 <<< @/examples/12-containers/src/serve.ts{serve}
 
-`server.close()` が、新しい接続を受けるのをやめて、進行中の応答が終わるのを待ってくれます。ECS のドキュメントに載っている Node.js の例も、この 1 行です。
+`server.close()` は、新しい接続を受けるのをやめて、進行中のレスポンスが終わるのを待ちます。ECS のドキュメントに載っている Node.js の例も、この 1 行です。
 
-ただ、それだけだと足りませんでした。ここ、実際に試してわかったところです。
+実際に試すと、`server.close()` だけでは足りませんでした。ALB はタスクとの接続を使い回します（keep-alive）。`server.close()` は、呼ばれた時点で使われていない接続は閉じますが、レスポンスの途中だった接続は、レスポンスが終わったあとも使われていない接続として残ります。相手が閉じるか、keep-alive の時間が切れるまで、サーバーは終了できません。このサンプルは keep-alive を 65 秒にしているので、何もしなければ `stopTimeout` の 30 秒が先に来ます。
 
-ALB は、task との接続を使い回します（keep-alive）。`server.close()` は、呼ばれた瞬間に暇だった接続は閉じてくれますが、そのとき応答の途中だった接続は、応答が終わったあと「暇な接続」として残ります。相手が閉じるか、keep-alive の時間切れまで、サーバーは終われません。このサンプルは keep-alive を 65 秒にしているので、放っておくと `stopTimeout` の 30 秒のほうが先に来ます。
+`sweep` はこの問題に対処するためのタイマーで、使われなくなった接続を短い間隔で閉じ続けます。締め切りの 25 秒を過ぎたら残りの接続を切り、`forced` と報告する処理も入れました。終了コードは、`drained` なら 0、`forced` なら 1 です。
 
-`sweep` は、そのためのものです。暇になった接続を、短い間隔で閉じ続けます。締め切り（25 秒）を過ぎたら残りを切って、`forced` と報告する保険も付けました。終了コードも、`drained` なら 0、`forced` なら 1 に分けています。
+`maxConnections` は、止まり方とは別の設定です。タスクが同時に持つ接続を 512 本までにして、上限を超えた接続は応答せずに閉じます。本文は 1 件 64 KiB までなので、受け取っている途中の本文は合わせても 32 MiB ほどに収まります。この設定は流量を制限するものではなく、メモリの使用量に上限を付けるものです。接続が上限に達している間は、ALB のヘルスチェックも同じ枠を取り合うので、大量のリクエストが続けば、タスクが不健全と判定されることもありえます。
 
-`maxConnections` は、止め方とは別の話です。task が同時に持つ接続を 512 本までにして、それを超えた接続は応答せずに閉じます。本文は 1 件 64 KiB までなので、受け取っている途中の本文は、多くても 32 MiB ほど。流量の制限ではなく、メモリの蓋です。いっぱいのあいだは ALB の health check も同じ枠を取り合うので、叩かれ続ければ task が不健全と判定されることもありえます。
-
-テストは、本当にプロセスを起動して、SIGTERM を送ります。Docker は使いません。
+テストは、Docker を使わずに、実際にプロセスを起動して SIGTERM を送ります。
 
 <<< @/examples/12-containers/test/shutdown.test.ts{sigterm}
 
-ちょっとした工夫が要りました。「リクエストの途中」という状態を、待ち時間に頼らずに作りたかったんです。そこで、`Expect: 100-continue` を付けてヘッダーだけ送ります。サーバーが `100 Continue` を返したら、リクエストは確かに届いていて、本文を待っている。その状態で SIGTERM を送り、`draining` のログを確認してから本文を送ります。応答が 201 で、ノートが返ってきて、それからプロセスが終了コード 0 で終わる。順序が決まっているので、何度走らせても同じ結果になります。
+このテストでは、リクエストの途中という状態を、待ち時間に頼らずに作る必要がありました。そのために、`Expect: 100-continue` を付けてヘッダーだけを先に送ります。サーバーが `100 Continue` を返せば、リクエストは確かに届いていて、サーバーは本文を待っています。その状態で SIGTERM を送り、`draining` のログを確認してから本文を送ります。レスポンスは 201 でノートが返り、そのあとプロセスが終了コード 0 で終わります。順序が決まっているので、何度実行しても同じ結果になります。
 
-`sweep` を外してこのテストを走らせると、`drained` のはずが `forced` になって落ちます。さっきの話は、それで見つけました。
+`sweep` を外してこのテストを実行すると、`drained` になるはずの結果が `forced` になって失敗します。keep-alive の接続が残る問題は、この失敗で見つけました。
 
-ほかに、暇な keep-alive 接続では待たされないこと、いつまでも終わらない処理は締め切りで切って `forced` になること、signal が 2 回来ても同じ 1 回の shutdown になることも、テストにしてあります。
+テストはこのほかに、使われていない keep-alive 接続のせいで終了が遅れないこと、終わらない処理は締め切りで切って `forced` になること、シグナルが 2 回届いても shutdown は 1 回だけ進むことを確かめています。
 
-## image を作る
+## イメージを作る
 
 <!-- section: 12.image -->
 
-image に入れるのは、ファイル 1 つです。
+イメージに入れるファイルは 1 つだけです。
 
 <<< @/examples/12-containers/scripts/bundle.ts{bundle}
 
@@ -91,103 +91,103 @@ vp run ecs:bundle
 vp run ecs:bundle:check
 ```
 
-esbuild が、サーバーと、Hono や Zod などの依存を全部まとめて `dist/server.mjs` にします（書いた時点で 860 KiB ほど）。04章で `NodejsFunction` が synth のときにやっていたのと同じことを、自分でやっているだけです。
+esbuild が、サーバーと、Hono や Zod などの依存をすべて `dist/server.mjs` にまとめます（書いた時点で 860 KiB ほど）。04章では `NodejsFunction` が synth のときにしていた作業を、ここでは自分で実行しています。
 
-`ecs:bundle:check` は、そのファイルを `node_modules` の無い場所へコピーして起動し、`/health` を呼んで、SIGTERM で終了コード 0 になることを確かめます。image に入るのはこのファイルそのものなので、「コンテナの中で依存が見つからない」は、Docker を動かす前にここで見つかります。
+`ecs:bundle:check` は、`dist/server.mjs` を `node_modules` の無い場所へコピーして起動し、`/health` を呼んで、SIGTERM で終了コード 0 になることを確かめます。イメージに入るのはこのファイルそのものなので、コンテナの中で依存が見つからない問題は、Docker を動かす前にこの確認で見つかります。
 
-Dockerfile はこうなりました。
+Dockerfile は次のとおりです。
 
 <<< @/examples/12-containers/Dockerfile
 
-短いですよね。理由を順に。
+短い Dockerfile になった理由を、順に説明します。
 
-**multi-stage にしていません。** よく見る Dockerfile は、1 つ目の stage で依存を入れて build し、2 つ目の stage に成果物だけをコピーします。build の道具を最終的な image に残さないための書き方です。このサンプルは build を image の外で済ませているので、残すものがそもそもありません。外で build して困らないのは、道具の版を Nix と lockfile が固定していることと、成果物が純粋な JavaScript で、build したマシンの OS や CPU に依存しないことが理由です。ネイティブのモジュールを含む依存があるなら話は変わって、動かす環境と同じ OS・CPU の中で build する stage が要ります。
+**multi-stage にしていません。** よく見る Dockerfile は、1 つ目の stage で依存を入れてビルドし、2 つ目の stage に成果物だけをコピーします。ビルドの道具を最終的なイメージに残さないための書き方です。このサンプルはビルドをイメージの外で済ませているので、残る道具がありません。外でビルドしても困らないのは、道具の版を Nix と lockfile が固定していて、成果物が純粋な JavaScript なので、ビルドしたマシンの OS や CPU に依存しないからです。ネイティブのモジュールを含む依存があるなら、動かす環境と同じ OS と CPU の中でビルドする stage が必要になります。
 
-**root で動かしません。** `USER node` で、base image に最初から入っている権限のないユーザーに切り替えています。8080 番を使うのも、特権なしで待ち受けられる番号だからです。
+**root で動かしません。** `USER node` で、ベースイメージに最初から入っている権限のないユーザーに切り替えています。8080 番を使うのも、特権なしで待ち受けられる番号だからです。
 
-**`HEALTHCHECK` を書いていません。** 書いても、ECS は image に埋め込まれた health check を見ません。見るのは task definition に書いたものだけです。そちらに書く手もありますが、コンテナの中から自分を呼ぶ確認より、ALB が外から、本物のリクエストと同じ経路で呼ぶ確認のほうが、知りたいことに近い。なので、ALB の health check だけにしました。
+**`HEALTHCHECK` を書いていません。** 書いても、ECS はイメージに埋め込まれたヘルスチェックを見ず、タスク定義に書いたものだけを見ます。タスク定義に書くこともできますが、コンテナの中から自分を呼ぶ確認よりも、ALB が外から実際のリクエストと同じ経路で呼ぶ確認のほうが、知りたいことに近いので、ALB のヘルスチェックだけにしました。
 
-**`CMD` は配列で書きます。** `CMD node server.mjs` と書くと、`/bin/sh -c` が間に入って、SIGTERM は shell に届きます。shell は node へ伝えてくれないので、せっかくの graceful shutdown が動かず、30 秒後に SIGKILL です。
+**`CMD` は配列で書きます。** `CMD node server.mjs` と書くと、`/bin/sh -c` が間に入り、SIGTERM はシェルに届きます。シェルは node へシグナルを伝えないので、graceful shutdown は動かず、30 秒後に SIGKILL が届きます。
 
-`.dockerignore` も置いてあります。build のとき daemon に送るのを `dist/server.mjs` だけにして、ソースや `.env` が image に紛れ込まないようにしています。
+`.dockerignore` も置いてあります。ビルドのときにデーモンへ送るファイルを `dist/server.mjs` だけにして、ソースや `.env` がイメージに入らないようにしています。
 
-daemon が動いていれば、build して、手元で動かせます。
+デーモンが動いていれば、イメージをビルドして手元で動かせます。
 
 ```bash
 vp run ecs:image:build v1
 vp run ecs:image:run v1
 ```
 
-`--platform linux/arm64` を付けて build します。task definition が arm64 を指定しているからで、x86 のマシンで build するなら、daemon が arm64 の image を作れる設定になっている必要があります。コマンドだけ見たいときは、末尾に `--dry-run` を付けると、実行せずに表示します。
+ビルドには `--platform linux/arm64` を付けます。タスク定義が arm64 を指定しているからです。x86 のマシンでビルドするなら、デーモンが arm64 のイメージを作れる設定になっている必要があります。コマンドだけを見たいときは、末尾に `--dry-run` を付けると、実行せずに表示します。
 
-繰り返しになりますが、この 2 つは実行できていません。
+この 2 つのコマンドは、デーモンが無かったので実行できていません。
 
-## image の置き場所
+## イメージの置き場所
 
 <!-- section: 12.registry -->
 
-build した image は手元の daemon の中にあるだけです。Fargate が取りに来られる場所、ECR の repository に置きます。
+ビルドしたイメージは、手元のデーモンの中にあるだけです。Fargate が取得できるように、ECR のリポジトリに置きます。
 
 <<< @/examples/12-containers/infra/lib/containers-stack.ts{repository}
 
-**tag は immutable にしました。** `v1` という tag が、あとから別の image を指すことはありません。同じ tag をもう一度 push すると、ECR が拒否します。「`v1` が動いている」が 1 つの意味しか持たなくなるので、入れ替えも巻き戻しも、何が起きるかを言い切れます。`latest` を使わないのも同じ理由で、設定の schema が弾きます。
+**タグは immutable にしました。** `v1` というタグが、あとから別のイメージを指すことはありません。同じタグをもう一度プッシュすると、ECR が拒否します。`v1` が動いていると言えば 1 つのイメージに決まるので、入れ替えでもロールバックでも、何が起きるかをはっきり言えます。`latest` を使わないのも同じ理由で、設定のスキーマが `latest` を拒否します。
 
 <<< @/examples/12-containers/src/config.ts{schema}
 
-lifecycle の規則は、新しいほうから 10 個を残して、古い image を消します。置きっぱなしの image にも保存料金がかかるので。
+lifecycle の規則は、新しいほうから 10 個を残して、古いイメージを消します。置いたままのイメージにも保存料金がかかるからです。
 
-### なぜ 2 回に分けて deploy するのか
+### デプロイを 2 回に分ける理由
 
-`return` に注目してください。`-c imageTag=...` を渡さないと、この stack は repository だけになります。
+次のコードの `return` を見てください。`-c imageTag=...` を渡さないと、このスタックはリポジトリだけになります。
 
 <<< @/examples/12-containers/infra/bin/app.ts{context}
 
-service は、起動するとすぐ image を取りに行きます。repository が空のうちに service を作ると、task は起動に失敗し続けて、deploy は待ち時間の上限まで待ったあとで失敗します。なので、順番を分けました。
+サービスは、起動するとすぐにイメージを取得しようとします。リポジトリが空のうちにサービスを作ると、タスクは起動に失敗し続け、デプロイは待ち時間の上限まで待ったあとで失敗します。そこで、手順を 3 つに分けました。
 
-1. tag なしで deploy する。repository だけができる
-2. image を build して push する
-3. `-c imageTag=v1` を付けて deploy する。ここで初めて、ALB と task ができる
+1. タグなしでデプロイする。リポジトリだけができる
+2. イメージをビルドしてプッシュする
+3. `-c imageTag=v1` を付けてデプロイする。ここで初めて、ALB とタスクができる
 
-この形には、おまけがあります。tag なしでもう一度 deploy すると、ALB と task が消えて、repository と image だけが残ります。「時間課金だけ止めて、image は取っておく」ができるわけです。
+手順を分けたことで、もう 1 つできることが増えます。タグなしでもう一度デプロイすると、ALB とタスクが消えて、リポジトリとイメージだけが残ります。時間課金だけを止めて、イメージは残しておけます。
 
 ### `ecs.ContainerImage.fromAsset` を使わなかった理由
 
-CDK には、ディレクトリを渡すと build から push までやってくれる `ecs.ContainerImage.fromAsset` があります。便利ですが、使いませんでした。
+CDK には、ディレクトリを渡すとビルドからプッシュまで実行する `ecs.ContainerImage.fromAsset` があります。便利ですが、この章では使いませんでした。
 
-調べたことを書いておきます。固定した版（aws-cdk-lib 2.273.0）で試したところ、`fromAsset` を使っても synth は Docker なしで通ります。synth がやるのは、ディレクトリを `cdk.out` にコピーして、「この image をこの repository に置く」という一覧を書くところまで。Docker が要るのは deploy のときです。cdkd（0.296.28）のソースを読むと、deploy の中で `docker build`、`docker tag`、`docker push` を実行し、置き場所は `cdkd bootstrap` が作る `cdkd-container-assets-<account>-<region>` という共用の repository になります。tag は内容の hash です。
+固定した版（aws-cdk-lib 2.273.0）で試したところ、`fromAsset` を使っても synth は Docker なしで通ります。synth は、ディレクトリを `cdk.out` にコピーして、どのイメージをどのリポジトリに置くかの一覧を書くところまでしか進みません。Docker が必要になるのはデプロイのときです。cdkd（0.296.28）のソースを読むと、デプロイの中で `docker build`、`docker tag`、`docker push` を実行し、置き場所は `cdkd bootstrap` が作る `cdkd-container-assets-<account>-<region>` という共用のリポジトリになります。タグは内容のハッシュです。
 
-つまり `fromAsset` だと、deploy のたびに daemon が要り、tag は自分で選べず、image は共用の repository に入ります。この章では、repository、login、push、tag を自分の手で一度通してほしかったので、分けました。本番で CI から deploy するなら、`fromAsset` や、CI が push した image の digest を渡す形のほうが楽なことも多いです。
+`fromAsset` を使うと、デプロイのたびにデーモンが必要になり、タグは自分で選べず、イメージは共用のリポジトリに入ります。この章では、リポジトリの作成、ログイン、プッシュ、タグ付けを一度自分の手で通してほしかったので、分けました。本番で CI からデプロイするなら、`fromAsset` や、CI がプッシュしたイメージのダイジェストを渡す形のほうが楽なことも多くあります。
 
-## task はどの subnet に住む？
+## タスクを置くサブネット
 
 <!-- section: 12.network -->
 
-11章の VPC を、名前で取りに行きます。`importNetwork` は 11章が用意した関数で、全部が `Fn::ImportValue` になるので、synth は AWS に問い合わせません。
+11章の VPC は、名前で読み込みます。`importNetwork` は 11章が用意した関数で、値はすべて `Fn::ImportValue` になるので、synth は AWS に問い合わせません。
 
-さて、Fargate の task は、起動するときに ECR から image を取ってきます。ECR の入口は VPC の外です。11章の既定の構成だと、private subnet には外へ出る経路がありませんでした。道は 3 つあります。
+Fargate のタスクは、起動するときに ECR からイメージを取得します。ECR の入口は VPC の外にあり、11章の既定の構成では、private サブネットに外へ出る経路がありませんでした。タスクの置き方は 3 通りあります。
 
-| task の置き場所 | 11章に足すもの | 時間で課金されるもの（月額） |
+| タスクの置き場所 | 11章に足すもの | 時間で課金されるもの（月額） |
 | --- | --- | --- |
-| public subnet、task に public IP | なし | task の public IPv4 アドレス 2 つ。USD 7.30 |
-| private subnet | `-c egress=nat` | NAT Gateway と Elastic IP アドレス。USD 48.91 |
-| private subnet | `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` | interface endpoint 3 つ × 2 AZ。USD 61.32 |
+| public サブネット、タスクに public IP | なし | タスクの public IPv4 アドレス 2 つ。USD 7.30 |
+| private サブネット | `-c egress=nat` | NAT Gateway と Elastic IP アドレス。USD 48.91 |
+| private サブネット | `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` | interface endpoint 3 つ × 2 AZ。USD 61.32 |
 
-3 つ目で endpoint が 3 つ要るのは、image の取得に `ecr.api` と `ecr.dkr`、ログの送信に `logs` を使うからです。image の中身（layer）は S3 から来ますが、そちらは 11章が既定で作っている gateway endpoint を通ります。
+3 つ目でエンドポイントが 3 つ必要なのは、イメージの取得に `ecr.api` と `ecr.dkr` を、ログの送信に `logs` を使うからです。イメージの中身（layer）は S3 から届きますが、S3 への通信は 11章が既定で作っている gateway endpoint を通ります。
 
-**既定は 1 つ目にしました。** 理由は料金です。練習用の構成に、置いてあるだけで月 USD 49 や USD 61 を足したくありません。
+**既定は 1 つ目にしました。** 理由は料金です。練習用の構成に、置いてあるだけで月 USD 49 や USD 61 かかるものを足したくありませんでした。
 
-「task に public IP を付けて大丈夫？」と思いますよね。入ってくる通信を決めるのは、public IP の有無ではなく security group です。
+タスクに public IP を付けても、インターネットから直接届くようにはなりません。入ってくる通信を決めるのは、public IP の有無ではなくセキュリティグループだからです。
 
 <<< @/examples/12-containers/infra/lib/containers-stack.ts{firewall}
 
-task の security group には、入ってくる向きの規則を 1 つも書いていません。あとで ALB につなぐときに、CDK が「ALB の security group から、8080 番」という規則を 1 つだけ足します。インターネットから task の public IP を直接叩いても、届きません。テストは、task への入口がその 1 つだけであることを見ています。
+タスクのセキュリティグループには、入ってくる向きの規則を 1 つも書いていません。あとで ALB につなぐときに、CDK が「ALB のセキュリティグループから 8080 番へ」という規則を 1 つだけ足します。インターネットからタスクの public IP を直接呼んでも届きません。テストは、タスクへの入口がこの 1 つだけであることを確かめています。
 
-出ていく向きは 443 番だけ。ECR も S3 も CloudWatch Logs も HTTPS です。名前解決（DNS）は、security group が見ない通信なので、規則は要りません。
+出ていく向きは 443 番だけを許しています。ECR も S3 も CloudWatch Logs も HTTPS だからです。名前解決（DNS）はセキュリティグループの対象にならない通信なので、規則は必要ありません。
 
-それでも、1 つ目は「簡易な構成」です。task ごとに public IPv4 アドレスを持つので、task が増えれば料金も増えます。組織によっては、アプリを public subnet に置くこと自体を禁じています。そういうときは切り替えます。
+それでも、1 つ目は簡易な構成です。タスクごとに public IPv4 アドレスを持つので、タスクが増えれば料金も増えます。アプリを public サブネットに置くこと自体を禁じている組織もあります。その場合は、次のように切り替えます。
 
 ```bash
 vp run ecs:infra:deploy -c imageTag=v1 -c taskSubnets=private
 ```
 
-この場合、11章の側を先に NAT か endpoint つきで deploy しておいてください。していないと、task は image を取れずに起動に失敗し続けます。
+切り替える前に、11章のスタックを NAT かエンドポイント付きでデプロイしておいてください。していないと、タスクはイメージを取得できず、起動に失敗し続けます。

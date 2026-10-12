@@ -4,71 +4,73 @@ title: "16 Workflow: Design and Build"
 
 # 16 Workflow: Design and Build
 
+[The previous page](/en/chapters/16-long-jobs.md) built an `ExportPages` that leaves the same parts however often it runs. This page adds the step that finishes an export and the step that discards one, and connects all three with a state machine.
+
 ## The last file makes it visible
 
 <!-- section: 16.manifest -->
 
-Until all the parts are there, the bucket holds a half-written export. It would be a problem if someone read that.
+Until all the parts are there, the bucket holds a half-written export. Anyone who read it at that point would take incomplete data for the finished thing.
 
 <<< @/examples/16-long-jobs/src/steps.ts{finish}
 
-So there is one agreement with whoever reads an export. **An export without a manifest does not exist.** The manifest is a small file listing the keys of the parts. A reader reads the manifest first, and then only the parts it names. It must not list the prefix and read what it finds.
+So there is one agreement with whoever reads an export. **An export without a manifest does not exist.** The manifest is a small file that lists the keys of the parts. A reader reads the manifest first, and then only the parts it names. A reader must not list the prefix and read whatever it finds.
 
-Before it writes the manifest, `Finish` lists the parts to check that all of them are there. It cannot write the name of something that is missing. The manifest has no timestamp in it. If two executions finish the same export, the bytes they try to write are the same. The first one wins, and the other gets a 412 and returns the same result.
+Before it writes the manifest, `Finish` lists the parts to check that all of them are there, because it must not write the name of a part that is missing. The manifest also has no timestamp in it, so if two executions finish the same export, the bytes they try to write are identical. The first one wins, and the other gets a 412 and returns the same result.
 
 ### Undo only when you cannot go on
 
-What if a part is missing? This is where the chapter's compensation comes in.
+What the workflow does when a part is missing is this chapter's compensation.
 
-With a database transaction, a failure halfway means a rollback makes everything not have happened. A workflow has nothing like that. What step 1 wrote to S3 stays there when step 3 fails. If you want it undone, you write the step that undoes it. That is compensation.
+When a database transaction fails halfway, a rollback makes it as if nothing had happened. A workflow has no such mechanism. What step 1 wrote to S3 stays there when step 3 fails. If you want it undone, you write the step that undoes it yourself, and that step is called a compensation.
 
 <<< @/examples/16-long-jobs/src/steps.ts{discard}
 
-A compensation is in a harder position than an ordinary step. It is called when something is already broken, and it can stop halfway itself. So there are three rules.
+A compensation is in a harder position than an ordinary step, because it is called when something is already broken and it can stop halfway itself. This one follows three rules.
 
-- **It can be called any number of times.** Deleting what is already gone is not an error. If it stops halfway, calling it again deletes the rest
-- **It does not touch what is finished.** An export that has a manifest is not deleted. That is insurance against the verdict "it failed" being out of date
-- **What cannot be undone cannot be undone.** An S3 object can be deleted. An email that was sent cannot. Put operations that cannot be undone as late in the workflow as you can
+- It can be called any number of times. Deleting what is already gone is not an error, and if it stops halfway, calling it again deletes the rest
+- It does not touch what is finished. An export that has a manifest is not deleted, in case the verdict that it failed was out of date
+- Operations that cannot be undone go as late in the workflow as possible. An S3 object can be deleted, but an email that was sent cannot
 
-And the occasions for calling a compensation are fewer than you might think. When `ExportPages` fails, this workflow does not delete the parts. The parts that were written are where the next resume starts. They are deleted only when `Finish` says a part is missing, because no retry brings a missing part back.
+The workflow also calls the compensation as rarely as it can. When `ExportPages` fails, this workflow does not delete the parts, because the parts already written are where the next resume starts. It deletes them only when `Finish` finds that a part is missing, since no retry brings a missing part back.
 
-**If you can go forward, resume. Undo only when you cannot.** For long work, decide this first. A workflow that undoes everything on every failure has thrown away "resume where it stopped" by itself.
+**If you can go forward, resume. Undo only when you cannot.** For long work, draw this line first. A workflow that undoes everything on every failure has given up the ability to resume.
 
-What about parts that are neither resumed nor undone, just left? The bucket's lifecycle rule deletes them after 7 days. Finished exports go after the same 7 days. An export is treated as a temporary place for someone to pick things up from.
+Parts that are neither resumed nor undone are deleted after 7 days by the bucket's lifecycle rule. Finished exports are deleted after the same 7 days. An export is treated as a temporary place for someone to pick up from.
 
-One gap is left open, and here it is. In `Finish`, "check by listing" and "write the manifest" are two operations. If another execution's `Discard` deletes a part between them, there is a manifest that names a deleted part. It takes two overlapping executions of the same export of which only one decides a part is missing, but it can happen. This chapter does not close it.
+One gap is left open. In `Finish`, checking the list and writing the manifest are two separate operations. If another execution's `Discard` deletes a part between them, the result is a manifest that names a deleted part. This needs two overlapping executions of the same export, of which only one decides that a part is missing, but it can happen. This chapter does not close the gap.
 
 ## Leave the order to the workflow
 
 <!-- section: 16.workflow -->
 
-The steps are ready, so let's connect them. A Step Functions workflow is called a state machine and is written in a JSON language, Amazon States Language (ASL).
+With the steps ready, the next job is to connect them. A Step Functions workflow is called a state machine, and it is written in Amazon States Language (ASL), which is JSON.
 
 <<< @/examples/16-long-jobs/src/workflow.ts{definition}
 
-This chapter writes the definition as a TypeScript object. CDK has constructs for it, and they are not used here, because the same object should go to both the local runner (coming up) and CDK.
+This chapter writes the definition as a TypeScript object. CDK has constructs for state machines, but they are not used here, because the same object has to go to both [the local runner](/en/chapters/16-long-jobs/local.md) and CDK.
 
-There are six states. A `Task` calls a function, a `Choice` is a fork, and `Succeed` and `Fail` are the ends.
+There are six states. A `Task` calls a function, a `Choice` picks the next state, and `Succeed` and `Fail` are the ends.
 
-The `Resource` of each `Task` is the function's ARN, written directly. Written this way, the state's input becomes the function's event as it is, and the function's return value becomes the state's output as it is. The progress `ExportPages` returns goes through `MorePages` and becomes the input of the next `ExportPages`. That is all it takes for the loop to turn.
+The `Resource` of each `Task` is the function's ARN, written directly. Written this way, the state's input becomes the function's event unchanged, and the function's return value becomes the state's output unchanged. The progress that `ExportPages` returns goes through `MorePages` and becomes the input of the next `ExportPages`. That hand-over is all the loop needs.
 
 ### Retry and Catch
 
-`Retry` means "this state again, with the same input". `ExportPages` is retried up to three times on any error, starting 5 seconds apart and doubling. `States.ALL` is a name that matches almost every error: an exception in the function, a transient Lambda fault, a timeout.
+`Retry` runs the same state again with the same input. `ExportPages` is retried up to three times on any error, starting 5 seconds apart and doubling. `States.ALL` is a name that matches almost every error, including an exception in the function, a transient Lambda fault, and a timeout.
 
-Only `Finish` has two retriers. `ExportCorrupt` gets zero attempts, that is, no retry. Everything else gets three. `ExportCorrupt` is the `name` of the exception the function throws. An error thrown by a Lambda function reaches Step Functions under its `name`.
+Only `Finish` has two retriers. `ExportCorrupt` gets zero attempts, which means no retry, and everything else gets up to three. `ExportCorrupt` is the `name` of the exception the function throws, and an error thrown by a Lambda function reaches Step Functions under its `name`.
 
-`Catch` means "when the retries are used up, go to this state instead of failing". With `ResultPath`, the original input is kept and the error is added beside it. `Discard` reads the export's ID from there.
+`Catch` sends the execution to a state you name when the retries are used up, instead of failing it. With `ResultPath`, the original input is kept and the error is added beside it. `Discard` reads the export's ID from the input that was kept.
 
-The only `Catch` is on `Finish`, for `ExportCorrupt`. Every other failure is caught by nothing, and the execution itself fails. That is on purpose.
+The only `Catch` is on `Finish`, for `ExportCorrupt`. Every other failure is caught by nothing, and the execution itself fails. That is deliberate, and redrive is the reason.
 
 ### A failed execution continues
 
-A failed Standard workflow execution can be redriven for 14 days: the failed state runs again, with the input it had. States that succeeded are not run again.
+A failed execution of a Standard workflow can be redriven for 14 days. A redrive runs the failed state again with the input it had, and does not run the states that succeeded.
 
-Say `ExportPages` fails four times in a row and the execution stops. After fixing the cause (wrong permissions, say), a redrive calls `ExportPages` again with the progress it had when it stopped. If parts 1 to 30 were written, it goes on from 31. To be exact, any parts the stopped call wrote on its way are passed over through 412s as well.
+Say `ExportPages` fails four times in a row and the execution stops. After you fix the cause, such as wrong permissions, a redrive calls `ExportPages` again with the progress it had when it stopped. If parts 1 to 30 were written, it goes on from 31. To be exact, any parts the stopped call had already written are passed over through 412s as well.
 
-Had there been a `Catch` leading to a `Fail` state here, a redrive would not help. According to the documentation, a redrive re-enters a `Fail` state and fails again. An execution of this workflow that got to `Discarded` cannot be resumed. It was undone, so that is right.
+Had the failure of `ExportPages` been caught and sent to a `Fail` state, a redrive would not help. According to the documentation, a redrive re-enters the `Fail` state and fails again. In this workflow too, an execution that got to `Discarded` cannot be resumed. The export has been discarded by then, so that is the right behaviour.
 
 ### Standard and Express
 
@@ -82,42 +84,42 @@ A state machine is one of two types, and the type cannot be changed after creati
 | Billing | Number of state transitions | Number of executions, duration, memory |
 | Redrive of a failed execution | Yes | Not confirmed |
 
-This chapter uses Standard: nothing guarantees it ends in five minutes, and it should resume from the middle.
+This chapter uses Standard, because nothing guarantees that the export ends in five minutes and it has to resume from the middle.
 
 ### Always write the timeout
 
-A `Task`'s `TimeoutSeconds` is 99,999,999 seconds when left out. That is more than three years. A task whose answer never comes would leave the execution stopped right there. The official best practices say the same: give tasks a timeout.
+A `Task`'s `TimeoutSeconds` is 99,999,999 seconds when left out, which is more than three years. A task whose answer never comes would leave the execution stuck at that state. The official best practices also recommend giving tasks a timeout.
 
-In this chapter, each `Task`'s timeout is 30 seconds longer than its function's timeout. Lambda stops the function first and returns an error. Step Functions receives it and retries. In that order, the state "Step Functions has given up, but the function is still running" does not normally come about.
+In this chapter, each `Task`'s timeout is 30 seconds longer than its function's timeout. Lambda stops the function first and returns an error, and Step Functions receives that error and retries. With that order, you do not normally end up with Step Functions having given up while the function is still running.
 
-"Normally", because it cannot be ruled out. The documentation says a task that timed out is treated as failed. It does not say the running function is stopped. Besides, an answer can be lost on the network, and two executions of the same export can overlap. The `If-None-Match` of the earlier section is there for that. Timeout settings make late workers rarer. The condition on the write is what makes them harmless.
+"Normally" is there because it cannot be ruled out. The documentation says a task that timed out is treated as failed, but it does not say the running function is stopped. An answer can also be lost on the network, and two executions of the same export can overlap. The `If-None-Match` on [the previous page](/en/chapters/16-long-jobs.md) is there for those cases. The timeout settings only make late workers rarer. The condition on the write is what keeps a late worker from damaging the output.
 
 ## How big a checkpoint
 
 <!-- section: 16.checkpoint -->
 
-Saving "how far it got" is called a checkpoint. This workflow makes one every time `ExportPages` returns. So how often should it return?
+Saving "how far it got" is called a checkpoint. This workflow makes one every time `ExportPages` returns, so how often `ExportPages` returns is the granularity of the checkpoints.
 
 <<< @/examples/16-long-jobs/src/steps.ts{budget}
 
-After every page it writes, the step function asks outside: is there room for one more? Who holds the answer decides the granularity.
+After every page it writes, the step function asks its caller whether it may go on to one more page. Who answers that question decides the granularity.
 
 <<< @/examples/16-long-jobs/src/export-pages-lambda.ts{handler}
 
-On Lambda, the answer is "are there still more than 60 seconds until the function's timeout?" `getRemainingTimeInMillis()` is a function on the context Lambda passes to the handler; it returns the time left before the function is stopped. The function's timeout is 300 seconds, so one invocation writes about four minutes' worth of pages and returns.
+On Lambda, the answer is yes while more than 60 seconds remain before the function's timeout. `getRemainingTimeInMillis()` is a function on the `context` that Lambda passes to the handler, and it returns the time left before the function is stopped. The function's timeout is 300 seconds, so one invocation writes about four minutes' worth of pages and returns.
 
 <<< @/examples/16-long-jobs/src/env.ts{env}
 
-Consider the two extremes.
+Compare the two extremes.
 
-**Return after every page.** A failure costs one page of rework. In exchange, the workflow is passed through once per page. A Standard workflow is billed per state transition, so more pages mean a larger bill. There is a limit too: one execution of a Standard workflow fails when its history reaches 25,000 events, and every turn of the loop adds a few.
+If the step returns after every page, a failure costs one page of rework. In exchange, the workflow is passed through once per page. A Standard workflow is billed per state transition, so more pages mean a larger bill. There is a limit as well. One execution of a Standard workflow fails when its history reaches 25,000 events, and every turn of the loop adds a few events.
 
-**Everything in one go.** The fewest state transitions. But for work that does not finish in 15 minutes, it is not on offer.
+If the step writes everything in one invocation, the number of state transitions is the smallest possible. But for work that does not finish in 15 minutes, that option does not exist.
 
-This chapter sits in between: go as far as time allows, and return with room to spare. While there are few notes it finishes in one call, and as they grow it splits into two calls, then three, by itself.
+This chapter sits in between. The step goes as far as time allows and returns with room to spare. While there are few notes it finishes in one call, and as they grow the work splits into two calls, then three.
 
-This is where the design of the earlier sections pays off. A part is written to S3 after every page, and a written part can be passed over. So **a coarse workflow checkpoint does not mean more rework.** If the function dies four minutes in, the retry walks past the written parts, checking each with a 412, and writes on from there. The `Scan` is read again; nothing is written again.
+The design on the previous page is what makes a coarse granularity affordable. A part is written to S3 after every page, and a written part can be passed over. So **a coarse workflow checkpoint does not mean more rework.** If the function dies four minutes in, the retry walks past the written parts, confirming each with a 412, and writes on from there. The `Scan` runs again, but nothing is written again.
 
-So there are two layers of checkpoint. The progress the workflow remembers is a hint about where to call from, and the parts in S3 are the fact of what is done. When the hint is stale, the fact still leads to the right result. A test checks that returning after every page and writing everything in one call produce output that does not differ by a byte.
+There are, in other words, two layers of checkpoint. The progress the workflow remembers is a hint about where to call from, and the parts in S3 are the fact of what is done. When the hint is stale, the step follows the fact and still arrives at the right result. A test checks that returning after every page and writing everything in one call produce output that does not differ by a byte.
 
-Work whose loop is long enough to approach the history limit needs something else. The documentation names two options: a Distributed Map, or starting a new execution partway and handing over the rest. This chapter tries neither.
+Work whose loop is long enough to approach the history limit needs something else. The documentation names two options, a Distributed Map or starting a new execution partway and handing over the rest. This chapter tries neither.

@@ -4,33 +4,35 @@ title: "22 Backup: Costs, Pitfalls, and Cleanup"
 
 # 22 Backup: Costs, Pitfalls, and Cleanup
 
+This is the last page of the chapter. It covers the difference from Cloudflare D1, the cost, what to look at when something goes wrong, what to add for production, and cleanup.
+
 ## If you come from D1's Time Travel
 
 <!-- section: 22.cloudflare -->
 
-If you have been using Cloudflare D1, you will have thought "that is a lot of steps" by now. It is.
+If you have been using Cloudflare D1, the steps so far will have seemed like a lot. They are more than D1 asks of you.
 
-D1's Time Travel is on from the start and costs nothing extra. It restores to a minute within the last 30 days (7 on the Workers Free plan). And when you restore, the database is overwritten in place. No new database appears. The binding and the name stay as they are. There is no cutover to do.
+D1's Time Travel is on from the start and costs nothing extra. It restores to any minute within the last 30 days (7 days on the Workers Free plan). A restore overwrites the database in place, and no new database is created. The binding and the name stay as they are, so there is no cutover to do.
 
-DynamoDB's PITR is something you turn on, and pay for by the size of the table. Its granularity is a second, and it reaches back 35 days at most. And it always produces a new table.
+DynamoDB's PITR is something you turn on yourself and pay for by the size of the table. Its granularity is a second, and it reaches back 35 days at most. It always produces a new table.
 
-Which is better depends on what you fear. A restore that overwrites in place is fast and simple. In exchange, the moment you restore, the current data is out of sight. D1 hands back a bookmark for returning to the state before the restore, so it can be undone. What you cannot do is put the restored result and the state before it side by side. The documentation says there is no feature for cloning a database yet. A restore that creates a new table is slow and cumbersome. In exchange, you can set it next to the original, count the differences, and then decide whether to cut over. That is what `recovery:diff` does in this chapter.
+Which is better depends on what you fear. A restore that overwrites in place is fast and simple. In exchange, the current data is out of sight the moment you restore. D1 returns a bookmark for going back to the state before the restore, so the restore can be undone. But you cannot put the restored result and the state before it side by side. The documentation says there is no feature for cloning a database yet. A restore that creates a new table is slow and takes more work. In exchange, you can set the new table next to the original, count the differences, and then decide whether to cut over. `recovery:diff` in this chapter counts those differences.
 
 For R2, what was checked is that the compatibility table of its S3 API marks the versioning operations (`GetBucketVersioning`, `PutBucketVersioning`) as not implemented. Whether R2 has other means of restoring was not looked into.
 
-And if you combine D1 and R2, the main subject of this chapter applies as it stands. Take the database back ten minutes, and the bucket does not follow.
+If you combine D1 and R2, the disagreement this chapter spends most of its pages on applies to you unchanged. When you take the database back ten minutes, the bucket does not go back with it.
 
 ## What it costs
 
 <!-- section: 22.cost -->
 
-Amounts are in USD, for the Tokyo Region, on demand, before tax. The details are in [Pricing Worksheets](/en/reference/pricing.md).
+Amounts are in USD, for the Tokyo Region, on demand, before tax. The details of the calculation are in [Pricing Worksheets](/en/reference/pricing.md).
 
-The drill in this chapter is three notes and three images of 33 bytes each. At the unit prices below, it does not reach one cent. Whether small amounts carry a minimum charge was not checked.
+The drill in this chapter handles three notes and three images of 33 bytes each. At the unit prices below, it does not reach one cent. Whether small amounts carry a minimum charge was not checked.
 
-Let's look at a size that means something: a 1 GB table and 10 GB of images.
+For a size that gives a sense of the amounts, the tables below assume a 1 GB table and 10 GB of images.
 
-**What staying restorable adds.** Storage for the table and the images themselves is left out. This is only what you pay for being able to go back.
+The first table is what staying restorable adds. Storage for the table and the images themselves is left out.
 
 | Item | Per month |
 | --- | --- |
@@ -38,9 +40,9 @@ Let's look at a size that means something: a 1 GB table and 10 GB of images.
 | Old versions (1 GB a month overwritten or deleted, kept 30 days) | 0.03 |
 | Subtotal | **0.25** |
 
-PITR is USD 0.228 per GB-month. It is set by the size of the table, and the documentation says that shrinking the window from 35 days to 1 changes nothing. Old versions are billed at the price of ordinary objects, each one whole. An image overwritten three times is four images.
+PITR is USD 0.228 per GB-month. The charge is set by the size of the table, and the documentation says that shrinking the window from 35 days to 1 does not change it. Old versions are billed at the price of ordinary objects, each one in full. An image overwritten three times is billed as four images.
 
-**One drill.**
+The second table is the cost of running the drill once.
 
 | Item | List price |
 | --- | --- |
@@ -49,18 +51,18 @@ PITR is USD 0.228 per GB-month. It is set by the size of the table, and the docu
 | Storage for the restored table if left for a month (1 GB) | 0.00 |
 | Subtotal | **0.32** |
 
-A restore is USD 0.171 per GB restored. The check reads the whole table with strong consistency, about 260,000 read request units for 1 GB; four of them come to USD 0.15. Make the table 100 times larger, and one check is about USD 3.7. As with chapter 08's cleanup, **the cost of reconciling grows with how much is stored.**
+A restore is USD 0.171 per GB restored. The check reads the whole table with strong consistency, which takes about 260,000 read request units for 1 GB, and four checks come to USD 0.15. If the table is 100 times larger, one check is about USD 3.7. As with chapter 08's cleanup, **the cost of reconciling grows with how much is stored.**
 
-Storage shows 0.00 because the first 25 GB of DynamoDB storage is a USD 0 tier. If the account's total is past that, it is USD 0.285 per GB. More important: the restored table is outside the stack, so it **stays when the stack is deleted**. If you turned PITR back on, that continues as well.
+Storage shows 0.00 because the first 25 GB of DynamoDB storage is a USD 0 tier. If the account's total is over 25 GB, storage costs USD 0.285 per GB. What matters more than the amount is that the restored table is outside the stack, so it **stays when the stack is deleted**. If you turned PITR back on, that charge continues as well.
 
-**What is added only when asked.**
+The last table is what is added only when you ask for it.
 
 | Layout | Per month |
 | --- | --- |
 | `-c backup=on` (1 GB table, once a day, kept 7 days) | 0.80 |
 | `-c replica=on` (a copy of 10 GB of images and 1 GB of old versions, 10,000 objects replicated a month) | 0.32 |
 
-AWS Backup is USD 0.114 per GB-month. The 0.80 assumes that each of the seven snapshots is billed at the size of the whole table; whether they are taken incrementally was not checked. Replication is the second set of storage plus the replication requests. According to the pricing page, replication within one Region has no data transfer item. A replication request was computed at the price of an ordinary PUT.
+AWS Backup is USD 0.114 per GB-month. The 0.80 assumes that each of the seven snapshots is billed at the size of the whole table. Whether they are taken incrementally was not checked. Replication costs the second set of storage plus the replication requests. According to the pricing page, replication within one Region has no data transfer item. A replication request was computed at the price of an ordinary PUT.
 
 No free allowance is deducted in any of these tables. Whether restores and AWS Backup have one was not looked into.
 
@@ -69,28 +71,28 @@ No free allowance is deducted in any of these tables. Whether restores and AWS B
 | If this happens | Look here |
 | --- | --- |
 | `recovery:restore:table` says "outside what can be restored" | The time you gave is later than `latest restorable`. Check with `recovery:status` and wait a few minutes |
-| `recovery:restore:table` says "not enabled" | PITR is off on the table. Was the table deployed by this chapter's stack? |
+| `recovery:restore:table` says "not enabled" | PITR is off on the table. Check that the table was deployed by this chapter's stack |
 | The restored table never becomes `ACTIVE` | The time depends on the amount of data and the number of indexes, and none is guaranteed. The source table stays usable meanwhile |
-| The plan of `recovery:restore:objects` is empty | Is the `--at` time before the accident? Did you pass it in UTC? |
-| An object you deleted grows a marker every time you delete it | You are deleting a delete marker without its version ID. That only stacks another |
+| The plan of `recovery:restore:objects` is empty | Check that the `--at` time is before the accident and that you passed it in UTC |
+| An object you deleted gains a delete marker every time you delete it | You are deleting a delete marker without its version ID. That only stacks another one |
 | `recovery:verify` finds nothing right after the accident | That is correct. Cleanly deleted data does not disagree |
-| `recovery:verify` reports many `object_without_record` after the restore | Uploads from after the restore point. Without `--frozen` they appear once an hour has passed |
-| `recovery:audit` names the old table after the cutover | Did you deploy with `-c table=`? Is it in `cdk.json`? |
-| The function fails with `AccessDenied` | Did you change only the environment variable? The permission moves with it through the context |
-| `recovery:infra:destroy` cannot delete the bucket | Versions are left. `recovery:empty --apply` comes first |
+| `recovery:verify` reports many `object_without_record` right after the restore | These are uploads from after the restore point. Without `--frozen` they appear once an hour has passed |
+| `recovery:audit` names the old table after the cutover | Check that you deployed with `-c table=` and that it is in `cdk.json` |
+| The function fails with `AccessDenied` | This happens when only the environment variable was changed. Change the permission together with it through the context |
+| `recovery:infra:destroy` cannot delete the bucket | Versions are left. Run `recovery:empty --apply` first |
 | The stack is gone and DynamoDB is still on the bill | A restored table is left. `recovery:status` lists them |
 
 ## Going to production
 
-- **Protect the table and the bucket.** That is `-c protect=on`: `RETAIN` and deletion protection. It protects the table itself, and only that. The contents are protected by PITR and versioning
-- **Set targets first, and check them with a drill.** RTO and RPO, once chosen, are only numbers. Measuring is what tells you whether you meet them. As the table grows, so does the restore time. Do it regularly
-- **Have a way to know when the accident happened.** PITR restores to whatever time you give it. Only you know that time. Record API calls so you can trace who deleted what, and when (the tool is CloudTrail. The event history read in [chapter 21](/en/chapters/21-security.md) records management events, so check beforehand what will be in it)
-- **Have a way to stop writes during the cutover.** Cut over on a running service, and the check's grace period and the count of lost data both keep moving. This chapter builds no way to stop
-- **Put "stop the cleanup" into the recovery procedure.** Chapter 08's schedule deletes images whose records were lost
-- **Return the restored table to the source.** Adopt it, or rebuild. Don't keep running the service on "a table outside the stack"
-- **Mix the number of restores into the version comparison.** That closes the rewound numbers, deleted notes included
-- **Keep backups in another account or another Region as well.** PITR and versioning both live in the same account and the same Region. They do nothing against losing the account. AWS Backup's cross-Region and cross-account copies are not covered in this chapter
-- **Don't keep the check for recoveries only.** Small disagreements appear in normal operation too, like chapter 08's open gaps. Run the function on a schedule and get told when `broken` stops being 0. The cost grows with the size of the table
+- **Protect the table and the bucket.** `-c protect=on` does this with `RETAIN` and deletion protection. It protects only the table itself. The contents are protected by PITR and versioning
+- **Set targets first, and check them with a drill.** An RTO and an RPO that you have only chosen are just numbers, and you learn whether you meet them by measuring. The restore time changes as the table grows, so measure regularly
+- **Have a way to know when the accident happened.** PITR restores to whatever time you give it, but only you know that time. Record API calls so that you can trace who deleted what, and when (the tool is CloudTrail. The event history you read in [chapter 21](/en/chapters/21-security.md) records management events, so check beforehand what will be in it)
+- **Have a way to stop writes during the cutover.** If you cut over on a running service, the check's grace period and the count of lost data both keep moving. This chapter builds no way to stop writes
+- **Put stopping the cleanup into the recovery procedure.** Chapter 08's schedule deletes images whose records were lost
+- **Return the restored table to the source.** Decide whether to import it or rebuild it. Do not keep running the service on a table outside the stack
+- **Mix the number of restores into the version comparison.** That closes the hole of rewound numbers, deleted notes included
+- **Keep backups in another account or another Region as well.** PITR and versioning both live in the same account and the same Region. They do nothing against losing the whole account. AWS Backup's cross-Region and cross-account copies are not covered in this chapter
+- **Do not keep the check for recoveries only.** Small disagreements appear in normal operation too, as with chapter 08's open gaps. Run the function on a schedule and send a notification when `broken` stops being 0. The cost grows with the size of the table
 
 ## Cleaning up
 
@@ -103,29 +105,29 @@ vp run recovery:empty --apply
 vp run recovery:infra:destroy
 ```
 
-The order means something.
+There is a reason for this order.
 
-First, delete the restored tables. They are outside the stack, so `destroy` will not do it. `recovery:status` lists the tables whose names carry the mark. If you are still cut over, deploy without `-c table=` first, to return the function to the original table. `recovery:drop-table` refuses to delete the table the function is reading.
+First, delete the restored tables. They are outside the stack, so `destroy` does not delete them. `recovery:status` lists the tables whose names carry the mark. If you are still cut over, deploy without `-c table=` first, to return the function to the original table. `recovery:drop-table` refuses to delete the table the function is reading.
 
 <<< @/examples/22-recovery/scripts/recovery.ts{drop-table}
 
-Next, empty the bucket. A bucket with versioning is not empty until every version and every delete marker is gone. After this runs, nothing in the bucket can be brought back.
+Next, empty the bucket. A bucket with versioning is not empty until every version and every delete marker is gone. After you run `recovery:empty --apply`, nothing in the bucket can be brought back.
 
-Last, the stack. The table, the bucket, the function, and the logs are deleted. The PITR history goes with the table. According to the documentation, a table that had PITR on leaves a system backup for 35 days, at no additional cost.
+Last, destroy the stack. The table, the bucket, the function, and the logs are deleted. The PITR history is deleted with the table. According to the documentation, a table that had PITR on leaves a system backup for 35 days, at no additional cost.
 
-Cleaning up a stack deployed with `-c protect=on`, `-c backup=on`, or `-c replica=on` was not checked. A table and a bucket under `protect` are meant to survive the stack, so you delete them by hand. That cdkd does not delete a table with deletion protection unless `--remove-protection` is given was read in its source. What happens when snapshots are still in the vault is not known.
+Cleaning up a stack deployed with `-c protect=on`, `-c backup=on`, or `-c replica=on` was not checked. A table and a bucket under `protect` are meant to survive the stack, so you delete them by hand. cdkd's source shows that it does not delete a table with deletion protection unless `--remove-protection` is given. What happens when snapshots are still in the vault is not known.
 
 The drill records are in `reports/drills/`, which git ignores. Move the ones you want to keep somewhere else, together with your copy of `examples/22-recovery/drill/TEMPLATE.md`.
 
 ## As a distributed system
 
-There are two owners of state. Notes and records belong to DynamoDB, bytes to S3. No transaction spans the two. Chapters 07 and 08 used the order of writes, and conditional writes, so that "stopping halfway never leaves a broken state".
+State has two owners. DynamoDB holds the notes and the records, S3 holds the bytes, and no transaction spans the two. Chapters 07 and 08 used the order of writes and conditional writes so that stopping halfway never leaves a broken state.
 
-A restore walks straight past that care. From two histories written in a careful order, it cuts out two different moments. **A promise kept by ordering does not survive an operation that rewinds time.** To keep it again, the promise itself has to exist in a form that can be checked. In this chapter that is `check`.
+A restore bypasses that care, because it cuts two different moments out of two histories that were written in a careful order. **A promise kept by ordering does not hold against an operation that rewinds time.** To keep it again, the promise itself has to exist in a form that can be checked. In this chapter `check` does that job.
 
-The repair is designed like chapter 08's worker. Every step verifies for itself the condition it depends on. So run twice, or stopped halfway, it settles in the same place. What differs is that no event says what the right order is, and that gap was filled with "a sequencer that beats the stale record and nothing else".
+The repair follows the same design as chapter 08's worker. Every step verifies for itself the condition it depends on, so whether it runs twice or stops halfway, it settles in the same state. The difference is that no event says what the right order is, and a sequencer that beats only the stale record fills that gap.
 
-And what is not closed. The check reads the table and the bucket separately. On a running service, writes land between the two reads. The grace period avoids most of it, but an attachment deleted a moment ago can briefly look like "a record with no image". The repair looks again before it acts, so it breaks nothing. It does appear in the report. Checking with writes stopped is the surest way.
+Some things are not closed. The check reads the table and the bucket separately, and on a running service writes land between the two reads. The grace period avoids most of these, but an attachment deleted a moment ago can briefly look like a record with no image. The repair looks again before it acts, so it breaks nothing, but the finding does appear in the report. Checking with writes stopped is the surest way.
 
 ::: details Verification notes for this chapter
 

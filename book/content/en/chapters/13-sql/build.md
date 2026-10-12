@@ -4,6 +4,8 @@ title: "13 SQL: Design and Build"
 
 # 13 SQL: Design and Build
 
+The [previous page](/en/chapters/13-sql.md) showed the setup and where Aurora DSQL differs from PostgreSQL. This page implements the schema, the queries, and the transactions within those constraints.
+
 ## Schema and migrations
 
 <!-- section: 13.migrations -->
@@ -14,87 +16,87 @@ There are two tables.
 
 <<< @/examples/13-sql/migrations/0003_create_notes.sql
 
-A note's ID is a random UUID made by the application. On D1 you might reach for an `INTEGER PRIMARY KEY` counter, but the DSQL documentation advises against monotonically increasing primary keys on tables with many writes: every new row would land in the same place.
+A note's ID is a random UUID that the application generates. On D1 you would often use an `INTEGER PRIMARY KEY` counter, but the DSQL documentation advises against monotonically increasing primary keys on tables with many writes, because every new row lands in the same place.
 
-`note_count` in `owners` becomes the star later. For now, it is the column that counts toward "an owner may hold at most 100 notes". As in chapter 04, a list returns summaries of the newest 20 notes and nothing else. There is no pagination.
+`note_count` in `owners` keeps a count so that one owner can hold at most 100 notes, and it becomes central in the section "A transaction is retried as a whole" below. As in chapter 04, a list returns only summaries of the newest 20 notes, and there is no pagination.
 
-Here is the index.
+There is one index.
 
 <<< @/examples/13-sql/migrations/0004_index_notes_by_owner.sql
 
 ### One statement per file
 
-A D1 migration file can hold as many statements as you like. Here, a file holds exactly one.
+A D1 migration file can hold any number of SQL statements, but in this chapter a file holds exactly one.
 
-DSQL allows one DDL statement per transaction, so a file with several can never be made "all of it or none of it". With one statement to begin with, a file maps onto a transaction directly.
+DSQL allows only one DDL statement per transaction, so a file with several statements cannot be made to apply completely or not at all. With one statement per file from the start, each file corresponds to exactly one transaction.
 
 This is the runner.
 
 <<< @/examples/13-sql/src/migrate.ts{migrate}
 
-It does what D1 does: run the files in name order and write down how far it got, in a table (`public.aih_migrations`). The difference is at the comment in the middle.
+Like D1, it runs the files in name order and records how far it got in a table (`public.aih_migrations`). The difference is the part that the comments inside the loop explain.
 
-The schema change and the record of it cannot share a transaction, because DDL and DML do not mix. So if the process dies after the change and before the record, you are left with "applied, but not recorded".
+DDL and DML cannot share a transaction, so the schema change and the record of that change happen in separate transactions. If the process dies after the change and before the record is written, the migration is applied but not recorded.
 
-The next run sends the same statement again. That is why every statement is written so that running it twice is harmless (`IF NOT EXISTS`), and the lint above enforces it. The invariant for migrations: **if there is a record, the statement has been applied; a statement without a record gives the same result when run again.**
+The next run then sends the same statement again. For that reason every statement is written in a form that is safe to run twice (`IF NOT EXISTS`), and the [lint on the previous page](/en/chapters/13-sql.md) enforces it. The invariant for migrations is this: **if there is a record, the statement has been applied, and a statement without a record gives the same result when it is run again.**
 
-This, too, is checked by breaking it on purpose.
+A test that stops the runner just before it writes the record checks this invariant.
 
 <<< @/examples/13-sql/test/migrate.test.ts{interrupted}
 
-One more thing. If you edit a file that was already applied, the runner notices the changed checksum and stops. To fix something, add a file with a new number.
+If you edit a file after it was applied, the runner notices that the checksum changed and stops. To fix something, add a file with a new number.
 
-The local PostgreSQL does not know the word `ASYNC`. That one word is removed by the runner just before sending.
+The local PostgreSQL does not accept the word `ASYNC`, so the runner removes it just before sending the statement, and only when it sends to the local database.
 
 <<< @/examples/13-sql/src/migrate.ts{dialect}
 
-The files are written in DSQL's SQL and the local side adapts. Not the other way around.
+The files contain DSQL's SQL, and the local side adapts to it. It is not the other way around.
 
 ## Rows into types
 
 <!-- section: 13.queries -->
 
-The API contract is nearly the one from chapter 04, plus updates (`PUT`) and a `version`.
+The API contract is nearly the one from chapter 04, with updates (`PUT`) and a `version` added.
 
 <<< @/examples/13-sql/src/contract.ts{note}
 
-Between the application and the database there is one thin interface.
+One thin interface sits between the application and the database.
 
 <<< @/examples/13-sql/src/db.ts{db}
 
-`query` takes SQL text and numbered values such as `$1`. This chapter's application never puts a value into the SQL text. That way the door to SQL injection is not built in the first place.
+`query` takes SQL text and numbered values such as `$1`. This chapter's application never puts a value into the SQL text, so that there is no opening for SQL injection to begin with.
 
-Now, the `rows` that `query` returns are typed `unknown[]`. node-postgres will let you attach any type you like, but that is only a declaration of what you expect. Rename a column in a migration and the type stays as it was, while the runtime value changes.
+The `rows` that `query` returns are typed `unknown[]`. node-postgres lets you attach any type you like to a row, but that type is only a declaration of the shape you expect. If a migration renames a column, the type stays the same and only the runtime value changes.
 
-A database row is a value from outside the type system, just like an HTTP request. So it gets the same treatment.
+A database row comes from outside the type system, as an HTTP request does, so it is checked against a schema at the boundary in the same way.
 
 <<< @/examples/13-sql/src/db.ts{rows}
 
 <<< @/examples/13-sql/src/notes-repository.ts{row}
 
-The row schema doubles as the conversion from snake_case columns to the API's `Note`. Both node-postgres and PGlite return `timestamptz` as a `Date`, which becomes an ISO 8601 string.
+The row schema also converts the snake_case columns into the API's `Note`. Both node-postgres and PGlite return `timestamptz` as a `Date`, which the schema turns into an ISO 8601 string.
 
-A list is read in a different shape.
+A list is read in a different shape from a single note.
 
 <<< @/examples/13-sql/src/notes-repository.ts{list}
 
-There is no `body` column in the `SELECT`. SQL lets you choose the columns you get back, so a list takes the ID, the title, `version`, and the two timestamps. The value passed to `LIMIT` is 20. An owner can hold 100 notes, but a list returns the newest 20 at most, so that a single response stays under 20 KiB, as in chapter 04. `GET /notes/:id` returns the body, reading that one row.
+The `SELECT` has no `body` column. SQL lets you choose the columns you get back, so a list takes only the ID, the title, `version`, and the two timestamps. The value passed to `LIMIT` is 20. An owner can hold up to 100 notes, but a list returns at most the newest 20, so that one response stays within 20 KiB as in chapter 04. `GET /notes/:id` returns the body by reading that one row.
 
-Here is the update.
+This is the update.
 
 <<< @/examples/13-sql/src/notes-repository.ts{update}
 
-`WHERE ... AND version = $6` is the point. If the `version` is still the one you loaded, the row is updated and the version moves by one. If not, no row is updated, and the current row is read and returned with a 409. The check and the write are one statement, so no other write fits in between.
+The key part is `WHERE ... AND version = $6`. If the `version` is still the one you loaded, the statement updates the row and advances `version` by one. If it is not, no row is updated, and the code reads the current row and returns it with a 409. The check and the write are a single statement, so no other write can come between them.
 
-The same SQL works on D1. That part of SQL is a pleasure.
+You can write the same SQL on D1.
 
 ## A transaction is retried as a whole
 
 <!-- section: 13.transactions -->
 
-From here on is where this chapter differs most from D1.
+Transactions are where this chapter differs most from D1.
 
-Creating a note first checks that the owner has not reached 100 notes. Written naively: count them, and `INSERT` if there is room. What happens when two of those run at once? Let's follow it with a cap of 2 and one note already there.
+Creating a note first checks that the owner has not yet reached 100 notes. The obvious way to write that is to count the notes and `INSERT` if there is room. The figure follows two such requests that run at the same time, with a limit of 2 and one note already present.
 
 ```figure
 caption: With a quota of 2 and an owner who already has 1 note, of two transactions that run at once, B loses at commit, retries, and hits the quota
@@ -118,72 +120,72 @@ step b -> db: t9 COMMIT
 note b: the API answers quota_exceeded
 ```
 
-An Aurora DSQL transaction keeps reading the data as it was when the transaction began (snapshot isolation). B sees `note_count = 1` as of t2, so its `UPDATE` at t4 goes through without complaint. B does not know that A has already written.
+An Aurora DSQL transaction keeps reading the data as it was when the transaction began (snapshot isolation). B sees `note_count = 1` as of t2 and does not know that A has already written, so its `UPDATE` at t4 goes through.
 
-On an ordinary PostgreSQL, B would wait at t4 for A's lock to be released. DSQL does not make it wait. It lets both proceed without locks and checks at commit whether another transaction committed the same row first. This is optimistic concurrency control (OCC). B loses at t6 and gets SQLSTATE `40001` (serialization failure). Nothing B wrote remains.
+On an ordinary PostgreSQL, B would wait at t4 for A to release its lock. DSQL does not make B wait. It lets both transactions proceed without locks, and at commit it checks whether another transaction has already committed a change to the same row. This is called optimistic concurrency control (OCC). B loses at t6 and receives SQLSTATE `40001` (serialization failure), and nothing B wrote remains.
 
-The loser has one thing to do: **run the transaction again from the start.**
+The loser **runs the transaction again from the start.**
 
 <<< @/examples/13-sql/src/transaction.ts{run}
 
-Sending just the `COMMIT` again will not do. Look at t7. The second time, B reads `note_count = 2` and decides there is no room. A different answer from the first time. Had it remembered its earlier decision and replayed only the `INSERT`, there would be a third note.
+Sending only the `COMMIT` again is not enough. At t7 in the figure, the rerun of B reads `note_count = 2` and now decides there is no room. The answer differs from the first attempt, so if B remembered its earlier decision and replayed only the `INSERT`, a third note would exist.
 
-The invariant for this chapter: **a transaction either commits as a whole or is run again as a whole, and a rerun changes its outcome only through values read from the database again.**
+The invariant for this chapter is this: **a transaction either commits as a whole or is run again as a whole, and a rerun changes its outcome only through values it reads from the database again.**
 
-To keep the second half true, the create is written like this.
+To keep the second half true, the create operation is written as follows.
 
 <<< @/examples/13-sql/src/notes-repository.ts{create}
 
-There are three rules.
+The operation follows three rules.
 
-**Inside the transaction, touch nothing but the database.** Sending an email or calling another API in there would happen twice, three times, once per rerun.
+The first is to touch nothing but the database inside the transaction. Sending an email or calling another API there would run two or three times, once for each rerun.
 
-**Decide the ID and the time outside, and pass them in.** An ID made inside the transaction would be a different note on every rerun.
+The second is to decide the ID and the time outside and pass them in. An ID generated inside the transaction would be a different note on every rerun.
 
 <<< @/examples/13-sql/src/notes.ts{service}
 
-**If the same ID is already there, do nothing.** That is the `selectNote` at the top. It is needed because the answer to a commit can fail to arrive. When a connection drops, the commit may have succeeded or not. If calling again with the same ID still leaves one note, either case is fine.
+The third is to do nothing if a row with the same ID already exists, which is what the `selectNote` at the top does. The response to a commit can fail to arrive, and when a connection drops you cannot tell whether the commit succeeded. If calling again with the same ID still leaves exactly one note, the result is the same in both cases.
 
-### Why update one row instead of counting
+### Why the code updates one row and does not count
 
-With `SELECT count(*) FROM app.notes` followed by `INSERT`, A and B both read "one note" and each inserts a different row. They did not write the same row, so DSQL sees no conflict. Both commit, and there are three notes. This is called write skew.
+With `SELECT count(*) FROM app.notes` followed by `INSERT`, A and B both read "one note" and each inserts a different row. They did not write to the same row, so DSQL sees no conflict. Both commit, and there are three notes. This is called write skew.
 
-Always updating `note_count` in `owners` is there to make the two transactions collide on one row, on purpose. Then the database stops one of them.
+The code always updates `note_count` in `owners` so that the two transactions collide on the same row on purpose. When both write the same row, the database stops one of them.
 
-The price: creates and deletes by the same owner go through one at a time. For one person's notes that is plenty. Design it so that everyone updates the same single row, and you get nothing but reruns. Deciding which row transactions collide on is the center of designing for DSQL.
+In exchange, only one create or delete by the same owner goes through at a time. That is enough for one person's notes, but a design in which everyone updates the same single row would spend most of its time on reruns. Deciding which row transactions collide on is the center of designing for DSQL.
 
-### How far to retry
+### What is retried, and how often
 
 <<< @/examples/13-sql/src/transaction.ts{policy}
 
-Only `40001` is retried. At most 4 attempts, with waits that grow and are spread out at random, so that transactions that lost together do not come back together and collide again.
+Only `40001` is retried, and there are at most 4 attempts. The wait grows with each attempt and is randomized, so that transactions that lost together do not return together and collide again.
 
-After losing four times, the API gives up with a 503.
+After losing all four attempts, the API gives up and returns a 503.
 
 <<< @/examples/13-sql/src/app.ts{errors}
 
-Every attempt was rolled back, so nothing was written. The caller can simply send it again.
+Every attempt was rolled back, so nothing was written. The caller can send the same request again as it is.
 
-Reads go through the same runner. Right after a schema change, a connection that still remembers the old schema can receive `40001` (OC001). The cost is an extra `BEGIN` and `COMMIT` round trip per read.
+Reads go through the same runner, because right after a schema change a connection that still remembers the old schema can receive `40001` (OC001). The cost is one more `BEGIN` and `COMMIT` round trip for each read.
 
-By the way, the `version` check and this retry are separate matters. `version` catches "someone changed it between opening the screen and saving": seconds to minutes. OCC catches "two commits at the same instant": milliseconds. You need both.
+The `version` check and this retry catch different things. `version` catches someone else changing the note in the seconds or minutes between opening the screen and saving. OCC catches two commits that arrive within milliseconds of each other. You need both.
 
 ## Causing a conflict on purpose
 
 <!-- section: 13.conflicts -->
 
-Awkwardly, this conflict never happens locally. PGlite has a single connection, and transactions run one after another.
+This conflict does not happen locally. PGlite has a single connection and runs transactions one at a time, in order.
 
-So what does not happen gets made to happen.
+The tests therefore create the conflict themselves.
 
 <<< @/examples/13-sql/test/support.ts{inject}
 
-When `COMMIT` arrives, it rolls back instead of committing, commits the "winner's" writes first, and then throws `40001`. That is what happens when you lose on DSQL, in the same order. The SQL itself runs on a real PostgreSQL (PGlite).
+When `COMMIT` arrives, the wrapper rolls back instead of committing, commits the winner's writes first, and then throws `40001`. This reproduces what happens when a transaction loses on DSQL, in the same order. The SQL itself runs on a real PostgreSQL (PGlite).
 
-With that, the timeline above becomes a test as it stands.
+With this in place, the timeline in the figure above can be written as a test directly.
 
 <<< @/examples/13-sql/test/notes-repository.test.ts{conflicts}
 
-The second test is the heart of the chapter. The loser of the last slot reruns and ends as `quota_exceeded`, and the count in `owners` and the number of rows in `notes` both equal the cap exactly.
+The second test is the center of this chapter. The side that loses the race for the last slot reruns and ends with `quota_exceeded`, and the count in `owners` and the number of rows in `notes` both equal the limit exactly.
 
-To be honest, this does not prove that DSQL behaves this way. It checks that this code does the right thing when DSQL returns `40001` as documented. Causing a conflict on a real cluster is still to be done.
+This test does not prove that DSQL really behaves this way. It checks that this code works correctly when DSQL returns `40001` as its documentation says. Causing a conflict on a real cluster and checking it there has not been done yet.

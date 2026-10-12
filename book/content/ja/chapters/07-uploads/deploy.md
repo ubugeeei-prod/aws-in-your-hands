@@ -4,53 +4,55 @@ title: "07 File Upload: デプロイ"
 
 # 07 File Upload: デプロイ
 
+[手元で動かした](/ja/chapters/07-uploads/local.md)アプリを AWS にのせるためのインフラと手順を、このページで見ます。デプロイの手順は用意しただけで、まだ実行していません。
+
 ## AWS にのせる準備
 
 <!-- section: 07.infra -->
 
-stack（`AihUploads`）は、06章の stack に、bucket を 1 つ、権限を 2 つ、route を 4 つ足したものです。
+スタック（`AihUploads`）は、06章のスタックに、バケットを 1 つ、権限を 2 つ、ルートを 4 つ足したものです。
 
-### bucket
+### バケット
 
 <<< @/examples/07-uploads/infra/lib/uploads-stack.ts{uploads-bucket}
 
-Block Public Access は、4 つの設定を全部有効にしています。ACL でも bucket policy でも、この bucket の object は公開できません。presigned URL は「公開」ではなく、role が署名したリクエストなので、この設定の下でも使えます。
+Block Public Access は、4 つの設定をすべて有効にしています。ACL でもバケットポリシーでも、このバケットのオブジェクトは公開できません。署名付き URL は公開ではなく、ロールが署名したリクエストなので、この設定の下でも使えます。
 
-CORS は、origin を 2 つ（デプロイした SPA と、手元の開発サーバー）、method を `POST` だけにしています。ブラウザの JavaScript が、別の origin への POST の結果を読むために要ります。`<img>` で画像を表示するのに CORS の規則は要らないので、`GET` は入れていません。
+CORS では、オリジンを 2 つ（デプロイした SPA と、手元の開発サーバー）、method を `POST` だけにしています。この設定は、ブラウザの JavaScript が別のオリジンへの POST の結果を読むために要ります。`<img>` で画像を表示するのに CORS の規則は要らないので、`GET` は入れていません。
 
-lifecycle rule は 2 つ。1 つは、さっきの pending の掃除です。もう 1 つは、未完了の multipart upload の中止。multipart upload は、大きな object を分割して送る仕組みで、完了も中止もされなかった part は、保存されたまま料金がかかり続けます。この章のアプリは multipart upload を始めません。それでも入れてあるのは、公式ドキュメントがこの規則を勧めているのと、あとで大きなファイルに対応したときに忘れないためです。
+ライフサイクルルールは 2 つあります。1 つは、[残ったものを片付ける](/ja/chapters/07-uploads/build.md)で説明した pending の掃除です。もう 1 つは、未完了の multipart upload の中止です。multipart upload は大きなオブジェクトを分割して送る仕組みで、完了も中止もされなかった part は、保存されたまま料金がかかり続けます。この章のアプリは multipart upload を始めません。それでも入れてあるのは、公式ドキュメントがこの規則を勧めているからで、あとで大きなファイルに対応したときに入れ忘れないためでもあります。
 
-`removalPolicy` は `DESTROY` です。stack を消すと、空にした bucket が消えます。
+`removalPolicy` は `DESTROY` です。スタックを消すと、空にしたバケットが消えます。
 
 ### 関数にできること
 
 <<< @/examples/07-uploads/infra/lib/uploads-stack.ts{uploads-role}
 
-関数に許すのは、`u/` で始まる key への 5 つの操作です。`s3:PutObject` と `s3:PutObjectTagging` は、関数自身は呼びません。ブラウザのアップロードが、関数の署名を使って実行します。署名した role に権限がなければ、許可証は使えません。
+関数に許すのは、`u/` で始まるキーへの 5 つの操作です。そのうち `s3:PutObject` と `s3:PutObjectTagging` は、関数自身は呼びません。ブラウザのアップロードが、関数の署名を使って実行します。署名したロールに権限がなければ、許可証は使えません。
 
-`s3:ListBucket` は、一覧のためではありません。公式ドキュメントによると、存在しない key への `HeadObject` は、呼び出し側にこの権限があれば 404、なければ 403 を返します。403 では、「まだ送られていない」と「権限がない」の区別がつきません。
+`s3:ListBucket` は、一覧を取るための権限ではありません。公式ドキュメントによると、存在しないキーへの `HeadObject` は、呼び出し側にこの権限があれば 404 を、なければ 403 を返します。403 では、まだ送られていないのか、権限がないのかを区別できません。
 
 <<< @/examples/07-uploads/infra/lib/uploads-stack.ts{routes}
 
-テストは、template に対して次を確かめます。
+テストは、テンプレートに対して次のことを確かめます。
 
-- 2 つの bucket がどちらも、Block Public Access の 4 つの設定を有効にしている
-- アップロード用の bucket の policy に、`Allow` が 1 つもない
-- CORS の規則が 1 つで、method が `POST` だけ、`*` を含まない
-- lifecycle rule が、pending の tag と multipart upload の 2 つである
+- 2 つのバケットがどちらも、Block Public Access の 4 つの設定を有効にしている
+- アップロード用のバケットのポリシーに、`Allow` が 1 つもない
+- CORS の規則が 1 つで、method が `POST` だけで、`*` を含まない
+- ライフサイクルルールが、pending のタグと multipart upload の 2 つである
 - 関数の S3 の権限が、上の 6 つの操作だけで、`*` の action も `*` の resource もない
-- `/health` 以外のすべての route に、足した 4 つも含めて、JWT authorizer と scope が付いている
-- stage に 06章と同じ throttle（1 秒 10 リクエスト、瞬間的に 20）が、table に同じ request unit の上限が付いている
+- `/health` 以外のすべてのルートに、足した 4 つも含めて、JWT オーソライザーとスコープが付いている
+- ステージに 06章と同じスロットリング（1 秒 10 リクエスト、瞬間的に 20）が、テーブルに同じリクエストユニットの上限が付いている
 
-throttle は、足した route にもそのまま効きます。許可証を求めるリクエストも、1 秒 10 回より速くは通りません。
+スロットリングは、足したルートにもそのまま働きます。許可証を求めるリクエストも、1 秒 10 回より速くは通りません。
 
-使っているリソースの種類は、06章と同じ 19 種類です。アップロード用の bucket は、新しい種類を足しません。固定した版の cdkd は、`AWS::S3::Bucket` に専用の実装を持っていて、lifecycle と CORS の設定を扱うコードがあることを、パッケージの中で確かめました。専用の実装がない 3 種類（`AWS::CloudFront::Function`、`AWS::Cognito::UserPoolClient`、`AWS::Cognito::UserPoolDomain`）は、06章と同じです。
+使っているリソースの種類は、06章と同じ 19 種類です。アップロード用のバケットは、新しい種類を足しません。固定した版の cdkd が `AWS::S3::Bucket` に専用の実装を持っていて、ライフサイクルと CORS の設定を扱うコードがあることは、パッケージの中で確かめました。専用の実装がない 3 種類（`AWS::CloudFront::Function`、`AWS::Cognito::UserPoolClient`、`AWS::Cognito::UserPoolDomain`）は、06章と同じです。
 
 ## デプロイする
 
 <!-- section: 07.deploy -->
 
-ここから先は、実行していません。手順とタスクを用意したところまでです。
+ここから先の手順は、実行していません。手順とタスクを用意したところまでです。
 
 ```bash
 vp run uploads:infra:diff
@@ -61,18 +63,18 @@ vp run uploads:smoke:web
 vp run uploads:smoke:api
 ```
 
-流れは 06章と同じです。違うのは `uploads:smoke:api` で、環境変数 `AIH_ACCESS_TOKEN` に access token を入れて実行すると、本物の bucket に対して次を試します。
+流れは 06章と同じです。違うのは `uploads:smoke:api` で、環境変数 `AIH_ACCESS_TOKEN` にアクセストークンを入れて実行すると、本物のバケットに対して次のことを試します。
 
-- 大きすぎるファイル、違う `Content-Type`、違う key の 3 つを、S3 が拒否すること
-- 小さな PNG が送れて、完了できて、一覧に出ること
-- 返ってきた URL が、token なしで画像を返すこと
+- 大きすぎるファイル、違う `Content-Type`、違うキーの 3 つを、S3 が拒否すること
+- 小さな PNG を送れて、完了でき、一覧に出ること
+- 返ってきた URL が、トークンなしで画像を返すこと
 - 削除すると、同じ URL が画像を返さなくなること
 
-この章の「まだ」は、ほとんどこのタスクで確かめられます。token を入れなかった場合は、token なしのリクエストが拒否されることだけを確かめて、「アップロードの経路は確かめていない」と表示します。
+この章でまだ確かめていないことの大半は、このタスクで確かめられます。トークンを入れなかった場合は、トークンなしのリクエストが拒否されることだけを確かめて、アップロードの経路は確かめていないと表示します。
 
-06章の stack（`AihNotesApp`）とは、別の stack です。user pool も table も別なので、両方をデプロイすると、利用者もノートも別々になります。
+このスタックは、06章のスタック（`AihNotesApp`）とは別のスタックです。ユーザープールもテーブルも別なので、両方をデプロイすると、利用者もノートも別々になります。
 
-drift の検査は、これまでと同じです。
+ドリフトの検査は、これまでの章と同じです。
 
 ```bash
 vp run uploads:infra:drift

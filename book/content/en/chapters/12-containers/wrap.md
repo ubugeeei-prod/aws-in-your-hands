@@ -8,9 +8,9 @@ title: "12 Containers: Costs, Pitfalls, and Cleanup"
 
 <!-- section: 12.cost -->
 
-Amounts are in USD, for the Tokyo Region, on demand, before tax, with a month of 730 hours. The arithmetic is in the [pricing worksheet](/en/reference/pricing.md).
+Amounts are in USD for the Tokyo Region, on demand, before tax, with a month counted as 730 hours. The calculations are in [Pricing calculations](/en/reference/pricing.md).
 
-First, what it costs just to exist, in the default layout.
+The first table is what the default setup costs just for existing.
 
 | Item | Quantity | Unit price | Per month |
 | --- | --- | --- | --- |
@@ -20,17 +20,17 @@ First, what it costs just to exist, in the default layout.
 | Public IPv4 addresses | (2 for the ALB + 2 tasks) × 730 hours | 0.005 per hour | 14.60 |
 | Subtotal | | | **50.33** |
 
-One day is USD 1.65. On top comes the storage of the images in the repository (USD 0.10 per GB a month; USD 0.01 assuming one image of 0.1 GB).
+That is USD 1.65 a day. Storage for the image in the repository comes on top (USD 0.10 per GB a month, which is USD 0.01 if one image is assumed to be 0.1 GB).
 
-Three things to read from the table.
+The table shows three things.
 
-**Doing nothing costs about 25 times the Lambda chapter.** Chapter 04 came to USD 2.02 for a million requests a month. This is USD 50.33 for zero requests. If you choose containers, you need a reason worth that fixed cost.
+**Doing nothing costs about 25 times what the Lambda chapter did.** Chapter 04 came to USD 2.02 for a million requests a month, and this chapter comes to USD 50.33 for zero requests. If you choose containers, you need a reason that justifies this fixed cost.
 
-**Public IPv4 addresses cost about as much as Fargate.** Four of them are USD 14.60 a month. The load balancer has a node per zone, and each uses one. The tasks' share goes away if you move them to private subnets, but then the charge for a NAT gateway or endpoints comes in its place.
+**Public IPv4 addresses cost about as much as Fargate.** Four of them are USD 14.60 a month. The ALB has a node in each zone, and each node uses one address. The tasks' addresses are no longer needed if you move the tasks to private subnets, but then you pay for a NAT gateway or for endpoints.
 
 **arm64 is a fifth cheaper.** One task of the same size is USD 9.00 a month on arm64 and USD 11.25 on x86.
 
-When it is called, it looks like this. The assumption: a million requests a month, with the service staying at two tasks.
+The next table assumes a million requests a month, with the number of tasks staying at two.
 
 | Item | Quantity | List price |
 | --- | --- | --- |
@@ -41,11 +41,11 @@ When it is called, it looks like this. The assumption: a million requests a mont
 | Data transfer out to the internet | 0.477 GB | 0.05 |
 | Subtotal | | **50.63** |
 
-After the monthly CloudWatch Logs allowance (5 GB) it is USD 50.48. A million more requests add USD 0.29. Nearly all of it is the fixed part.
+After the monthly free allowance of CloudWatch Logs (5 GB), it is USD 50.48. A million more requests add only USD 0.29. Almost all of it is fixed cost.
 
-An LCU is the unit a load balancer bills its work in. Of new connections, concurrent connections, bytes passed, and rule evaluations, the largest one counts. Here I assumed one connection per request and computed with new connections. What the LCU usage is with no requests (whether health checks count) I could not confirm, so the first table doesn't include it. That means not included, not zero.
+An LCU is the unit the ALB uses to bill for the work it does. Of four measures (new connections, active connections, bytes processed, and rule evaluations), the largest is the one billed. The calculation here treats one request as one connection and uses new connections. LCU usage with no requests (whether health checks count) could not be confirmed, so it is not in the first table. That means it is left out, not that it is zero.
 
-Changing where the tasks live gives this.
+Changing where the tasks are changes the totals as follows.
 
 | Layout | This chapter's stack | Chapter 11's side | Total |
 | --- | --- | --- | --- |
@@ -53,35 +53,37 @@ Changing where the tasks live gives this.
 | `-c taskSubnets=private` and one NAT gateway | 43.03 | 48.91 | 92.07 |
 | `-c taskSubnets=private` and three interface endpoints | 43.03 | 61.32 | 104.37 |
 
-The totals include image storage (USD 0.01) and assumed data volumes: 2 GB a month through the NAT gateway, 1 GB a month through the endpoints.
+The totals include image storage (USD 0.01) and the cost of assumed data volumes: 2 GB a month through the NAT gateway and 1 GB a month through the endpoints.
 
-About free allowances. I found no free allowance on the Fargate pricing page. The ALB and ECR pages describe allowances for new customers, but they don't apply to every account, so nothing is deducted.
+No free allowance is deducted. I found none on the Fargate pricing page. The ALB and ECR pages describe allowances for new customers, and those do not apply to every account.
 
-**If it is hammered.** Anyone who knows the load balancer's URL can call it over HTTP. There is no authentication. And a load balancer has nothing like the stage throttling of API Gateway: no rate limit that comes for free. Every request that arrives goes all the way to a task.
+**When it gets hammered.** Anyone who knows the ALB's URL can call it over HTTP. There is no authentication. An ALB also has no rate limit that comes at no extra charge, as the stage throttling of API Gateway does, so every request that arrives reaches a task.
 
-Here is what stops, and what does not.
+Under a flood of requests, some things have a ceiling and some do not.
 
-- **The fixed cost stops.** Tasks never go past `maxCount`, which is 4. Four of them running all month cost USD 75.62 just for being there (Fargate 35.98, the load balancer 17.74, six public IPv4 addresses 21.90)
-- **Memory stops.** A task keeps at most 100 notes. The 101st gets 409. A body is at most 10,000 characters, so the notes one task holds come to about a million characters at most. A task holds at most 512 connections, and a request body is at most 64 KiB
-- **LCUs, logs, and data transfer do not stop.** Each grows with what arrives. There is no ceiling
+- **The fixed cost has a ceiling.** The number of tasks never goes past `maxCount`, which is 4. Four tasks running all month cost USD 75.62 just for existing (Fargate 35.98, the ALB 17.74, six public IPv4 addresses 21.90)
+- **Memory has a ceiling.** A task keeps at most 100 notes, and the 101st gets a 409. A body is at most 10,000 characters, so the notes one task holds come to about a million characters at most. A task holds at most 512 connections, and a request body is at most 64 KiB
+- **LCUs, logs, and data transfer have no ceiling.** Each grows with the requests that arrive
 
-To size the part that does not stop, take the assumptions of the table above (one connection per request, 0.2 KB of logs, a 0.5 KB response). At 100 requests a second for 30 days, that is 259.2 million requests: USD 23.04 for LCUs, USD 37.57 for log ingestion, and USD 14.09 for data transfer, USD 74.70 a month in all. At 1,000 a second, ten times that. Whether four tasks of 0.25 vCPU can answer that many has not been measured. The requests they fail to answer still reached the load balancer. Also, an LCU is counted on the largest of its four dimensions. What a stream of large bodies would come to on the bytes dimension has not been calculated. Data transfer also moves with the size of the responses. Under chapter 04's contract a list is 20 summaries and at most 20 KiB, and one note is at most 64 KiB. If all of 100 responses a second were 64 KiB notes, that would be about 15,820 GB in 30 days, or about USD 1,664 for data transfer alone.
+To size the part without a ceiling, take the assumptions of the table above (one connection per request, 0.2 KB of logs, a 0.5 KB response). At 100 requests a second for 30 days, that is 259.2 million requests: USD 23.04 for LCUs, USD 37.57 for log ingestion, and USD 14.09 for data transfer, USD 74.70 a month in all. At 1,000 a second it is ten times that. Whether four tasks of 0.25 vCPU can answer that many requests has not been measured. The requests the tasks fail to answer have still reached the ALB.
 
-Before real users arrive, the entrance needs a rate limit. AWS WAF can be attached to a load balancer ([chapter 21](/en/chapters/21-security.md)). The WAF unit prices this book holds are the ones for CloudFront, though. The price of a web ACL on a load balancer in the Tokyo Region has not been checked. While you are only practising, another option is to narrow the load balancer's security group to your own IP address (this chapter's stack does not).
+Two things are missing from that calculation. An LCU is counted on the largest of its four measures, and what a stream of large request bodies would come to on the bytes measure has not been calculated. Data transfer also changes with the size of the responses. Under chapter 04's contract, a list is 20 summaries and at most 20 KiB, and one note is at most 64 KiB. If all of 100 responses a second were 64 KiB notes, that would be about 15,820 GB in 30 days, or about USD 1,664 for data transfer alone.
 
-Redeploy without a tag, leaving only the repository, and the hourly charges stop. What remains is image storage.
+Before real users arrive, the entry point needs a rate limit. AWS WAF can be attached to an ALB ([chapter 21](/en/chapters/21-security.md)). The WAF unit prices this book holds are the ones for CloudFront, though, and the price of a web ACL on an ALB in the Tokyo Region has not been checked. While you are only practicing, you can also narrow the ALB's security group to your own IP address (this chapter's stack does not).
 
-How the hourly items are counted is in code.
+If you redeploy without a tag and leave only the repository, the hourly charges stop and only image storage remains.
+
+How the hourly items are counted is written as code.
 
 <<< @/examples/12-containers/src/cost.ts{billable}
 
-The tests check that the hours this function produces match the scenarios in the pricing data, and that the amounts written here match what the calculator returns.
+The tests check that the hours this function produces match the scenarios in the pricing data, and that the amounts on this page match what the calculator returns.
 
 ## If you come from Cloudflare
 
 <!-- section: 12.cloudflare -->
 
-Cloudflare has Containers too. Here are the differences as far as I read the documentation. (I have not used it to check.)
+Cloudflare has Containers too. The differences below come from reading its documentation (I have not used it to check them).
 
 | | Cloudflare Containers | This chapter (ECS on Fargate and an ALB) |
 | --- | --- | --- |
@@ -93,42 +95,42 @@ Cloudflare has Containers too. Here are the differences as far as I read the doc
 | Network | Nothing to design | You decide the VPC, subnets, and security groups |
 | Locally | `wrangler dev`, which needs a Docker-compatible CLI and engine | This sample runs directly on Node.js. Only building the image needs Docker |
 
-The biggest difference is the idle time. A Cloudflare container sleeps and the charges stop. In exchange there is a start from the stopped state (a cold start), which the documentation puts at 1 to 3 seconds in many cases. An ECS service doesn't stop, so nobody waits. In exchange you pay for the time it isn't used.
+The biggest difference is what happens while nothing is using it. A Cloudflare container sleeps and its charges stop, at the price of a start from the stopped state (a cold start), which the documentation puts at 1 to 3 seconds in many cases. An ECS service does not stop, so nobody waits for a start, and you pay for the time it is not used.
 
-One more. On Cloudflare a Worker and a Durable Object always sit in front of the container, and you write routing and starting as code. On ECS the load balancer and the service settings play that part. Which fits depends on what you're building.
+The other difference is where routing and starting are decided. On Cloudflare a Worker and a Durable Object always sit in front of the container, and you write routing and starting as code. On ECS the ALB and the service settings do that job. Which one fits depends on what you are building.
 
-Receiving SIGTERM and finishing the work in flight before stopping is the same on both. So is old and new living together during an update: Cloudflare's documentation also says that new Worker code can reach containers on the previous image. The second half of this chapter carries over as it is.
+Finishing the work in flight after SIGTERM and then stopping is the right design on both. Old and new running together during an update is the same too: Cloudflare's documentation also says that new Worker code can reach containers on the previous image. "What happens during an update" and "Old and new run side by side" in [Build, Continued](/en/chapters/12-containers/more.md) apply to Cloudflare as they are.
 
 ## Where it goes wrong
 
 | If this happens | Look here |
 | --- | --- |
-| `dev:ecs` stops with `Invalid environment` | Does `examples/12-containers/.env` exist? Check the variable named in the message |
+| `dev:ecs` stops with `Invalid environment` | Check that `examples/12-containers/.env` exists, and check the variable named in the message |
 | `ecs:image:build` stops with `No Docker daemon answered` | You have the client and no running daemon. Start Docker Desktop or similar |
-| The push fails with `ImageTagAlreadyExistsException` | That tag is taken. Tags are immutable, so use a new one |
-| The deploy sits at the service for a long time, then fails | The tasks can't start. Read `stoppedReason` with `aws ecs list-tasks --desired-status STOPPED` and `aws ecs describe-tasks`. Often the image can't be fetched (a mistyped tag, or private subnets with no route) |
-| The tasks run, but the load balancer's URL returns an error | Check with `aws elbv2 describe-target-health` whether the targets are healthy. Does `/health` answer 200, and does the security group allow port 8080? |
-| A 502 comes back now and then | Is the server's keep-alive shorter than the load balancer's idle timeout? Check the relations in `src/timing.ts` |
-| A few requests fail on every update | SIGTERM isn't received (is `CMD` written as an array?), or some requests take longer than the deregistration delay |
+| The push fails with `ImageTagAlreadyExistsException` | That tag is already in use. Tags are immutable, so use a new one |
+| The deploy sits at the service for a long time, then fails | The tasks cannot start. Read `stoppedReason` with `aws ecs list-tasks --desired-status STOPPED` and `aws ecs describe-tasks`. Often the image cannot be fetched (a mistyped tag, or private subnets with no route) |
+| The tasks run, but the ALB's URL returns an error | Check with `aws elbv2 describe-target-health` whether the targets are healthy. Check that `/health` answers 200 and that the security group allows port 8080 |
+| A 502 comes back now and then | Check whether the server's keep-alive is shorter than the ALB's idle timeout. Look at the relations in `src/timing.ts` |
+| A few requests fail on every update | SIGTERM is not received (is `CMD` written as an array?), or some requests take longer than the deregistration delay |
 | A note you created appears and disappears from call to call | There are two tasks, each with its own `Map`. That is how this chapter is built |
-| A POST gets 409 with `quota_exceeded` | That task's `Map` is full at 100 notes. The count is per task, so the same POST gets through on one and not on another. Delete a note, or wait for the task to be replaced |
+| A POST gets 409 with `quota_exceeded` | That task's `Map` is full at 100 notes. The count is per task, so the same POST gets through on one task and not on another. Delete a note, or wait for the task to be replaced |
 | `net:infra:destroy` stops with `StackHasActiveImportsError` | This chapter's stack uses the VPC. Run `ecs:infra:destroy` first |
 | You are billed although you use nothing | The service is running. Redeploy without a tag, or destroy |
 
-Apart from the first two rows, these were put together from the documentation, not seen by making them happen.
+Apart from the first two rows, these were put together from the documentation. I have not made them happen to check them.
 
 ## Before production
 
 - **Switch to HTTPS.** Get a domain name and a certificate and make the listener port 443. Right now everything is plain text
 - **Add authentication and authorization.** As in chapter 04, anyone who knows the URL can call it (chapter 06)
-- **Put a rate limit at the entrance.** A load balancer passes everything that arrives. Attach an AWS WAF rate-based rule to it (chapter 21; the price for a load balancer was not checked in this book)
-- **Keep data outside the tasks.** Right now it is gone on every update (chapters 05 and 13). At that point the rules from "Old and new run side by side" become real constraints
-- **Put the tasks in private subnets.** Whether the way out is a NAT gateway or endpoints is decided with the table in chapter 11
-- **Don't write secrets directly into environment variables.** With `secrets` in the task definition they are passed in at start from Secrets Manager or similar. The permission to read them goes on the execution role (for handling secrets, see [chapter 21](/en/chapters/21-security.md); its example is a Lambda function)
-- **Stop updates on application metrics too.** The circuit breaker only sees starting and health checks. ECS can also fail a deployment on a CloudWatch alarm (for how to put an alarm together, see [chapter 19](/en/chapters/19-observability.md))
-- **Pin the base image by digest.** The tag `node:24-bookworm-slim` keeps getting new contents. If every build should use the same image, name it by digest
-- **Use three zones and three or more tasks.** With two, the moment one zone stops you are at half capacity
-- **Review the log retention, the load balancer's deletion protection, and the repository's `emptyOnDelete`.** All of them lean toward "easy to delete", for practice
+- **Put a rate limit at the entry point.** An ALB passes every request that arrives. Attach an AWS WAF rate-based rule to it (chapter 21; this book has not checked the price for an ALB)
+- **Keep data outside the tasks.** Right now it is lost on every update (chapters 05 and 13). Once it is outside, the rules in [Old and new run side by side](/en/chapters/12-containers/more.md) become real constraints
+- **Put the tasks in private subnets.** Use the table in chapter 11 to decide between a NAT gateway and endpoints for the way out
+- **Do not write secrets directly into environment variables.** Pass them in at start from Secrets Manager or similar with `secrets` in the task definition. The permission to read them goes on the task execution role (handling secrets is in [chapter 21](/en/chapters/21-security.md), where the example is a Lambda function)
+- **Stop updates on application metrics too.** The circuit breaker sees only starts and health checks. ECS can also fail a deployment on a CloudWatch alarm (how to build an alarm is in [chapter 19](/en/chapters/19-observability.md))
+- **Pin the base image by digest.** The contents behind the tag `node:24-bookworm-slim` keep changing. If every build should use the same image, name it by digest
+- **Use three zones and three or more tasks.** With two, you are at half capacity as soon as one zone stops
+- **Review the log retention, the ALB's deletion protection, and the repository's `emptyOnDelete`.** All of them are set to be easy to delete, for practice
 - **Deploy through the AWS CDK CLI and CloudFormation.** cdkd's own documentation says cdkd is for development and testing and recommends the AWS CDK CLI for production (chapter 02)
 
 ## Cleaning up
@@ -142,20 +144,20 @@ vp run ecs:infra:diff
 vp run ecs:infra:deploy
 ```
 
-Run it after `diff` shows the load balancer, the service, the task definition and so on as deletions, and the repository as staying.
+Run the deploy only after `diff` shows the ALB, the service, the task definition, and so on as deletions, and the repository as staying.
 
-To remove everything, use these.
+To remove everything, run these two.
 
 ```bash
 vp run ecs:infra:destroy
 vp run net:infra:destroy
 ```
 
-In this order. While a stack that uses the VPC remains, chapter 11's destroy is refused.
+Keep this order. While a stack that uses the VPC remains, chapter 11's destroy is refused.
 
-The repository goes together with its images (`emptyOnDelete`). So does the log group. Nothing is left outside the stack, and a test checks that no resource is set to be retained.
+The repository is deleted together with its images (`emptyOnDelete`), and so is the log group. Nothing is left outside the stack, and a test checks that no resource is set to be retained.
 
-In the end, looking for yourself is the sure way.
+To be sure, check for yourself at the end.
 
 ```bash
 aws elbv2 describe-load-balancers --region ap-northeast-1
@@ -163,32 +165,32 @@ aws ecs list-clusters --region ap-northeast-1
 aws ecr describe-repositories --region ap-northeast-1
 ```
 
-If the first shows no load balancer from this chapter and the second no cluster, this chapter's hourly charges have stopped. The third should show only the repository that `cdkd bootstrap` created in chapter 02.
+If the first shows no load balancer from this chapter and the second shows no cluster, this chapter's hourly charges have stopped. The third should show only the repository that `cdkd bootstrap` created in chapter 02.
 
-The daemon on your machine keeps the images you built. `docker image rm aih-notes:v1` removes one.
+The daemon on your machine still has the images you built. `docker image rm aih-notes:v1` removes one.
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** The test that starts the server as a child process and sends SIGTERM in the middle of a request. The graceful shutdown tests (including that removing `sweep` turns `drained` into `forced` and fails them). The test that runs an old and a new version at the same time. Unit tests for the timing relations, settings, the `docker` command lines, pricing, and the stack assertions. Type checking. `ecs:infra:synth` (without a tag, with `-c imageTag=v1`, with `-c imageTag=v1 -c taskSubnets=private`, and that `-c imageTag=latest` is refused). `ecs:bundle` and `ecs:bundle:check`. `dev:ecs`, started, with the chapter's `curl` commands and the log lines on Ctrl-C. `ecs:image:build`, `ecs:image:run`, and `ecs:image:push` with `--dry-run`, and the message they print without a daemon. `ecs:watch`, pointed at a local server with `--url`. That a synthesis using `ecs.ContainerImage.fromAsset` succeeds with no `docker` command on the PATH (aws-cdk-lib 2.273.0). The `docker` flags were checked against the help of Docker CLI 29.7.2. The amounts in the text are what `tools/src/pricing/calc.ts` computes from Price List unit prices, and `examples/12-containers/test/pricing.test.ts` compares them.
+**Checked locally.** The test that starts the server as a child process and sends SIGTERM in the middle of a request. The graceful shutdown tests (including that removing `sweep` turns `drained` into `forced` and fails them). The test that runs an old and a new version at the same time. Unit tests for the timing relations, the settings, how the `docker` commands are assembled, pricing, and the stack assertions. Type checking. `ecs:infra:synth` (without a tag, with `-c imageTag=v1`, with `-c imageTag=v1 -c taskSubnets=private`, and that `-c imageTag=latest` is refused). `ecs:bundle` and `ecs:bundle:check`. `dev:ecs`, started, with the `curl` commands from the text and the log lines on Ctrl-C. `ecs:image:build`, `ecs:image:run`, and `ecs:image:push` with `--dry-run`, and the message they print when run without a daemon. `ecs:watch`, pointed at a local server with `--url`. That a synth using `ecs.ContainerImage.fromAsset` passes with no `docker` command on the PATH (aws-cdk-lib 2.273.0). The `docker` flags were checked against the help of Docker CLI 29.7.2. The amounts in the text are what `tools/src/pricing/calc.ts` computes from Price List unit prices, and `examples/12-containers/test/pricing.test.ts` compares them.
 
-**Not checked yet.** The connection cap (`maxConnections`) was only checked on local Node.js: a connection past the limit is closed without an answer. What a caller gets behind a load balancer when it is full, and what happens to health checks, are unchecked. Nor was 512 arrived at by measuring. No Docker daemon was running, so the image has never been built. Unverified as a result: that the Dockerfile builds, that the `.dockerignore` exception works, that the image starts on the arm64 base image, that it runs with `--read-only`, and how large the image is (the 0.1 GB in the cost tables is an assumption). `ecs:infra:diff`, `ecs:infra:deploy`, `ecs:image:push`, `ecs:watch`, `ecs:logs`, `ecs:infra:drift`, and `ecs:infra:destroy` have not been run against real AWS. All of the following wait for a real environment. That cdkd 0.296.28 creates and deletes this stack. That the chapter 11 VPC can be read through `Fn::ImportValue` from a stack in another app. That the three types routed through Cloud Control API work. That tasks in public subnets can fetch the image, and that egress on port 443 alone is enough. Both routes for `-c taskSubnets=private`. The load balancer's health checks and fail-open behavior. That no request fails during a rolling update. That SIGTERM arrives after the target has been deregistered. The circuit breaker's rollback, and what cdkd prints then. Auto scaling in both directions. That redeploying without a tag removes only the load balancer and the tasks. The symptoms under "Where it goes wrong".
+**Not checked yet.** The connection limit (`maxConnections`) was checked only on local Node.js: a connection past the limit is closed without an answer. What a caller gets behind an ALB when the connections are at the limit, and what happens to the health checks, have not been checked. The number 512 was not chosen by measuring either. No Docker daemon was running, so the image has never been built. As a result these are unverified: that the Dockerfile builds, that the exception in `.dockerignore` works, that the image starts on the arm64 base image, that it runs with `--read-only`, and how large the image is (the 0.1 GB in the cost tables is an assumption). `ecs:infra:diff`, `ecs:infra:deploy`, `ecs:image:push`, `ecs:watch`, `ecs:logs`, `ecs:infra:drift`, and `ecs:infra:destroy` have not been run against real AWS. All of the following wait for a check in a real environment. That cdkd 0.296.28 can create and delete this stack. That the chapter 11 VPC can be read with `Fn::ImportValue` from another app's stack. That the three types that go through the Cloud Control API work. That tasks in public subnets can fetch the image, and that egress on port 443 alone is enough. Both routes for `-c taskSubnets=private`. The ALB's health checks and fail open. That no errors occur during a rolling update. That SIGTERM arrives after the target has been deregistered. The circuit breaker's rollback, and what cdkd prints when it happens. Auto scaling up and down. That redeploying without a tag removes only the ALB and the tasks. The symptoms under "Where it goes wrong".
 
-Not confirmed from a primary source. A load balancer's LCU usage with no requests. Whether the service-linked roles for ECS and Application Auto Scaling are created automatically on the first deploy in an account. Whether redeploying a service that auto scaling has grown sets the number of tasks back to the `desiredCount` of 2. How many public IPv4 addresses a load balancer uses once it adds nodes under load. That `node:24-bookworm-slim` on Docker Hub has an arm64 variant: only the beginning of the API response (the amd64 entry) was read. Cloudflare Containers was only read about.
+Not confirmed from a primary source. An ALB's LCU usage with no requests. Whether the service-linked roles for ECS and Application Auto Scaling are created automatically on the first deploy in an account. Whether redeploying a service while auto scaling is active sets the number of tasks back to the `desiredCount` of 2. How many public IPv4 addresses an ALB uses once it adds nodes under load. That `node:24-bookworm-slim` on Docker Hub has an arm64 variant: I read only the beginning of the API response (the amd64 entry) and did not confirm it. For Cloudflare Containers, I only read the documentation.
 
-Resource types and cdkd. In `src/provisioning/register-providers.ts` at the `v0.296.28` tag, dedicated implementations are registered for `AWS::ECS::Cluster`, `TaskDefinition`, and `Service` (the ECS provider), `AWS::ElasticLoadBalancingV2::LoadBalancer`, `TargetGroup`, and `Listener` (the ELBv2 provider), `AWS::ECR::Repository`, `AWS::EC2::SecurityGroup`, `SecurityGroupIngress`, `AWS::IAM::Role`, `Policy`, and `AWS::Logs::LogGroup`. `AWS::ApplicationAutoScaling::ScalableTarget`, `ScalingPolicy`, and `AWS::EC2::SecurityGroupEgress` are not registered and not on the unsupported list, so they go through Cloud Control API. The ECS provider treats a changed task definition as a replacement (a new revision is registered, the old one deregistered); for a service it returns by default once `CreateService` or `UpdateService` is accepted, and waits for stability only with `--full-wait`. The ECR provider deletes a repository together with its images only when `EmptyOnDelete` is true. The npm tarball contains no TypeScript source, so I read the archive of the GitHub tag.
+Resource types that cdkd handles. In `src/provisioning/register-providers.ts` at the `v0.296.28` tag, dedicated implementations are registered for `AWS::ECS::Cluster`, `TaskDefinition`, and `Service` (the ECS provider), `AWS::ElasticLoadBalancingV2::LoadBalancer`, `TargetGroup`, and `Listener` (the ELBv2 provider), `AWS::ECR::Repository`, `AWS::EC2::SecurityGroup`, `SecurityGroupIngress`, `AWS::IAM::Role`, `Policy`, and `AWS::Logs::LogGroup`. `AWS::ApplicationAutoScaling::ScalableTarget`, `ScalingPolicy`, and `AWS::EC2::SecurityGroupEgress` are not registered and are not on the unsupported list, so they go through the Cloud Control API. The ECS provider treats a change to a task definition as a replacement (it registers a new revision and deregisters the old one). For a service, it returns by default once `CreateService` or `UpdateService` is accepted, and waits for stability only with `--full-wait`. The ECR provider deletes a repository together with its images only when `EmptyOnDelete` is true. The npm tarball contains no TypeScript source, so I read the archive of the GitHub tag.
 
 **Where the code is.**
 
-| Section | Files | Tasks |
+| Section | Files | `vp run` tasks |
 | --- | --- | --- |
 | The big picture | `examples/12-containers/infra/lib/containers-stack.ts`, `src/config.ts` | `ecs:infra:synth` |
 | docker is two programs | `examples/12-containers/src/image.ts`, `scripts/image.ts` | `ecs:image:build` |
 | From a handler to a server that keeps running | `examples/12-containers/src/compose.ts`, `src/env.ts`, `src/server.ts`, `test/compose.test.ts`, `.env.example` | `dev:ecs`, `test:unit` |
-| Decide how you are stopped | `examples/12-containers/src/serve.ts`, `src/server.ts`, `test/shutdown.test.ts` | `test:unit` |
+| What the server does when it is stopped | `examples/12-containers/src/serve.ts`, `src/server.ts`, `test/shutdown.test.ts` | `test:unit` |
 | Build the image | `examples/12-containers/Dockerfile`, `.dockerignore`, `scripts/bundle.ts`, `scripts/check-bundle.ts`, `src/image.ts` | `ecs:bundle`, `ecs:bundle:check`, `ecs:image:build`, `ecs:image:run` |
 | Where the image is kept | `examples/12-containers/infra/lib/containers-stack.ts`, `infra/bin/app.ts`, `src/config.ts`, `test/config.test.ts` | `ecs:infra:synth`, `ecs:image:push`, `test:unit` |
-| Which subnet do the tasks live in? | `examples/12-containers/infra/lib/containers-stack.ts`, `infra/test/containers-stack.test.ts`, `examples/11-network/infra/lib/import-network.ts` | `test:unit`, `net:plan` |
-| There are two roles | `examples/12-containers/infra/lib/containers-stack.ts`, `infra/test/containers-stack.test.ts` | `test:unit` |
+| Which subnets the tasks go in | `examples/12-containers/infra/lib/containers-stack.ts`, `infra/test/containers-stack.test.ts`, `examples/11-network/infra/lib/import-network.ts` | `test:unit`, `net:plan` |
+| The two roles | `examples/12-containers/infra/lib/containers-stack.ts`, `infra/test/containers-stack.test.ts` | `test:unit` |
 | The service and the load balancer | `examples/12-containers/infra/lib/containers-stack.ts`, `src/timing.ts`, `test/timing.test.ts` | `test:unit`, `ecs:infra:synth` |
 | What happens during an update | `examples/12-containers/infra/lib/containers-stack.ts`, `src/timing.ts`, `scripts/watch.ts`, `src/watch.ts` | `ecs:watch` |
 | Old and new run side by side | `examples/12-containers/src/compat.ts`, `test/versions.test.ts` | `test:unit` |

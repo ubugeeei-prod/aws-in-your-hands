@@ -7,11 +7,11 @@ sourceRevision: 3
 
 **Practical AWS for TypeScript Developers**
 
-You know TypeScript, HTTP, Git, and ordinary web app development. AWS accounts, IAM, networking, pricing, and operations are new to you. If that sounds like you, this book is written for you.
+This book is for developers who are at home with TypeScript, HTTP, Git, and web app development, and who have not yet worked with AWS accounts, IAM, networking, pricing, or operations.
 
-It is not here to talk you out of Cloudflare or Vercel. Both are easy to start with and pleasant to work in. What this book wants is for AWS to be one more tool you can reach for. It won't claim that AWS is always cheaper, faster, or better.
+It does not ask you to leave Cloudflare or Vercel. Both are easy to start with and pleasant to develop on. The aim is to add AWS alongside them, so that you can choose by what you are building. The book does not claim that AWS is always cheaper, faster, or better.
 
-By the end, you should be able to explain these things about what you built:
+The goal is that, when you finish, you can explain these things about what you built:
 
 - What you built, and why you chose that architecture
 - Where your code runs
@@ -19,25 +19,23 @@ By the end, you should be able to explain these things about what you built:
 - What you can check on your own machine, and what you can only check in a real environment
 - What you would add before using it in production
 
-## How much is written so far?
+## What is written, and what has been checked
 
-All 25 chapters, 00 through 24, have their text and their samples.
+All 25 chapters, 00 through 24, have their text and their samples. Written is not the same as run and checked, though, and the checking goes only as far as what runs on a local machine.
 
-Written is not the same as run and checked, though. To be honest, the checking stops at the local machine.
+- From [00 Introduction](/en/chapters/00-welcome.md) to [24 Self-hosting](/en/chapters/24-celld.md), every chapter passes the local checks (`vp run check:all`). Those checks are formatting and lint, type checks, tests, CDK synth, loading the Lambda bundles, and building the book and checking its links
+- No chapter has been deployed to AWS or run there, not even once. The post-deployment steps in the text are prepared, but they have not been run through
+- This book's own site is not published yet either, and it has no public URL
 
-- [00 Welcome](/en/chapters/00-welcome.md) through [24 celld](/en/chapters/24-celld.md): every chapter passes the local checks (`vp run check:all`). That covers formatting and lint, type checks, tests, CDK synth, loading the Lambda bundles, and building the book and checking its links
-- Against AWS, no chapter has been deployed or run, not even once. The post-deployment steps in the text are prepared, but nobody has gone through them yet
-- This book's own site is not published either. There is no public URL
+What was checked locally differs by chapter. Some chapters have tests only, and for others the server was started and exercised with `curl` or a browser. The breakdown for each chapter is in "Verification notes for this chapter" at its end. Which commands were run, when, what passed, and what is still open are collected in the [Validation Record](/en/reference/validation.md).
 
-What was checked locally differs from chapter to chapter. Some chapters have tests only. For others, the server was started and exercised with `curl` or a browser. The breakdown is in "Verification notes for this chapter" at the end of each chapter. Which commands were run, when, what passed, and what is still open is all in the [Validation Record](/en/reference/validation.md).
+## Where to start
 
-## Where do you start?
-
-- To read in order, start with [00 Welcome](/en/chapters/00-welcome.md)
+- To read in order, start with [00 Introduction](/en/chapters/00-welcome.md)
 - If you know Cloudflare D1, Workers, and Workers AI, read [Coming from Cloudflare](/en/guides/cloudflare.md)
 - To follow distributed-systems topics such as idempotency and conflicts across chapters, read the [Distributed Systems Guide](/en/guides/distributed.md)
-- To rebuild this book's own site with the same architecture, read [Reproduce This Site](/en/reference/book-site.md)
+- To rebuild this book's site with the same architecture, read [Reproduce This Site](/en/reference/book-site.md)
 
-## All the code is in the repository
+## Where the code is
 
-Every piece of code the text explains lives in the same repository as the book. The code you see in a chapter is pulled in from the actual files. It is not a fragment rewritten for the explanation. The end of each chapter lists which files go with which section.
+All the code the text explains is in the same repository as the book. The code shown in a chapter is pulled in from the actual files, not rewritten as a fragment for the explanation. The end of each chapter lists which files go with which section.

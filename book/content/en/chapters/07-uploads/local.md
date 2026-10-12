@@ -4,51 +4,53 @@ title: "07 File Upload: Run It Locally"
 
 # 07 File Upload: Run It Locally
 
-## Running it locally
+This page runs the attachment feature described up to [Design and Build](/en/chapters/07-uploads/build.md) on your machine, without S3.
+
+## Run it on your machine
 
 <!-- section: 07.local -->
 
-Copy `examples/07-uploads/.env.example` to `.env` in the same place.
+Copy `examples/07-uploads/.env.example` to a file named `.env` in the same place.
 
 <<< @/examples/07-uploads/.env.example
 
-Use two terminals.
+Use two terminals and run one of these tasks in each.
 
 ```bash
 vp run dev:uploads:api
 vp run dev:uploads:web
 ```
 
-Open <http://localhost:5173>, sign in, create a note, and open it. Choose a file under "Images" and the image is attached. Sign in as `bob` in another browser and neither Alice's note nor her image is visible.
+Open <http://localhost:5173>, sign in, create a note, and open it. Choosing a file under "Images" attaches the image. If you sign in as `bob` in another browser, you see neither Alice's notes nor her images.
 
-No Docker, no AWS credentials, no bucket.
+You need no Docker, no AWS credentials, and no bucket.
 
 ### Standing in for S3
 
 <<< @/examples/07-uploads/api/src/object-store.ts{port}
 
-The app receives "a place that holds bytes" as this interface. In AWS it is S3. On your laptop it is an in-memory implementation.
+The app receives the place where bytes are stored as this interface. On AWS it is S3, and locally it is an in-memory implementation.
 
 <<< @/examples/07-uploads/api/src/local-store-http.ts{local-store}
 
 <<< @/examples/07-uploads/api/src/dev.ts{dev}
 
-The local implementation has an endpoint for the form inside the development server. Its permits carry a small policy signed with the development secret, and it refuses a different key, a different type, a file that is too large, and an expired permit.
+The local implementation has an endpoint inside the development server that receives the form. Its permits carry a small policy signed with the development secret, and it refuses a different key, a different type, a file that is too large, and an expired permit.
 
-This is not an emulation of S3. It is a stand-in that lets the app's ordering and authorization run. What it does not reproduce:
+The local implementation is not a simulation of S3. It is a stand-in that lets the app's ordering and authorization run. It doesn't reproduce the following.
 
-- The real evaluation of a POST policy: what S3 refuses, and with what response
+- The real evaluation of a POST policy. What S3 refuses, and with what response, isn't reproduced
 - The bucket's CORS. Locally the development server returns its own CORS headers
-- IAM: whether the execution role has enough permissions
+- IAM. You can't tell whether the execution role has enough permissions
 - Lifecycle rules. Locally, a pending object stays forever
 - URLs expiring early when credentials expire
 
-An S3-compatible server in a container would get you a little closer to the real thing. That needs Docker, and the Docker daemon is not part of the Nix shell. This chapter provides no task for it. The daemon was not running where this was written, so it was not tried either.
+Running an S3-compatible server in a container would get a little closer to the real thing. That needs Docker, and the Docker daemon is not part of the Nix shell. This chapter provides no task for it. The daemon was not running where this was written, so it was not tried either.
 
 ### The screen
 
-The SPA is built on chapter 06's `web/`. Sign-in, loading the configuration, and parsing routes are imported from chapter 06's files as they are. The only addition is the images panel under the note form.
+The SPA is built on chapter 06's `web/`. Sign-in, loading the configuration, and parsing routes are imported unchanged from chapter 06's files. The only addition is the images panel under the note form.
 
 <<< @/examples/07-uploads/web/src/check-file.ts{check-file}
 
-When you choose a file, the browser checks the type and size as well. That is a courtesy, not a control. Send a file that would fail the check directly, and S3 refuses it (locally, the in-memory implementation does).
+When you choose a file, the browser also checks its type and size. The check is there to tell the user early, and it is not a defense. If a file that fails the check is sent directly, S3 refuses it (locally, the in-memory implementation does).

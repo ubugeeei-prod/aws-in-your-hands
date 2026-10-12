@@ -4,6 +4,8 @@ title: "13 SQL: Costs, Pitfalls, and Cleanup"
 
 # 13 SQL: Costs, Pitfalls, and Cleanup
 
+This last page of the chapter puts the differences from D1 into one table, and then goes through the costs, where to look when something fails, what to change for production, and the cleanup.
+
 ## For people coming from D1
 
 <!-- section: 13.d1 -->
@@ -15,32 +17,32 @@ title: "13 SQL: Costs, Pitfalls, and Cleanup"
 | Migrations | Wrangler runs numbered `.sql` files in order. A failed migration is rolled back | This chapter's runner runs numbered `.sql` files in order. One statement per file, written so that it can be run again after an interruption |
 | Connecting | A binding (`env.DB`) | A TCP connection. An IAM token is the password |
 | Transactions | The statements listed in one `batch()` form a transaction | From `BEGIN` to `COMMIT`. You can read a value and decide the next statement |
-| Simultaneous writes | Writes all go to the one primary | Conflicts are checked at commit; the loser gets `40001` and reruns |
+| Simultaneous writes | Writes all go to the one primary | Conflicts are checked at commit. The loser gets `40001` and reruns |
 | Where reads are served | Read replicas around the world, asynchronous | Three AZs in one Region, synchronous |
-| Backup | Time Travel: any minute of the last 30 days | AWS Backup: the whole cluster; a restore is a new cluster |
+| Backup | Time Travel, to any minute of the last 30 days | AWS Backup, for the whole cluster. A restore is a new cluster |
 | Billing units | Rows read, rows written, storage | DPUs, storage |
 
-The biggest difference is consistency.
+The largest difference is consistency.
 
-D1's read replicas receive copies from the primary asynchronously. So a replica can be arbitrarily out of date. The Sessions API makes up for that: within one session it guarantees that reads never go backwards and that you can read what you wrote (sequential consistency). The scope of the guarantee is the session. What another session sees is a separate matter unless a bookmark is passed along. And without the Sessions API, every query goes to the primary.
+D1's read replicas receive copies from the primary asynchronously, so a replica can be arbitrarily out of date. The Sessions API compensates for that. Within one session it guarantees that reads never go backwards and that you can read what you wrote (sequential consistency). The guarantee covers the session, and what another session sees is not guaranteed unless you pass a bookmark along. Without the Sessions API, every query goes to the primary.
 
-A single-Region Aurora DSQL cluster writes synchronously to three AZs. What was committed is visible to every transaction that follows. There are no sessions or bookmarks to think about. In exchange, a cluster in Tokyo is in Tokyo. There is nothing in this setup like D1's read replicas, which put copies near faraway readers.
+A single-Region Aurora DSQL cluster writes synchronously to three AZs. Whatever was committed is visible to every transaction that follows, so you never have to think about sessions or bookmarks. In exchange, a cluster in Tokyo is in Tokyo. This setup has nothing like D1's read replicas, which place copies near distant readers.
 
-That is why DSQL is not "D1, distributed". D1 is a database you write in one place and can read far away. DSQL is a database where, inside one Region, you see the same thing wherever you write. They aim at different places. Multi-Region clusters exist, but only within a set of nearby Regions (for Tokyo, Osaka and Seoul among others). This chapter does not cover them.
+This is why the start of the chapter said that DSQL is not a distributed D1. D1 is a database that you write to in one place and can read from far away, and DSQL is a database in which you see the same data wherever you write within one Region. Multi-Region clusters exist too, but only within a set of Regions in the same area (for Tokyo, Osaka and Seoul among others), and this chapter does not cover them.
 
-Transactions are written differently too. D1's `batch()` takes all its statements up front. You cannot look at a result halfway and branch. DSQL lets you read, decide, and write between `BEGIN` and `COMMIT`. The quota logic above does exactly that. In return for that freedom, you write the retry yourself.
+Transactions are written differently as well. D1's `batch()` takes all of its statements up front, so you cannot look at a result partway through and branch. On DSQL you can read, decide, and write between `BEGIN` and `COMMIT`. The quota handling on the [Design and Build](/en/chapters/13-sql/build.md) page is an example. The price of that freedom is that you write the retry yourself.
 
-There are plenty of places where D1 is easier: bindings, the real thing locally, Time Travel. This book does not tell you to leave D1. Read this as an option for when SQLite is not enough, when you need PostgreSQL's SQL, or when the database should sit right next to other AWS services.
+D1 is easier in many places, such as bindings, a local mode that runs the same thing as production, and Time Travel. This book does not recommend leaving D1. Read this chapter as an option for when SQLite is not enough and you need PostgreSQL's SQL, or when you want the database right next to other AWS services.
 
-## What it costs
+## Costs
 
 Amounts are in USD, for the Tokyo Region, on-demand, before tax. The calculations are in [Pricing Worksheets](/en/reference/pricing.md).
 
-Aurora DSQL bills two things. DPUs (one unit covering the compute, reads, and writes spent running SQL) at 10.00 per million, and storage at 0.40 per GB-month. Each month the first 100,000 DPUs and the first GB are free. The pricing page does not say whether that allowance ever ends.
+Aurora DSQL bills only two things, DPUs and storage. A DPU is one unit that covers the compute, reads, and writes spent running SQL, and it costs 10.00 per million. Storage costs 0.40 per GB-month. Each month the first 100,000 DPUs and the first GB are free. The pricing page does not say whether this allowance has an end date.
 
-**In a month with no queries, you pay for storage only.** With 1 GB stored that is 0.40 at list price, and 0 inside the allowance.
+**In a month with no queries, you pay only for storage.** With 1 GB stored, that is 0.40 at list price and 0 within the free allowance.
 
-Here are three ways of merely existing for a month.
+The next table compares the three services for a month in which the database only sits there.
 
 | Setup | Assumptions | List price / month |
 | --- | --- | --- |
@@ -49,11 +51,11 @@ Here are three ways of merely existing for a month.
 | Aurora Serverless v2 (no auto-pause) | Staying at the 0.5 ACU minimum for 730 hours, 1 GB | **54.87** |
 | Aurora Serverless v2 (paused all month) | 0 ACU minimum, never resumed, 1 GB | 0.12 |
 
-For RDS that is 18.25 for the instance and 2.76 for storage. For Aurora, 54.75 for capacity and 0.12 for storage. The RDS free tier was not checked for this chapter, so nothing is deducted. That means unknown, not zero.
+For RDS, the instance is 18.25 and storage is 2.76. For Aurora, capacity is 54.75 and storage is 0.12. The RDS free tier was not checked for this chapter, so nothing is deducted. That means unknown, not zero.
 
-The last row is the most favorable case. Aurora resumes the instance for maintenance at times, and that time is billed. RDS and Aurora also carry VPC-related charges on top (chapter 11).
+The last row is the most favorable case. Aurora sometimes resumes the instance for maintenance, and that time is billed. RDS and Aurora also add VPC-related charges (chapter 11).
 
-In use, DSQL looks like this, assuming 1 million requests a month: 900,000 reads and 100,000 writes.
+When DSQL is in use, and you assume 1 million requests a month with 900,000 reads and 100,000 writes, the cost is as follows.
 
 | Item | Quantity | List price | After the monthly allowance |
 | --- | --- | --- | --- |
@@ -61,15 +63,15 @@ In use, DSQL looks like this, assuming 1 million requests a month: 900,000 reads
 | Storage | 1 GB-month | 0.40 | 0 |
 | Subtotal | | **0.65** | **0** |
 
-A strong caveat here. 24,600 DPUs is not a measurement. It borrows the documentation's worked examples (0.00675 DPU for a read by primary key, 0.06175 DPU for a one-row `INSERT`) and sets a read at 0.00675 and a write at three times that `INSERT`. The real figure for your queries comes from `EXPLAIN ANALYZE VERBOSE` or from the DPU metrics in CloudWatch.
+24,600 DPUs is not a measured value. It borrows the worked examples in the official documentation (0.00675 DPU for a read by primary key, 0.06175 DPU for a one-row `INSERT`) and simply sets one read at 0.00675 and one write at three times that `INSERT`. You can find the real figure for your queries with `EXPLAIN ANALYZE VERBOSE` or the DPU metrics in CloudWatch.
 
-This table is the database alone. Lambda, API Gateway, and logs cost what they did in chapter 04. Backups add AWS Backup charges, and more reruns add their DPUs.
+This table covers the database only. Lambda, API Gateway, and logs are charged as they were in chapter 04. Taking backups adds AWS Backup charges, and more reruns add their DPUs.
 
-### If it gets hammered
+### When it gets hammered
 
-Anyone who knows the URL can call it, as often as they like. Three things stand in the way: the stage's throttling (10 requests a second for the whole API), the quota on rows (100 per owner), and the cap on response size (20 KiB for a list, 64 KiB for one note).
+Anyone who knows the URL can call this API, any number of times. Three things limit how much it can be called: the stage throttling (10 requests a second for the whole API), the limit on rows (100 per owner), and the limits on response size (20 KiB for a list, 64 KiB for one note).
 
-10 a second for 30 days is 25.92 million requests. Say every one of them is a write, and apply the assumption from above (0.18525 DPU each). Lambda, API Gateway, and logs keep chapter 04's assumptions and unit prices.
+10 requests a second for 30 days is 25.92 million requests. Assume that every one of them is a write, and apply the assumption above (0.18525 DPU each). Lambda, API Gateway, and logs keep chapter 04's assumptions and unit prices.
 
 | Item | List price |
 | --- | --- |
@@ -80,45 +82,45 @@ Anyone who knows the URL can call it, as often as they like. Three things stand 
 | Storage (100 rows) | 0.00 |
 | Total | **100.45** |
 
-About USD 100 a month. But this table stacks assumptions on assumptions. The DPU figure is not measured, and a row with a 10,000-character body should weigh more than the one-row example. The DPUs spent on reruns after a conflict aren't in it. The 50-millisecond duration is borrowed from chapter 04, and in this chapter, which calls a database, it will be longer. Whether DSQL itself has a setting that stops DPUs hasn't been checked. The only lid this chapter puts on is the request count at the entrance.
+The total is about USD 100 a month, but this table stacks assumptions on assumptions. The DPU figure is not measured, and a row with a 10,000-character body should weigh more than the one row in the worked example. The DPUs spent on reruns after conflicts are not included. The 50-millisecond duration is borrowed from chapter 04, and in this chapter, which calls a database, it will be longer. Whether DSQL itself has a setting that stops DPUs has not been checked. The only limit this chapter applies is on the number of requests at the entrance.
 
-Data transfer for the responses isn't in it either. The calculation is the one in chapter 04's "If it gets hammered". `GET /notes` returns summaries of the newest 20 rows, and a test pins it under 20 KiB, so 10 requests a second for 30 days is about 494 GB, or about USD 56. If all 25.92 million responses were one 64 KiB note, it would still stop at about 1,582 GB, or about USD 180. Whether that unit price applies as is to API Gateway responses hasn't been checked.
+Data transfer for the responses is not in this table either. It is calculated the same way as in [the same section of chapter 04](/en/chapters/04-http-api/wrap.md). `GET /notes` returns only summaries of the newest 20 rows, and a test pins it to no more than 20 KiB, so 10 requests a second for 30 days comes to about 494 GB, or about USD 56. Even if all 25.92 million responses were a single 64 KiB note, it would stay at about 1,582 GB, or about USD 180. Whether that unit price applies as it is to API Gateway responses has not been checked.
 
-The quota comes with a caveat too. Right now everyone is the same owner (`anonymous`), so 100 rows means "100 for the whole API". If somebody fills it, nobody else can create a note. And anyone can delete. Telling callers apart is what the authentication in chapter 06 is for.
+The limit on rows has a caveat as well. At present everyone is the same owner (`anonymous`), so 100 rows means 100 rows for the whole API, and once someone fills them, nobody else can create a note. Anyone can also delete notes. Separating owners is the job of the authentication in chapter 06.
 
-If you want to stop one IP address at a time, that's AWS WAF, but it can't be attached to an HTTP API, so you'd put CloudFront in front. The web ACL in [chapter 21](/en/chapters/21-security.md) costs USD 8.00 a month plus USD 0.60 per million requests. This book doesn't build that setup.
+To stop requests per IP address you would use AWS WAF, but it cannot be attached to an HTTP API, so that setup puts CloudFront in front. The web ACL in [chapter 21](/en/chapters/21-security.md) costs USD 8.00 a month plus USD 0.60 per million requests. This book does not build that setup.
 
-Destroying the stack stops this chapter's charges.
+Destroying the stack stops the charges for this chapter.
 
-## Where it goes wrong
+## Where to look when something fails
 
 | If you see this | Look here |
 | --- | --- |
 | `dev:sql` stops with `Not applied yet` | Run `vp run sql:db:migrate:local` first |
-| `The local database ... is open in process` | `dev:sql` is running. Stop it and try again |
-| After a deploy, `/health` is 200 but `/notes` is 500 | Did you run `sql:db:migrate` and `sql:db:grant`? The log should show `relation "app.notes" does not exist` or `permission denied` |
-| `Wrong user to action mapping` in the log | The token type does not match the database role. `admin` takes the admin token, everyone else the regular one |
-| `IAM authentication failed` or access denied in the log | Does the execution role have `dsql:DbConnect`? Was `sql:db:grant` run with the current role ARN? (recreating the stack changes the ARN) |
-| A 429 like `{"message":"Too Many Requests"}` comes back | That's the stage's throttling. The whole API went past 10 requests a second. It happens on somebody else's traffic too, not only yours |
-| 503 with `busy` | Four attempts, all lost. Writes are piling up on one row. Count the `transaction retry` lines and reconsider which row they collide on |
-| `40001` only right after a migration | The schema change beat connections that remembered the old schema (OC001). The rerun should pass |
-| `use CREATE INDEX ASYNC instead` | The index statement lacks `ASYNC`. If the lint passes, check the runner's `dialect` |
+| `The local database ... is open in process` | `dev:sql` is running. Stop it and run the task again |
+| After a deploy, `/health` is 200 but `/notes` is 500 | Check that you ran `sql:db:migrate` and `sql:db:grant`. The log should show `relation "app.notes" does not exist` or `permission denied` |
+| `Wrong user to action mapping` in the log | The token type does not match the database role. Use the admin token for `admin` and the regular token for any other role |
+| `IAM authentication failed` or access denied in the log | Check that the execution role has `dsql:DbConnect` and that `sql:db:grant` was run with the current role ARN (recreating the stack changes the ARN) |
+| A 429 such as `{"message":"Too Many Requests"}` comes back | This is the stage throttling. The whole API went over 10 requests a second. It can happen because of someone else's calls, even when you are not calling |
+| 503 with `busy` | All four attempts lost. Writes are concentrating on one row. Count the `transaction retry` lines and reconsider which row they collide on |
+| `40001` appears only right after a migration | The schema change made connections that remembered the old schema lose (OC001). The rerun should pass |
+| `use CREATE INDEX ASYNC instead` | The index statement has no `ASYNC`. If the lint passes, check the runner's `dialect` |
 | `transaction row limit exceeded` | One transaction went over 3,000 rows. Split it |
-| Only the first call after a long gap is slow, or fails | The cluster is coming back from Idle or Inactive, or the connection of a frozen execution environment has dropped. Call again |
+| Only the first call after a long gap is slow, or fails | The cluster is returning from Idle or Inactive, or the connection of a frozen execution environment has dropped. Call again from the caller's side |
 
-The last row is written from imagination. What error a dropped connection produces in an execution environment that was frozen has not been seen on the real thing.
+The last row is a guess. What error a dropped connection produces in an execution environment that has returned from a freeze has not been observed on a real system.
 
 ## Before production
 
-- **Turn on deletion protection, and keep the cluster when the stack is destroyed.** Right now it is the other way around
-- **Set up a backup plan and rehearse a restore at least once.** Including the switch to the new cluster
-- **Add authentication.** Every owner is `anonymous` for now, and anyone can delete ([chapter 06](/en/chapters/06-auth.md))
-- **Fit the rate limit to your API.** 10 a second is a value for practice. When you raise it, redo the arithmetic in "If it gets hammered", data transfer included
-- **Watch the number of conflicts.** Put alarms on the `transaction retry` lines and on 503s (for counting log lines and alarming on them, see [chapter 19](/en/chapters/19-observability.md))
-- **Run migrations through a fixed path, not from a laptop.** Narrow down who and what holds `dsql:DbConnectAdmin` (for building the CI path, see [chapter 20](/en/chapters/20-shipping.md))
-- **Make creates safe to resend from the caller's side.** The server picks the ID today, so resending a `POST` whose response never arrived creates a second note. Change it to accept a key chosen by the caller
-- **Decide what to retry when a connection drops.** This chapter retries only `40001`. After a connection error you do not know whether the commit happened. Only work that gives the same result however often it runs may be retried
-- **Deploy through the AWS CDK CLI and CloudFormation.** As discussed in chapter 02
+- Turn on deletion protection, and keep the cluster when the stack is destroyed. At present it is the other way around
+- Set up a backup plan, and rehearse a restore at least once, including the switch to the new cluster
+- Add authentication. At present every owner is `anonymous`, and anyone can delete ([chapter 06](/en/chapters/06-auth.md))
+- Fit the rate limit to your own API. 10 requests a second is a value for practice. When you raise it, redo the calculation in "When it gets hammered", including data transfer
+- Watch the number of conflicts. Put alarms on the `transaction retry` lines and on the number of 503s (for counting log lines and alarming on them, see [chapter 19](/en/chapters/19-observability.md))
+- Run migrations through a fixed path, not from your own machine. Narrow down who holds `dsql:DbConnectAdmin` and where (for building the CI path, see [chapter 20](/en/chapters/20-shipping.md))
+- Make creates safe to resend from the caller's side. At present the server chooses the ID, so resending a `POST` whose response never arrived creates a second note. Change the API to accept a key chosen by the caller
+- Decide what to retry when a connection drops. This chapter retries only `40001`. After a connection error you cannot tell whether the commit happened. Only work that gives the same result however many times it runs may be retried
+- Deploy through the AWS CDK CLI and CloudFormation. Chapter 02 gives the reason
 
 ## Cleaning up
 
@@ -128,7 +130,7 @@ The last row is written from imagination. What error a dropped connection produc
 vp run sql:infra:destroy
 ```
 
-The cluster, the function, the role, the API, and the log group are deleted. The notes and the database role go with the cluster. No backup was taken, so there is no way back.
+This deletes the cluster, the function, the role, the API, and the log group. The notes and the database role are deleted with the cluster. No backup was taken, so they cannot be recovered.
 
 The local database is gone once you delete `examples/13-sql/.pglite/`.
 
@@ -136,27 +138,27 @@ What remains is the storage that cdkd's bootstrap created (chapter 02) and the d
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** Unit tests (transaction retries, the repository on PGlite, injected `COMMIT` conflicts, migration lint and resuming after an interruption, the grant statements, the API, the infrastructure). These tests also pin the list: it returns no body, it stops at 20 notes, and it stays under 20 KiB with the largest titles. Type checking. Synth, and loading the resulting bundle in Node.js 24 to see `GET /health` and the 404 for a non-UUID ID. `sql:db:reset:local`, `sql:db:migrate:local`, `sql:db:seed:local`, and that a second run changes nothing. Starting `dev:sql` and running the `curl` commands in the text (create, update, the 409 for an old `version`) plus a delete. That a reset is refused while `dev:sql` runs, and that a stale lock is taken over once the server is stopped.
+**Checked locally.** Unit tests (transaction retries, the repository on PGlite, injected `COMMIT` conflicts, migration lint and resuming after an interruption, the grant statements, the API, the infrastructure). These tests also pin the list: it returns no body, it stops at 20 notes, and it stays within 20 KiB with the largest titles. Type checking. Synth, and loading the resulting bundle in Node.js 24 to see `GET /health` and the 404 for a non-UUID ID. `sql:db:reset:local`, `sql:db:migrate:local`, `sql:db:seed:local`, and that a second run changes nothing. Starting `dev:sql` and running the `curl` commands in the text (create, update, the 409 for an old `version`) plus a delete. That a reset is refused while `dev:sql` runs, and that a stale lock is taken over once the server is stopped.
 
-**Not checked yet.** For the stage's throttling, a test pins it in the template, and the source of the pinned cdkd (0.296.28) passes `DefaultRouteSettings` on to API Gateway: that much was read, and no more. That it takes effect, the shape of the 429 body, and whether a 429 is charged for were not checked. The amounts in "If it gets hammered" are computed from unit prices, settings, and assumptions.
+**Not checked yet.** For the stage throttling, a test pins that it is in the template, and the source of the pinned cdkd (0.296.28) was read to confirm that it passes `DefaultRouteSettings` on to API Gateway. Nothing more was done. That it takes effect, the shape of the 429 body, and whether a 429 is charged for were not checked. The amounts in "When it gets hammered" are only computed from unit prices, settings, and assumptions.
 
-Nothing was ever connected to a real Aurora DSQL cluster. `sql:infra:deploy`, `sql:db:migrate`, `sql:db:grant`, `sql:db:seed`, `sql:smoke`, `sql:logs`, `sql:infra:drift`, `sql:infra:destroy`, and `dev:sql` with `NOTES_DB=dsql` have not been run. In particular, these are waiting: that DSQL accepts the four migrations. That the job ID can be read from the response to `CREATE INDEX ASYNC` and completion awaited through `sys.jobs`. That `AWS IAM GRANT` and the `GRANT`s let `notes_api` read and write. That the token passes through the `password` function. That a conflict shows up as `40001` in the `code` of node-postgres's error. That cdkd creates the cluster through Cloud Control API and `Ref` returns the identifier. Backup and restore. The DPUs in the cost section are assumptions, not measurements. RDS for PostgreSQL and Aurora Serverless v2 were only read about, in the documentation and the Price List, and never created.
+Nothing was ever connected to a real Aurora DSQL cluster. `sql:infra:deploy`, `sql:db:migrate`, `sql:db:grant`, `sql:db:seed`, `sql:smoke`, `sql:logs`, `sql:infra:drift`, `sql:infra:destroy`, and `dev:sql` with `NOTES_DB=dsql` have not been run. In particular, these are waiting to be confirmed: that DSQL accepts the four migrations. That the job ID can be read from the response to `CREATE INDEX ASYNC` and completion awaited through `sys.jobs`. That `AWS IAM GRANT` and the `GRANT`s let `notes_api` read and write. That the token from the `password` function is accepted. That a conflict shows up as `40001` in the `code` of node-postgres's error. That cdkd creates the cluster through Cloud Control API and `Ref` returns the identifier. Backup and restore. The DPUs in the cost section are assumptions, not measurements. RDS for PostgreSQL and Aurora Serverless v2 were only read about, in the documentation and the Price List, and never created.
 
 **Where the code is.**
 
 | Section | Files | Tasks |
 | --- | --- | --- |
-| The big picture, Which one? | `examples/13-sql/infra/lib/sql-stack.ts` | `sql:infra:synth` |
-| Aurora DSQL is not PostgreSQL | `examples/13-sql/src/migrate.ts`, `test/migrate.test.ts` | `test:unit` |
+| The big picture, The three options | `examples/13-sql/infra/lib/sql-stack.ts` | `sql:infra:synth` |
+| How Aurora DSQL differs from PostgreSQL | `examples/13-sql/src/migrate.ts`, `test/migrate.test.ts` | `test:unit` |
 | Schema and migrations | `examples/13-sql/migrations/`, `src/migrate.ts`, `test/migrate.test.ts` | `test:unit`, `sql:db:migrate:local` |
 | Rows into types | `examples/13-sql/src/contract.ts`, `src/db.ts`, `src/notes-repository.ts`, `src/notes.ts`, `src/app.ts` | `test:unit` |
 | A transaction is retried as a whole | `examples/13-sql/src/transaction.ts`, `src/notes-repository.ts`, `test/transaction.test.ts` | `test:unit` |
 | Causing a conflict on purpose | `examples/13-sql/test/support.ts`, `test/notes-repository.test.ts`, `test/app.test.ts` | `test:unit` |
-| Running it locally | `examples/13-sql/src/pglite.ts`, `src/dev.ts`, `src/compose.ts`, `scripts/local-db.ts`, `scripts/db-tasks.ts`, `test/fixtures/seed-notes.json`, `.env.example` | `dev:sql`, `sql:db:migrate:local`, `sql:db:seed:local`, `sql:db:reset:local` |
+| Starting and checking it | `examples/13-sql/src/pglite.ts`, `src/dev.ts`, `src/compose.ts`, `scripts/local-db.ts`, `scripts/db-tasks.ts`, `test/fixtures/seed-notes.json`, `.env.example` | `dev:sql`, `sql:db:migrate:local`, `sql:db:seed:local`, `sql:db:reset:local` |
 | Connecting from Lambda | `examples/13-sql/src/dsql.ts`, `src/lambda.ts`, `src/env.ts`, `src/grant.ts`, `infra/lib/sql-stack.ts`, `infra/bin/app.ts`, `infra/test/sql-stack.test.ts`, `cdk.json` | `sql:infra:synth`, `test:unit` |
 | Deploy, then run the migrations | `examples/13-sql/scripts/cloud-db.ts`, `scripts/db-tasks.ts`, `scripts/smoke.ts`, `scripts/logs.ts`, `test/grant.test.ts` | `sql:infra:diff`, `sql:infra:deploy`, `sql:db:migrate`, `sql:db:grant`, `sql:db:seed`, `sql:smoke`, `sql:logs`, `sql:infra:drift` |
 | Cleaning up | `tools/src/infra/`, `examples/13-sql/scripts/local-db.ts` | `sql:infra:destroy`, `sql:db:reset:local` |
-| What it costs | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
+| Costs | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
 
 **Resource types and cdkd.** According to `src/provisioning/register-providers.ts` at the pinned version (0.296.28), `AWS::ApiGatewayV2::Api`, `Integration`, `Route`, `Stage`, `AWS::IAM::Policy`, `AWS::IAM::Role`, `AWS::Lambda::Function`, `AWS::Lambda::Permission`, and `AWS::Logs::LogGroup` have dedicated providers. `AWS::DSQL::Cluster` does not. It goes through Cloud Control API. `cc-protection-properties.ts` at the same tag registers `DeletionProtectionEnabled` as its deletion protection property.
 

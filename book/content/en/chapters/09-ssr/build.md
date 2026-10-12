@@ -4,11 +4,13 @@ title: "09 SSR: Design and Build"
 
 # 09 SSR: Design and Build
 
+On [the previous page](/en/chapters/09-ssr.md) you built Nuxt into a shape that Lambda can run. This page puts that build behind CloudFront and then goes through the cache boundary, the BFF, and streaming, in that order.
+
 ## From CloudFront to Lambda
 
 <!-- section: 09.connect -->
 
-In chapter 04, an API Gateway HTTP API stood in front of Lambda. This time CloudFront is in front. How should CloudFront reach Lambda? There are two candidates.
+In chapter 04 an API Gateway HTTP API stood in front of Lambda. This time CloudFront does, and there are two ways to connect CloudFront to Lambda.
 
 | | Lambda function URL | API Gateway HTTP API |
 | --- | --- | --- |
@@ -16,147 +18,147 @@ In chapter 04, an API Gateway HTTP API stood in front of Lambda. This time Cloud
 | Refusing calls that don't come from CloudFront | Origin access control can make a signature mandatory | No built-in mechanism; you improvise with a custom header or similar |
 | Response streaming | Yes | No (as in chapter 04's table; REST APIs have it) |
 | JWT authorizer, throttling, per-route settings | No | Yes |
-| POST from a browser | Doesn't pass as-is when combined with origin access control (see below) | Passes |
+| POST from a browser | Does not pass as it is when combined with origin access control (see "Don't leave the function URL public" on this page) | Passes |
 
-A function URL is a dedicated HTTPS endpoint attached to one Lambda function. This chapter picks it. The reasons: serving public pages needs none of API Gateway's features, and "Lambda refuses any request that didn't come through CloudFront" can be written in IAM.
+A function URL is a dedicated HTTPS endpoint attached to one Lambda function. This chapter uses a function URL, because serving public pages needs none of API Gateway's features and because the rule "Lambda refuses any request that did not come through CloudFront" can be written in IAM.
 
-The other way round, if you want POST from browsers, JWT validation at the door, or per-route rate limits, that's when you choose API Gateway instead.
+If you need to accept POST from browsers, validate JWTs at the entrance, or limit the rate per route, choose API Gateway instead.
 
 ### The function
 
 <<< @/examples/09-ssr/infra/lib/ssr-stack.ts{function}
 
-The difference from chapter 04 is `code`. Instead of `NodejsFunction`, it hands over the `.output/server` that Nitro made, as it is. The execution role is the same as in chapter 04: it may write to its own log group and nothing more.
+The difference from chapter 04 is `code`. The stack does not use `NodejsFunction` and passes the `.output/server` directory that Nitro produced, unchanged. The execution role is the same as in chapter 04 and can only write to the function's own log group.
 
-`timeout` is 10 seconds. CloudFront waits 30 seconds for an origin's response by default. Running longer than that means nobody is left to receive the answer.
+`timeout` is 10 seconds. CloudFront waits 30 seconds for an origin's response by default, so a function that runs longer than that has nobody left to answer.
 
-The last few lines are a ceiling on how many copies run at once (reserved concurrency). It's off by default. Pass something like `-c reservedConcurrency=5` at deploy time and it's on.
+The last few lines set a limit on how many invocations run at once (reserved concurrency). The limit is off by default and is set when you pass something like `-c reservedConcurrency=5` at deploy time.
 
 <<< @/examples/09-ssr/infra/lib/ssr-stack.ts{reserved}
 
-In chapter 04 we put a requests-per-second limit on API Gateway. A function URL behind CloudFront has no free setting like that. Every request that misses the cache runs the function, however many arrive. This number is what can cap that. Whatever goes past it is refused without the function running.
+In chapter 04 you put a limit on requests per second in API Gateway. A function URL behind CloudFront has no free setting that does the same, so every request that misses the cache runs the function, however many arrive. Reserved concurrency puts a limit on that number, and requests beyond the limit are refused without running the function.
 
-It's not the default because the deploy might fail. Reserved concurrency sets N aside out of the account's whole concurrency allowance. A brand-new account can have a small allowance, and then the reservation itself is refused. What happens in your account is something this book can't check. When to turn it on comes up under "What it costs", with numbers.
+It is not the default because it can make the deploy fail. Reserved concurrency sets N aside from the account's total concurrency. A new account can have a small total, and then the reservation itself is refused. This book cannot check what happens in your account. When to turn it on is covered, with the amounts, under "When it gets hammered" on [the costs page](/en/chapters/09-ssr/wrap.md).
 
 ### Don't leave the function URL public
 
 <<< @/examples/09-ssr/infra/lib/ssr-stack.ts{url}
 
-A function URL has an `AuthType`. Set it to `NONE` and anyone who knows the URL can call the function. They'd bypass CloudFront, which makes the cache settings, and any WAF you add later, meaningless.
+A function URL has an `AuthType` setting. With `NONE`, anyone who knows the URL can call the function. Because they can go around CloudFront, the cache settings and any WAF you add later stop having an effect.
 
-Here it is `AWS_IAM`. Lambda turns away an unsigned request with a 403 before the function runs. And CloudFront's origin access control (OAC) signs the requests it sends to the origin. It's the Lambda version of what chapter 03 used for S3.
+The stack therefore sets `AuthType` to `AWS_IAM`. Lambda refuses an unsigned request with a 403 before the function runs, and CloudFront's origin access control (OAC) signs the requests it sends to the origin. This is the Lambda counterpart of what chapter 03 used for S3.
 
-CDK's `origins.FunctionUrlOrigin.withOriginAccessControl` adds two permissions to the function's resource policy: `lambda:InvokeFunctionUrl` and `lambda:InvokeFunction`. Both name `cloudfront.amazonaws.com` as the principal and this distribution's ARN as the condition. A function URL created from October 2025 on needs both. The tests check that these two are the only permissions, and that none has `*` as its `Principal`.
+CDK's `origins.FunctionUrlOrigin.withOriginAccessControl` adds two permissions to the function's resource policy, `lambda:InvokeFunctionUrl` and `lambda:InvokeFunction`. Both name `cloudfront.amazonaws.com` as the principal and this distribution's ARN as the condition. A function URL created in October 2025 or later needs both. The tests check that these two are the only permissions and that none of them has `*` as its `Principal`.
 
-One constraint here matters later. With OAC, the sender of a POST or PUT request has to put the SHA-256 of the body in an `x-amz-content-sha256` header. An ordinary HTML form sends no such header. So this stack lets only GET and HEAD through, and CloudFront turns POST away before it gets anywhere.
+OAC comes with one constraint that affects a later section. For a POST or PUT request, the sender has to put the SHA-256 of the body in an `x-amz-content-sha256` header. An ordinary HTML form does not send that header, so this stack allows only GET and HEAD, and CloudFront refuses POST.
 
 ### Follow the shape of the build
 
 <<< @/examples/09-ssr/infra/bin/app.ts{app}
 
-The function URL's `InvokeMode` is the setting that pairs with the handler's shape. `BUFFERED` receives the whole response and then returns it; `RESPONSE_STREAM` receives it as a stream. Rather than have a person keep two places in step, the stack reads `nitro.json`. The shape that was built becomes the setting.
+The function URL's `InvokeMode` has to match the shape of the handler. `BUFFERED` receives the whole response and then returns it, and `RESPONSE_STREAM` receives it as a stream. So that nobody has to keep the two in step by hand, the stack reads `nitro.json`, and the shape that was built becomes the `InvokeMode`.
 
-What happens when the two disagree isn't described in the AWS documentation, and it hasn't been tried on real infrastructure. That's the reason for building it so they can't disagree.
+The AWS documentation does not say what happens when the handler's shape and `InvokeMode` disagree, and I have not tried it on real infrastructure. Since the outcome is unknown, the stack is built so that they cannot disagree.
 
-## Where the cache boundary is
+## The cache boundary
 
 <!-- section: 09.cache -->
 
-Now the main subject. First, the accident to avoid, concretely.
+This is the most important section of the chapter. The accident to prevent happens in this order.
 
-1. Alice signs in and opens `/me`. Lambda builds "Alice's page" and returns it
+1. Alice signs in and opens `/me`. Lambda builds Alice's page and returns it
 2. CloudFront stores that response as the answer for `/me`
-3. Bob opens `/me`. CloudFront doesn't ask Lambda; it returns the stored page, which is Alice's
+3. Bob opens `/me`. CloudFront does not ask Lambda and returns the stored page, which is Alice's
 
-Unless you configure it otherwise, CloudFront doesn't look at cookies. Two requests that differ only in their cookies are the same request to it. That's why step 3 happens.
+Unless you configure it to, CloudFront does not look at cookies. It treats two requests that differ only in their cookies as the same request, and that is why step 3 happens.
 
-Here is what must hold, in one sentence.
+The rule to uphold fits in one sentence.
 
-**A response that was built after looking at someone's cookie or `Authorization` header never enters a shared cache.**
+**A response built after looking at someone's cookie or `Authorization` header never enters a shared cache.**
 
-Guard that in one place only, and it leaks the moment that place is wrong. So there are three layers.
+If only one place upholds the rule, a mistake in that place is a leak. The chapter therefore upholds it in three layers.
 
 ### Layer 1: split by path
 
 <<< @/examples/09-ssr/core/routes.ts{routes}
 
-Everything that varies per person goes under `/me`. That's the whole rule. Both the app and the CDK stack import this definition, so that "the app thinks `/account` is personal too, but CloudFront was never told" can't happen.
+Everything that varies from person to person goes under `/me`, and that is the only rule. Both the app and the CDK stack import this definition, so the app cannot treat `/account` as personal while the CloudFront configuration leaves it out.
 
 ### Layer 2: no cookies reach the public side
 
 <<< @/examples/09-ssr/infra/lib/ssr-stack.ts{public-policy}
 
-This is the cache policy for everything except `/me`. `cookieBehavior` and `headerBehavior` are `none`. In CloudFront, a value that isn't in the cache key isn't sent to the origin either. So the Lambda function that builds a public page never receives a cookie in the first place.
+This is the cache policy for everything outside `/me`. `cookieBehavior` and `headerBehavior` are `none`. CloudFront does not send the origin a value that is not in the cache key, so the Lambda function that builds a public page never receives a cookie.
 
-`queryStringBehavior` is `none` too. None of this chapter's pages reads a query string. Put it in the cache key and `/?x=1` and `/?x=2` are separate cache entries. Anyone could miss the cache every time just by appending a random number, and each miss runs the 512 MB function. Left out, the same path is the same cache entry whatever is appended. When you add a page that does read a query string, list only the names it reads, as in `cloudfront.CacheQueryStringBehavior.allowList("page")`.
+`queryStringBehavior` is `none` as well. None of this chapter's pages reads a query string. With the query string in the cache key, `/?x=1` and `/?x=2` would be separate cache entries, and anyone could miss the cache on every request by appending a random number, running the 512 MB function each time. With the query string left out, the same path hits the same cache entry whatever is appended. When you add a page that reads a query string, put only the names it reads in the key, as in `cloudfront.CacheQueryStringBehavior.allowList("page")`.
 
-Back to cookies. This is what does the work. With no cookie, Lambda has no way of knowing who is looking. What it doesn't know, it can't write into the HTML. If someone later adds code that shows "Hello, Alice" on a public page, it works only on their machine; through CloudFront, no name appears. The accident falls on the side of "nothing is shown," not "it leaks."
+Withholding cookies has a second effect. Without a cookie, Lambda has no way to know who is looking, and it cannot write a name it does not know into the HTML. If someone later adds code that shows "Hello, Alice" on a public page, the name appears only on their own machine and not through CloudFront. A mistake results in something not being shown, not in something leaking to another person.
 
-The three TTL numbers each mean something too.
+Each of the three TTL values has a reason.
 
-- `minTtl` is 0. At 1 or more, CloudFront caches for that many seconds even when the origin returns `Cache-Control: private, no-store`. The documentation carries this as a warning
-- `defaultTtl` is 0 as well. A response with no `Cache-Control` isn't cached
-- `maxTtl` is 60 seconds. If the app asks for a long time by mistake, this is the ceiling
+- `minTtl` is 0. At 1 or more, CloudFront caches for that many seconds even when the origin returns `Cache-Control: private, no-store`. The documentation describes this behavior in a warning
+- `defaultTtl` is also 0, so a response with no `Cache-Control` is not cached
+- `maxTtl` is 60 seconds, so 60 seconds is the limit even if the app asks for longer by mistake
 
-One more thing: `Set-Cookie`. CloudFront can cache the `Set-Cookie` an origin returned along with the response, and hand the same cookie to everyone who hits the cache. If that happened with a session cookie, everybody would be signed in as the same person. That's why the response headers policy on the public side removes `Set-Cookie`.
+`Set-Cookie` needs care too. CloudFront can cache the `Set-Cookie` header an origin returned along with the response and hand the same cookie to everyone who hits the cache. If that happened with a session cookie, everyone would be signed in as the same person. That is why the response headers policy on the public side removes `Set-Cookie`.
 
-And the `/me` side.
+The `/me` side looks like this.
 
 <<< @/examples/09-ssr/infra/lib/ssr-stack.ts{personal}
 
-`CACHING_DISABLED` is the managed policy that turns caching off. Whatever headers the app sends, nothing under `/me` is stored. This is the only place where cookies are delivered to Lambda.
+`CACHING_DISABLED` is the managed policy that turns caching off. Whatever headers the app returns, no response under `/me` is stored. This behavior is the only one that delivers cookies to Lambda.
 
-The distribution lines up these two kinds of behavior.
+The distribution lists these two kinds of behavior.
 
 <<< @/examples/09-ssr/infra/lib/ssr-stack.ts{distribution}
 
 ### Layer 3: the app says so itself
 
-The CloudFront settings aren't trusted alone. For every response, the app also says "this may be shared" or "this may not," in a header. That header is the only thing a local dev server understands, or any other cache that may someday sit before or after CloudFront.
+The app does not rely on the CloudFront settings alone. It also states in a header, for every response, whether the response may be shared. That header is the only signal that the local dev server understands, and the only one that would reach another cache placed before or after CloudFront in the future.
 
 <<< @/examples/09-ssr/core/cache-control.ts{values}
 
-The value for a shareable response is `public, max-age=0, s-maxage=60`. It means: the browser asks CloudFront again every time (`max-age=0`), and CloudFront may answer by itself for up to 60 seconds (`s-maxage=60`).
+The value for a shareable response is `public, max-age=0, s-maxage=60`. `max-age=0` tells the browser to ask CloudFront again every time, and `s-maxage=60` lets CloudFront answer by itself for up to 60 seconds.
 
 <<< @/examples/09-ssr/core/cache-control.ts{decide}
 
-Only a response that reaches the last line may be shared. It's a GET or HEAD, outside `/me`, with neither a cookie nor `Authorization` on the request, setting no cookie, with status 200. Miss any one of those and it's `private, no-store`.
+Only a response that reaches the last line of the function may be shared. It has to be a GET or HEAD, outside `/me`, with no cookie and no `Authorization` on the request, setting no cookie, and with status 200. If any one condition fails, the value is `private, no-store`.
 
-The cookie's name isn't inspected. Any cookie at all stops sharing. Write "only for the session cookie" and a hole opens the day someone renames the cookie.
+The function does not look at the cookie's name, and any cookie at all prevents sharing. A condition such as "only for the session cookie" would open a hole on the day someone renames the cookie.
 
-A Nitro plugin puts this on every response.
+A Nitro plugin applies this decision to every response.
 
 <<< @/examples/09-ssr/server/plugins/cache-control.ts{plugin}
 
-The point is that there are two hooks. The moment a request arrives, `private, no-store` goes on. After the handler has finished, the responses that meet the conditions are rewritten to `public`. If an exception stops the second hook from running, what remains is the "don't share" value.
+There are two hooks for a reason. The first sets `private, no-store` as soon as a request arrives. The second runs after the handler has finished and rewrites the header to `public` only for responses that meet the conditions. If an exception keeps the second hook from running, the value that remains is the one that forbids sharing.
 
 ### What actually went wrong
 
-There's a slightly odd condition called `isInternalPath`. A test taught me that one.
+The `isInternalPath` condition in the decision is hard to explain from the code alone. I learned it was needed only when a test failed.
 
-Open a note that doesn't exist and Nuxt returns a 404 error page. To build it, Nuxt calls a path named `/__nuxt_error` once more inside the server, and copies the headers of that inner response onto the real, outer one. The inner request is "a GET with no cookie, and the status is 200." The first version of the code judged that to be a public page and put `public, s-maxage=60` on the 404.
+When you open a note that does not exist, Nuxt returns a 404 error page. To build that page, Nuxt calls the path `/__nuxt_error` once more inside the server and copies the headers of that inner response onto the real, outer response. The inner request is a GET with no cookie, and its status is 200. The first version of the code judged it to be a public page and put `public, s-maxage=60` on the 404 response.
 
-The check that calls the built handler for real (`ssr:check:output`, coming up) found it. You can pull the decision out into a pure function and test it, and still not know when, or how many times, the framework calls that function until you run it. This was a case of that.
+The mistake was found by the check that calls the built handler for real (`ssr:check:output`, under [Run It Locally](/en/chapters/09-ssr/local.md)). Even when a decision is extracted into a pure function and tested, you do not know when or how many times the framework calls that function until you run it.
 
 ### Reproducing the leak, in a fixed order
 
-`test/support/shared-cache.ts` is a deliberately sloppy shared cache. Its key is the path alone, it passes every cookie to the origin, and it stores whatever `Cache-Control` permits, `Set-Cookie` included. Think of it as the worst-configured CDN.
+`test/support/shared-cache.ts` is a shared cache that is sloppy on purpose. Its key is the path alone, it passes every cookie to the origin, and it stores any response that `Cache-Control` permits, `Set-Cookie` included. It stands for a CDN with the worst possible configuration.
 
-The tests send requests through this cache in the order "Alice, then Bob."
+The tests send requests through this cache as Alice and then as Bob.
 
-- With an origin that puts `public` on everything, Alice's page reaches Bob. This test confirms that the leak happens. If the mechanism couldn't detect a leak, passing it would mean nothing
-- With an origin that uses this chapter's decision, Alice's page doesn't reach Bob, on `/me` or on `/`. The same holds with the order reversed
-- The only thing left in the cache is a response built without a cookie
+- With an origin that puts `public` on every response, Alice's page reaches Bob. This test confirms that the leak really happens, because if the setup could not detect a leak, the other tests passing would mean nothing
+- With an origin that uses this chapter's decision, Alice's page does not reach Bob, on `/me` or on `/`. The same holds with the order reversed
+- The only responses left in the cache are ones built without a cookie
 
-The same sequence is also run against the real, built handler. That comes after the BFF section.
+The same sequence is also run against the real, built handler. You run that check under [Run It Locally](/en/chapters/09-ssr/local.md).
 
 ## A BFF: the token stays on the server
 
 <!-- section: 09.bff -->
 
-The SPA in chapter 06 kept the access token in the browser's memory. The table under ["Where does the token live?"](/en/chapters/06-auth.md) listed a third option: "A server-side session and a cookie (chapter 09)." This is the continuation.
+The SPA in chapter 06 kept the access token in the browser's memory. The table in [chapter 06](/en/chapters/06-auth.md) that compared places to keep a token listed a third option, a server-side session with a cookie, and left it to chapter 09. This section picks it up.
 
-If the server builds the HTML, the server is what calls the API. Then the server may as well hold the token. The browser gets a session ID that means nothing by itself. A server that exists for one front end and holds the token on the browser's behalf is called a backend for frontend (BFF).
+If the server builds the HTML, the server is also what calls the API. The server can then hold the token too, and the browser gets only a session ID that means nothing by itself. A server that exists for one front end and holds the token on the browser's behalf is called a backend for frontend (BFF).
 
 ```figure
 caption: The browser holds only a session ID, and the BFF holds the access token and calls the API.
@@ -172,61 +174,61 @@ step bff --> browser: HTML or JSON, no token
 mark bff
 ```
 
-To be upfront: the BFF in this chapter works only on your machine. The reasons come together below. Code first.
+The BFF in this chapter works only on your machine. The reasons are collected under "Why it works only locally," after the code.
 
 ### The cookie
 
 <<< @/examples/09-ssr/core/session.ts{cookie}
 
-A cookie marked `HttpOnly` can't be read from JavaScript. Even if a malicious script gets into the page, it can't carry the session ID away. As chapter 06 said, this doesn't replace defending against XSS itself. A script that got in can still act as the user from that page. What it can no longer do is take the credential and use it somewhere else.
+JavaScript cannot read a cookie marked `HttpOnly`, so a malicious script that gets into the page cannot take the session ID away. As chapter 06 said, this does not replace defending against XSS itself, because a script that got in can still act as the user from that page. What it prevents is taking the session ID and using it somewhere else.
 
-`path` is `/me`. The browser attaches this cookie only to requests under `/me`. The same boundary as cache layer 1 is drawn in the browser too.
+`path` is `/me`, so the browser attaches this cookie only to requests under `/me`. That draws the same boundary as cache layer 1 on the browser's side as well.
 
 ### The session and the token
 
 <<< @/examples/09-ssr/core/session.ts{store}
 
-Inside the session is `accessToken`. That it never leaves the server is the BFF's promise.
+The session contains `accessToken`. The BFF's promise is that this value never leaves the server.
 
-Here is the sign-in route.
+This is the sign-in route.
 
 <<< @/examples/09-ssr/server/routes/me/sign-in.post.ts{sign-in}
 
-It's for practice, so typing a name makes you that person. A real BFF would send chapter 06's authorization code to the token endpoint here and receive tokens. After that it's the same: the token goes into the session, and only the session ID goes back to the browser.
+It is for practice, so typing a name makes you that person. A real BFF would send chapter 06's authorization code to the token endpoint at this point and receive tokens. The rest is the same: the token goes into the session, and only the session ID goes back to the browser.
 
-`isSameOrigin` is the check that turns away a POST from a form placed on someone else's site. Once you authenticate by cookie, this kind of request (CSRF) becomes something to care about. It's homework that chapter 06's `Authorization` header approach didn't have.
+`isSameOrigin` is the check that refuses a POST from a form on another site. Once you authenticate by cookie, you have to defend against this kind of request (CSRF). Chapter 06's approach with the `Authorization` header did not need that defense.
 
-And the shape of what goes back to the browser.
+This is the type of the value that goes back to the browser.
 
 <<< @/examples/09-ssr/core/profile.ts{viewer}
 
-The type has no place to put a token.
+The type has no field for a token.
 
 <<< @/examples/09-ssr/server/routes/me/api/viewer.get.ts{viewer}
 
-It looks up the session from the cookie, calls the API behind it with the session's token, and returns only the profile that comes back. In this chapter the API behind it is a practice implementation in the same process.
+The route looks up the session from the cookie, calls the API behind it with the session's token, and returns only the profile that comes back. In this chapter the API behind it is a practice implementation in the same process.
 
 ### Why it works only locally
 
-There are two reasons, and you've met both in this chapter.
+There are two reasons, and both have already come up in this chapter.
 
-First, sessions sit in Lambda's memory. As chapter 04 showed, there may be more than one execution environment, and you don't choose when one disappears. If the request after sign-in lands in another one, you're no longer signed in. To make this real, sessions go somewhere every environment can read, such as chapter 05's DynamoDB.
+The first is that sessions are kept in Lambda's memory. As chapter 04 showed, there can be more than one execution environment, and you do not choose when one disappears. If the request after sign-in reaches a different execution environment, you are treated as not signed in. To make this real, keep sessions somewhere every execution environment can read, such as chapter 05's DynamoDB.
 
-Second, sign-in is a POST. The combination of a function URL and OAC doesn't let a POST from a browser form through as it is.
+The second is that sign-in is a POST. A function URL combined with OAC does not pass a POST from a browser form as it is.
 
-So the deployed stack turns the practice sign-in off (`AIH_SSR_SIGN_IN=off`). And if it's left on by accident, the server stops at startup on Lambda.
+The deployed stack therefore turns the practice sign-in off (`AIH_SSR_SIGN_IN=off`). If it is left on by mistake and put on Lambda, the server stops with an error at startup.
 
 <<< @/examples/09-ssr/core/env.ts{env}
 
-What can be checked in a deployed environment goes as far as "`/me` isn't cached, with or without a cookie." That someone holding a cookie really gets their own page is checked only locally and against the built handler.
+In a deployed environment you can check only that `/me` is not cached, with or without a cookie. That someone holding a cookie really gets their own page is checked only locally and against the built handler.
 
-## Streaming is about the whole path
+## Streaming depends on the whole path
 
 <!-- section: 09.streaming -->
 
-Response streaming means sending a response piece by piece as it is produced, before all of it exists. The first byte arrives sooner, and Lambda's 6 MB limit on response size (for buffered responses) widens to 200 MB.
+Response streaming sends a response piece by piece as it is produced, before all of it exists. The first byte arrives sooner, and Lambda's limit on response size goes from 6 MB for a buffered response to 200 MB.
 
-But if any single hop on the way "waits until everything has arrived," the reader gets it all at once. So let's go hop by hop.
+If any one hop on the way waits until everything has arrived, though, the reader gets the response all at once. The table checks each hop in turn.
 
 | Hop | Streams? | How it was checked |
 | --- | --- | --- |
@@ -237,31 +239,31 @@ But if any single hop on the way "waits until everything has arrived," the reade
 | CloudFront | Not confirmed | I haven't been able to check it |
 | The receiving end | Node.js `fetch` could read each piece as it arrived | Checked against the local dev server. Not checked in a browser |
 
-The top row matters first. The pinned Nuxt turns a page into a single string before handing it over. Even with the streaming handler, the HTML was written in one go. For Nuxt pages, streaming doesn't make the first byte arrive any sooner.
+Look at the top row first. The pinned version of Nuxt turns a page into a single string before handing it over. Even with the handler built in the streaming shape, the HTML was written in one go. For Nuxt pages, streaming does not make the first byte arrive any sooner.
 
-To watch something arrive bit by bit, there's a route called `/feed`.
+The example includes a route, `/feed`, that lets you watch a response arrive bit by bit.
 
 <<< @/examples/09-ssr/server/routes/feed.get.ts{feed}
 
-The local check swaps the `awslambda` global that the Lambda runtime provides for a fake that only records, and then calls the handler.
+The local check replaces the `awslambda` global that the Lambda runtime provides with a fake that only records writes, and then calls the handler.
 
 <<< @/examples/09-ssr/scripts/lambda-harness.ts{fake-runtime}
 
-What this confirms goes as far as "when, and what, Nitro's handler tries to write." Whether Lambda, the function URL, and CloudFront really pass the pieces along one by one can only be seen by deploying and watching `curl -N`. To be honest, I haven't seen that yet.
+This check confirms only when Nitro's handler tries to write and what it writes. Whether Lambda, the function URL, and CloudFront then pass the pieces along one by one can only be seen by deploying and watching `curl -N`, and I have not seen that yet.
 
-### Why this chapter defaults to buffered
+### Why buffered is the default
 
-Streaming has a price as well.
+Streaming also has costs.
 
-CloudFront compresses a response itself only when the origin's response has a `Content-Length`. Nitro's streaming handler adds `Transfer-Encoding: chunked` to the response. A response of unknown length is one CloudFront doesn't compress; that's how the documentation reads (not checked on real infrastructure). HTML that goes out uncompressed means more bytes transferred.
+CloudFront compresses a response itself only when the origin's response has a `Content-Length`. Nitro's streaming handler adds `Transfer-Encoding: chunked` to the response. The documentation reads as saying that CloudFront does not compress such a response, since its length is unknown (not checked on real infrastructure). HTML that is served uncompressed means more bytes transferred.
 
-The bill changes a little too. A streamed response costs USD 0.008 per GB for whatever exceeds the first 6 MB of each request. And if the reader disconnects in the middle of a stream, the function doesn't stop. You're billed for the time it ran to the end.
+The charges change a little as well. A streamed response costs USD 0.008 per GB for whatever exceeds the first 6 MB of each request. And if the reader disconnects partway through a stream, the function does not stop, and you are billed for the time it ran to the end.
 
-Nuxt pages are written in one go, so streaming gains them nothing. That's why buffered is the default. You'll want streaming when a response exceeds 6 MB, or when you add a route where arriving bit by bit is the point, such as AI output. Then do this.
+Nuxt pages are written in one go, so streaming gains them nothing, and that is why buffered is the default. You need streaming when a response exceeds 6 MB, or when you add a route where arriving bit by bit is the point, such as AI output. In that case, run these two tasks.
 
 ```bash
 vp run ssr:check:output:stream
 vp run ssr:infra:deploy
 ```
 
-The first rebuilds in the streaming shape and checks it; the second deploys that `.output` along with the `InvokeMode` that matches it. To go back to buffered, run `vp run build:ssr`.
+The first task rebuilds in the streaming shape and checks the result. The second deploys that `.output` together with the `InvokeMode` that matches it. To go back to buffered, run `vp run build:ssr`.

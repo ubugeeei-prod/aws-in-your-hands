@@ -4,13 +4,15 @@ title: "09 SSR: Deploy"
 
 # 09 SSR: Deploy
 
+This page puts the build you [checked locally](/en/chapters/09-ssr/local.md) on AWS and checks that the cache boundary also holds in CloudFront.
+
 ## Deploy and check
 
 <!-- section: 09.deploy -->
 
-From here on, I haven't yet got this through a real AWS account. The steps and the tasks are in place.
+I have not yet run the steps on this page against a real AWS account. The steps and the tasks are in place.
 
-The first time, the order is this.
+The first time, run the tasks in this order.
 
 ```bash
 vp run build:ssr
@@ -20,7 +22,7 @@ vp run ssr:assets:plan
 vp run ssr:assets:publish
 ```
 
-`ssr:infra:deploy` deploys the build that is in `.output` right now. The stack comes first because the bucket for the assets doesn't exist yet. For those few tens of seconds, the JavaScript the HTML points at isn't in S3.
+`ssr:infra:deploy` deploys the build that is in `.output` at that moment. The stack has to come first because the bucket for the assets does not exist yet. On the first deploy, this leaves a few tens of seconds in which the JavaScript that the HTML points at is not in S3.
 
 From the second time on, reverse the order.
 
@@ -30,13 +32,13 @@ vp run ssr:assets:publish
 vp run ssr:infra:deploy
 ```
 
-Put the new assets in place first, then swap the function. By the time the new HTML starts going out, the files it points at are already in S3.
+The new assets go up before the function is replaced, so by the time the new HTML starts going out, the files it points at are already in S3.
 
 <<< @/examples/09-ssr/scripts/asset-plan.ts{plan}
 
-Hashed files are only added, never overwritten. Files from older builds aren't deleted right away; they stay for 7 days. Why they stay is the next section.
+Hashed files are only added and never overwritten. Files from older builds are not deleted right away and stay for 7 days. "How stale a page may be" on this page explains why.
 
-Once they're up, check.
+Once the assets are up, check the site.
 
 ```bash
 vp run ssr:smoke
@@ -44,34 +46,34 @@ vp run ssr:smoke
 
 <<< @/examples/09-ssr/scripts/smoke-spec.ts{spec}
 
-It looks at five things.
+The task checks five things.
 
-1. Open `/` several times: the response header is `public, max-age=0, s-maxage=60`, and at least one of the later responses comes from CloudFront's cache
-2. Open `/me` and `/me/api/viewer` over and over, alternating a made-up session cookie with no cookie: always `private, no-store`, and never once from the cache
+1. When `/` is opened several times, the response header is `public, max-age=0, s-maxage=60`, and at least one of the later responses comes from CloudFront's cache
+2. However often `/me` and `/me/api/viewer` are opened, alternating a made-up session cookie with no cookie, the header is `private, no-store` and no response ever comes from the cache
 3. A `/_nuxt/` file that the HTML points at comes back marked `immutable`
 4. Opening the function URL directly returns 403
-5. CloudFront turns POST away
+5. CloudFront refuses POST
 
-Number 2 is the check that looks at this chapter's invariant in a real environment. Whether a response came from the cache is judged from its `x-cache` and `age` headers. I haven't yet seen with my own eyes how CloudFront actually returns those two.
+Number 2 is the check of this chapter's invariant in a real environment. Whether a response came from the cache is judged from its `x-cache` and `age` headers. I have not yet confirmed how CloudFront actually returns those two.
 
-Checking for drift is the same as in chapter 02.
+The drift check is the same as in chapter 02.
 
 ```bash
 vp run ssr:infra:drift
 ```
 
-## Who sees stale content, and for how long
+## How stale a page may be
 
 <!-- section: 09.stale -->
 
-A cache is also a mechanism for returning old content. In exchange for speed, whom do you allow to see something stale, and how stale? Decide it up front.
+A cache is also a mechanism that returns old content. In exchange for speed, you have to decide in advance who may be shown stale content and how stale it may be.
 
-This chapter's answer:
+This chapter decides as follows.
 
 - Public pages (`/`, `/notes/:id`, `/api/notes`): everyone may receive something up to 60 seconds old
 - Under `/me`: nothing stale. Lambda answers every time
 
-The number 60 lives in one place (`SHARED_SECONDS`), and both the app's header and CloudFront's `maxTtl` are built from it.
+The value 60 is defined in one place, `SHARED_SECONDS`, and both the app's header and CloudFront's `maxTtl` are built from it.
 
 ```figure
 caption: Each edge location has its own cache, so the moment a new note becomes visible differs from reader to reader.
@@ -93,10 +95,10 @@ step london -> lambda: t0+80 reloads
 step lambda --> london: renders; has B
 ```
 
-Each edge location has its own cache. At the same instant, a reader in Tokyo may see the new list while a reader in London sees the old one. You can't say everyone switches over together. What you can say stops at "no reader sees anything more than 60 seconds old."
+Each edge location has its own cache. At the same instant, a reader in Tokyo may therefore see the new list while a reader in London sees the old one. You cannot say that everyone switches over together. All you can say is that no reader sees anything more than 60 seconds old.
 
-If old HTML lives for 60 seconds, the JavaScript that old HTML points at is needed for at least 60 seconds too. Someone who leaves a tab open will come for the old files much later than that. That's why `ssr:assets:publish` keeps the files of older builds for 7 days. When HTML and assets are served from different places, you have to think about their two lifetimes together.
+If old HTML stays for 60 seconds, the JavaScript that the old HTML points at is needed for at least 60 seconds too. Someone who leaves a tab open comes back for the old files much later than that. That is why `ssr:assets:publish` keeps the files of older builds for 7 days. When HTML and assets are served from different places, you have to consider their two lifetimes together.
 
-When you can't wait, the invalidation from chapter 03 is available. But it means "ask the origin again from the next request on," not a guarantee that it takes effect at every edge at the same moment.
+When you cannot wait 60 seconds, you can use invalidation, as in chapter 03. Invalidation makes CloudFront ask the origin again from the next request on. It does not guarantee that the change takes effect at every edge at the same moment.
 
-Errors have a cache too. CloudFront stores a 404 or a 5xx from the origin for 10 seconds by default. The app puts `no-store` on everything that isn't a 200, but what happens to the 10 seconds in that case, I couldn't settle from the documentation. No cookie reaches the public side, so even if it is stored, it's an error page that belongs to nobody.
+Errors are cached too. By default CloudFront stores a 404 or a 5xx from the origin for 10 seconds. The app puts `no-store` on every response that is not a 200, but I could not work out from the documentation what happens to the 10 seconds in that case. No cookie reaches the public side, so even if the response is stored, it is an error page that belongs to nobody.

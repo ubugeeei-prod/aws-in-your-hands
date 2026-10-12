@@ -4,11 +4,13 @@ title: "04 HTTP API: Run It Locally"
 
 # 04 HTTP API: Run It Locally
 
+This page takes the app written on [the previous page](/en/chapters/04-http-api.md), runs it on your machine without AWS, and tests it. It ends with what happens to notes kept in memory once the app is on Lambda.
+
 ## Run it on your machine
 
 <!-- section: 04.local -->
 
-Let's run it. Copy `examples/04-http-api/.env.example` to a file named `.env` in the same place.
+Copy `examples/04-http-api/.env.example` to a file named `.env` in the same place.
 
 <<< @/examples/04-http-api/.env.example
 
@@ -16,7 +18,7 @@ Let's run it. Copy `examples/04-http-api/.env.example` to a file named `.env` in
 vp run dev:api
 ```
 
-The API comes up at <http://localhost:8787>. Try hitting it from another terminal.
+The API starts at <http://localhost:8787>. Call it from another terminal.
 
 ```bash
 curl -s http://localhost:8787/health
@@ -25,35 +27,35 @@ curl -s http://localhost:8787/notes
 curl -s -X POST http://localhost:8787/notes -H 'content-type: application/json' -d '{"title":""}'
 ```
 
-The last one fails on purpose. You should get back a 400 whose `code` is `invalid_request` and whose `issues` include `title`. In the server's terminal, one line of JSON goes by for each request. Save a source file and it restarts on its own.
+The last call fails on purpose. You should get a 400 whose `code` is `invalid_request` and whose `issues` include `title`. The server's terminal prints one line of JSON for each request, and the server restarts by itself when you save a source file.
 
-Here's all there is to this development server.
+The development server is nothing more than this code.
 
 <<< @/examples/04-http-api/src/dev.ts{dev}
 
-It's the same app that runs on Lambda, sitting on an ordinary Node.js HTTP server. That's why it's light, and why nothing gets billed. The flip side: it isn't Lambda itself, so some things aren't reproduced.
+It puts the same app that runs on Lambda on an ordinary Node.js HTTP server. It starts quickly and costs nothing. It isn't Lambda, though, so it doesn't reproduce the following.
 
-- **API Gateway's routes**: in production, for a path you didn't define, API Gateway returns 404 before the request reaches Lambda
-- **Lambda's limits**: work that runs past 10 seconds is cut off. Memory has a ceiling too
-- **IAM**: AWS operations you haven't allowed are denied
-- **API Gateway's CORS**: in production, API Gateway answers preflight requests before they ever reach Lambda
-- **Execution environments coming and going**: what's in memory isn't guaranteed to still be there at the next invocation
+- API Gateway's routes. In production, API Gateway answers a request for a path you didn't define with a 404 before it reaches Lambda
+- Lambda's limits. Work that runs past 10 seconds is cut off, and memory has a ceiling
+- IAM. AWS operations you haven't allowed are denied
+- API Gateway's CORS. In production, API Gateway answers preflight requests before they reach Lambda
+- Execution environments being replaced. What is in memory may not be there at the next invocation
 
-That last one is the star of the second half of this chapter.
+"Where the notes live" on this page covers the last item in detail.
 
-### When you want to get one step closer to production
+### Getting a little closer to production
 
-cdkd has a feature that runs API Gateway and Lambda in local containers.
+cdkd can run API Gateway and Lambda in local containers.
 
 ```bash
 vp run dev:api:cdkd
 ```
 
-This one needs a Docker daemon to be running. Entering the devShell doesn't bring Docker along, so start Docker Desktop or something like it separately.
+This task needs a running Docker daemon. The devShell doesn't include Docker, so start Docker Desktop or a similar tool separately.
 
-One thing to watch out for. Going by cdkd's source and documentation, this feature hands the container that runs the handler **your own credentials** by default. If the handler calls the AWS SDK, the call reaches real AWS, and gets billed, even though the handler is running locally. On top of that, it runs with your permissions rather than the execution role's, so "it worked here" doesn't mean "the permissions will be enough after deployment". This chapter's handler doesn't call AWS, so it doesn't matter here, but keep it in the back of your mind from chapter 05 on.
+One warning. As far as cdkd's source and documentation show, this feature gives the container that runs the handler **your own credentials** by default. If the handler calls the AWS SDK, the call reaches real AWS and is billed, even though the handler runs locally. It also runs with your permissions and not the execution role's, so a handler that works here may still lack permissions after deployment. This chapter's handler doesn't call AWS, so nothing changes here, but be careful from chapter 05 on.
 
-To be honest, this task hasn't actually been run yet.
+This task has not actually been run yet.
 
 ## Tests
 
@@ -63,39 +65,39 @@ To be honest, this task hasn't actually been run yet.
 vp run test:unit
 ```
 
-The tests live in three places. Each one is looking at something different.
+The tests are in three places, and each checks something different.
 
-| Where | File | What it looks at | What it doesn't look at |
+| Where | File | What it checks | What it doesn't check |
 | --- | --- | --- | --- |
 | App | `test/app.test.ts` | Input validation, the error shape, the request ID, CORS | How things behave through Lambda and API Gateway |
 | Client | `test/client.test.ts` | The contract between client and server. Handling of responses that break the contract | A real network |
 | Infrastructure | `infra/test/http-api-stack.test.ts` | Permissions, log retention, timeout, routes | That AWS behaves as the template says |
 
-The app tests don't open a port. They hand a `Request` straight to the Hono app, and that's it.
+The app tests don't open a port. They pass a `Request` straight to the Hono app.
 
-The client tests have no hand-written mock. They pass the real app to the client as its transport, as is. If you change the server implementation and the contract breaks, this test fails.
+The client tests have no hand-written mock. They give the client the real app as its transport, so if a change to the server breaks the contract, these tests fail.
 
-Here's that client.
+This is the client.
 
 <<< @/examples/04-http-api/src/client.ts{client}
 
-Thanks to `hc<App>`, the server's routes and response types reach the client at compile time. Mistype a path and it's a type error. Feels good, doesn't it?
+`hc<App>` carries the server's routes and response types to the client at compile time, so a mistyped path is a type error.
 
-But what this type describes is **the code in this repository**. The server that actually answers isn't necessarily the same version. It might be an old deployment, or a proxy along the way might return an error page. So the client runs the response it received through the schema before returning it. "200 but the wrong shape" and "502 that came back as HTML" are both in the tests.
+What the type describes, though, is **the code in this repository**. The server that actually answers may not be the same version. An old deployment may answer, or a proxy on the way may return an error page. So the client validates each response against the schema before returning it. The tests include a 200 with the wrong shape and a 502 that comes back as HTML.
 
-There's one more test, and it's a slightly odd one. It creates two instances of the app and checks that a note written to one can't be seen from the other. It isn't hunting for a bug. It pins down, as a specification, what the next section is about.
+One more test creates two instances of the app and checks that a note written to one can't be seen from the other. It isn't there to find a bug. It fixes, as a specification, the behavior the next section explains.
 
-## Where do the notes live?
+## Where the notes live
 
 <!-- section: 04.state -->
 
-Lambda runs your function inside an isolated box called an execution environment. The box is created and initialized at the time of the first invocation. That's a cold start. For a while after that, the same box gets reused.
+Lambda runs your function inside an execution environment. An execution environment is isolated from the others, and it is created and initialized at the first invocation. That creation and initialization is a cold start. For a while afterwards, the same execution environment is reused.
 
 <<< @/examples/04-http-api/src/lambda.ts{handler}
 
-`composeApp` sits at the outermost level of the file. That part runs once per box, not once per request. The `Map` that holds the notes is created then too, one of it.
+The call to `composeApp` is at the top level of the file. It runs once per execution environment, not once per request, and the `Map` that holds the notes is created at that moment, one per environment.
 
-So what happens?
+The next figure shows what happens when there are two execution environments.
 
 ```figure
 type: sequence
@@ -115,16 +117,14 @@ note a: t4 idle for a while
 note a: discarded; n1 is gone
 ```
 
-Look at t3. When the next request arrives while A is in the middle of handling another one, Lambda creates a second box, B. B's `Map` is empty. You called the same URL as at t2, and the answer is different.
+At t3 the next request arrives while execution environment A is still handling another one, so Lambda creates a second environment, B. B's `Map` is empty, and the same URL that was called at t2 returns something different. At t4, A has been idle for a while and is discarded, and `n1` exists nowhere.
 
-At t4, A has gone unused for a while and gets cleaned up, and `n1` no longer exists anywhere.
+What you keep in Lambda's memory can serve as a cache, but **it can't be the owner of the data**. There may be more than one execution environment, and you don't choose when one disappears. When chapter 05 adds DynamoDB, the table becomes the owner, and every execution environment reads the same data.
 
-In other words, what you keep in Lambda's memory can work as a cache, but **it can't be the owner of the data**. There may be more than one box, and you don't get to choose when one disappears. Once chapter 05 adds DynamoDB, the owner becomes the table, and you get the same answer no matter which box does the reading.
-
-You can actually observe this on the deployed API.
+You can observe this on the deployed API.
 
 ```bash
 vp run api:smoke
 ```
 
-This task creates one note and reads it straight back. If the read lands on a different box it gets a 404, but the task doesn't treat that as a failure; it prints that a different execution environment answered. With the way this chapter is built, that's the correct thing to expect.
+`api:smoke` creates one note and reads it straight back. If the read reaches a different execution environment it gets a 404, and the task doesn't count that as a failure. It prints that another execution environment answered, because with the way this chapter is built a 404 is also correct behavior.

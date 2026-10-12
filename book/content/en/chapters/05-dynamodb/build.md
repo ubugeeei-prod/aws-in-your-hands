@@ -4,35 +4,37 @@ title: "05 KV Store: Design and Build"
 
 # 05 KV Store: Design and Build
 
-## Swap the storage
+The [previous page](/en/chapters/05-dynamodb.md) settled the table's keys and a contract with a `version`. This page replaces the store with DynamoDB and then implements, in order, concurrent updates, the limit on the number of notes, paging, and the handling of a response that never arrives.
+
+## Replace the store
 
 <!-- section: 05.repository -->
 
-Because chapter 04 made `NoteRepository` an interface, most of the app doesn't know where notes are stored. In this chapter you revise that interface so that it also expresses the outcomes that can occur.
+Chapter 04 made `NoteRepository` an interface, so most of the app doesn't know where notes are stored. This chapter revises the interface so that it also expresses the outcomes that can occur.
 
 <<< @/examples/05-dynamodb/src/repository.ts{interface}
 
-"Someone saved first" isn't an exceptional accident. It's an outcome that happens in normal operation. So it isn't thrown as an exception; it's part of the return type. If the caller forgets to handle the `conflict` case, type checking fails.
+Someone else having saved first is not an exceptional accident. It happens in normal operation, so it is part of the return type and not a thrown exception. If the caller forgets to handle the `conflict` case, type checking fails.
 
 There are two implementations.
 
-`InMemoryNoteRepository` is for local development and tests. It needs neither Docker nor AWS. In exchange, it reproduces nothing about DynamoDB, and the data is gone when the process restarts.
+`InMemoryNoteRepository` is for local development and tests. It needs neither Docker nor AWS, but it reproduces nothing about DynamoDB's behavior, and the notes are gone when the process restarts.
 
-`DynamoDbNoteRepository` is the real thing, used after deployment. Locally you can also point it at DynamoDB Local.
+`DynamoDbNoteRepository` is the implementation used after deployment. Locally you can also point it at DynamoDB Local.
 
-That the two follow the same rules is checked by running one set of contract tests against both. More on that in the tests section.
+One set of contract tests runs against both implementations to confirm that they follow the same rules. The [Run It Locally](/en/chapters/05-dynamodb/local.md) page covers those tests.
 
-Here's where the connection to DynamoDB is assembled.
+The connection to DynamoDB is assembled here.
 
 <<< @/examples/05-dynamodb/src/compose.ts{repository}
 
-On Cloudflare Workers, D1 and KV appear on `env` as bindings. On AWS, you connect three separate things yourself: the table's name (configuration), the SDK client (code), and the permission to use the table (the execution role on AWS, your own credentials locally).
+On Cloudflare Workers, D1 and KV appear on `env` as bindings. On AWS, you connect three separate things yourself. The table's name is passed as configuration, the SDK client is created in code, and the permission to use the table belongs to the execution role on AWS and to your own credentials locally.
 
-## Prevent overwrites: conditional writes
+## Prevent overwrites with conditional writes
 
 <!-- section: 05.conditional -->
 
-You open the same note in two tabs, edit it in both, and save from both. What happens?
+Suppose you open the same note in two tabs, edit it in both, and save from both.
 
 ```figure
 caption: When two tabs save from the same version, the first save goes through and the second gets a 409.
@@ -54,47 +56,47 @@ note store: v2 "from A"
 note b: t4 shows A's text next to its own
 ```
 
-If B's save were let through at t3, A's change would disappear without anyone knowing. What prevents this is optimistic locking. Rather than taking a lock in advance, you check at the moment of writing whether the stored version is still the one you were looking at.
+If tab B's save went through at t3, tab A's change would disappear without anyone knowing. Optimistic locking prevents this. You don't take a lock in advance. At the moment of writing, you check whether the stored note is still the version you were looking at.
 
-Here's the catch. If app code does "read, compare the version, and write if it's the same" as two separate steps, another write can get in between them. The comparison and the write have to happen inside the database as one operation. In DynamoDB, a condition expression is what does that.
+If app code reads the note, compares the `version`, and writes when it matches, those are two requests, and another write can get in between them. The comparison and the write have to run inside the database as one operation. In DynamoDB, a condition expression does that.
 
 <<< @/examples/05-dynamodb/src/dynamodb-repository.ts{update}
 
-The single line `ConditionExpression: "version = :expected"` is all there is to the optimistic locking. DynamoDB evaluates the condition and performs the update as one operation, so two writes that carry the same version cannot both go through. When the condition doesn't hold, DynamoDB returns `ConditionalCheckFailedException`.
+The optimistic locking is the single line `ConditionExpression: "version = :expected"`. DynamoDB evaluates the condition and performs the update as one operation, so two writes that carry the same `version` can't both go through. When the condition doesn't hold, DynamoDB returns `ConditionalCheckFailedException`.
 
-The read that follows is a separate operation. It's there to find out why the condition failed (the note doesn't exist, or the version has moved on) and to hand the current content to the caller. The note can change once more between this read and the original update. So `current` is "the content close to the time the 409 was returned"; it is not necessarily "the content that is still correct now".
+The read that follows is a separate operation from the update. It finds out whether the condition failed because the note doesn't exist or because the `version` has moved on, and it gets the current content to hand to the caller. The note can change once more between the original update and this read. So `current` is the content from close to the time the 409 was returned, and it isn't necessarily still correct.
 
 Creation uses the same mechanism.
 
 <<< @/examples/05-dynamodb/src/dynamodb-repository.ts{create}
 
-`PutItem` silently replaces an item that has the same key. With `attribute_not_exists(pk)`, it fails when the key is already in use. The few lines at the top that "take a place" are for the end of this section.
+`PutItem` silently replaces an item that has the same key. With `attribute_not_exists(pk)`, it fails when the key is already in use. The few lines at the top that reserve a place are explained in "Put a limit on the count" below.
 
 The app returns `conflict` as an HTTP 409.
 
 <<< @/examples/05-dynamodb/src/app.ts{update}
 
-Written as one sentence, the invariant being kept is this.
+The invariant kept here, in one sentence, is this.
 
 **Each time a save succeeds, the version increases by exactly 1, and an update based on an old version is rejected.**
 
 ### Put a limit on the count
 
-Anyone can `POST` to this API. Left alone, the table grows by whatever it's handed. So one owner gets at most 100 notes.
+Anyone can `POST` to this API, so if nothing is done the table grows by whatever it is handed. One owner therefore gets at most 100 notes.
 
-"Count how many there are, and write if it's under 100" is the same trap as before. Another create can slip in between the counting and the writing. If two arrive together, both count 99 and both write.
+Counting the notes and writing when there are fewer than 100 has the same problem as the update did. Another create can get in between the counting and the writing, so when two creates arrive together, both count 99 and both write.
 
-So the count lives in an item of its own.
+The count is kept in an item of its own instead.
 
 <<< @/examples/05-dynamodb/src/dynamodb-repository.ts{quota}
 
-Each owner gets one item whose `sk` is `QUOTA`, and the count goes in there. A create first writes to that item, conditionally: "add 1 if it's under 100". Evaluating the condition and adding are one operation, so two callers can't both take the last place. With a place taken, the note is written. Without one, the repository returns `quota_exceeded` and the app turns it into a 409.
+Each owner gets one item whose `sk` is `QUOTA`, and that item holds the count. A create first reserves a place with a conditional write to that item, which adds 1 if the count is under 100. Evaluating the condition and adding are one operation, so two callers can't both take the last place. With a place reserved, the note is written. Without one, the repository returns `quota_exceeded` and the app turns it into a 409.
 
-Here's the catch: taking the place and writing the note are two separate requests. If the function stops between them, the place stays taken and there is no note. The count is then 1 higher than the truth. The opposite doesn't happen. So what this limit keeps is "never more than 100"; it doesn't promise that exactly 100 will fit. If it's off, it's off only toward fewer. Deletes go in the same order: delete the note, then give the place back.
+Reserving the place and writing the note are two separate requests. If the function stops between them, the place stays reserved with no note, and the count remains 1 higher than the real number. The opposite error doesn't happen. So this limit guarantees that there are never more than 100 notes, and it doesn't promise that exactly 100 will fit. If the count is off, fewer notes fit, never more. Deletes follow the same order: the note is deleted first, and then the place is given back.
 
-DynamoDB also has a transaction feature that writes two items in one go. This chapter doesn't use it.
+DynamoDB also has transactions, which write two items in one go. This chapter doesn't use them.
 
-The limit is chosen in `composeApp`. A repository built without one doesn't count notes at all.
+`composeApp` decides the limit. A repository built without a limit doesn't count notes.
 
 ## Choose the read consistency
 
@@ -108,49 +110,49 @@ DynamoDB has two kinds of reads.
 | Price | Half of strongly consistent | 1 read request unit for one item of up to 4 KB |
 | Default | This one | Specify `ConsistentRead: true` |
 
-According to the official documentation, a write is durable at the point where it returns a successful response. When an eventually consistent read doesn't see it, that isn't because it was lost. It hasn't yet reached the place the read went to.
+According to the official documentation, a write is durable by the time it returns a successful response. When an eventually consistent read doesn't see the write just before it, the write hasn't been lost. It hasn't yet reached the place the read went to.
 
-This chapter chooses per operation.
+This chapter chooses the consistency per operation.
 
 <<< @/examples/05-dynamodb/src/dynamodb-repository.ts{get}
 
-Reading one note is strongly consistent. If you reread the same note right after saving it and get the content from before the save, you'd think "wait, did the save fail?"
+Reading one note is strongly consistent. If you reread a note right after saving it and get the content from before the save, the save looks as if it failed.
 
 <<< @/examples/05-dynamodb/src/dynamodb-repository.ts{list}
 
-The list stays eventually consistent. It costs half as much, and a list that is stale for a moment does no harm. In exchange, a note that was created a moment ago can be missing from the next list. When you build the screen (chapter 06), you can keep this gap from the user by adding the note received in the creation response to the list you display.
+The list stays eventually consistent, because it costs half as much and a list that is stale for a moment does no harm. In exchange, a note created a moment ago can be missing from the next list. When chapter 06 builds the screen, it can hide that gap from the user by adding the note from the creation response to the list it displays.
 
-This choice holds because conditional writes don't depend on read consistency. Even if you send an update after looking at a stale list, the `version` condition is evaluated inside DynamoDB against the latest value. A stale read can cause more 409s, but it cannot cause an overwrite.
+Choosing per operation works because conditional writes don't depend on read consistency. If you send an update after looking at a stale list, DynamoDB still evaluates the `version` condition against the latest value. A stale read can cause more 409s, but it can't cause an overwrite.
 
-By the way, strongly consistent reads are available only on the table itself and on local secondary indexes, not on global secondary indexes. This chapter doesn't use an index.
+Strongly consistent reads are available only on the table itself and on local secondary indexes, not on global secondary indexes. This chapter doesn't use an index.
 
 ## Page through without dropping items
 
 <!-- section: 05.pagination -->
 
-A single `Query` returns at most 1 MB of results. Anything beyond that is not returned. And it isn't an error either. On top of that, this API also caps the number of items per page with `Limit`. Whichever of the two stops a query early, the signal DynamoDB gives is the same. If you return the list on the assumption that you got everything, then one day, after the notes have grown, older notes silently stop being shown. Not a fun bug.
+A single `Query` returns at most 1 MB of results. Anything beyond that isn't returned, and it isn't an error either. This API also caps the number of items per page with `Limit`. Whichever of the two stops a query early, DynamoDB gives the same signal. If you ignore that signal and return the list as though you had everything, then one day, after the notes have grown, older notes stop being shown, with no error.
 
-When there may be more, DynamoDB adds `LastEvaluatedKey` to the response. Pass it as `ExclusiveStartKey` to the next `Query` and you continue from where the last one stopped. This API hands it to the caller as a cursor.
+When there may be more, DynamoDB adds `LastEvaluatedKey` to the response. Pass that value as `ExclusiveStartKey` to the next `Query` and the query continues from where the last one stopped. This API hands the value to the caller as a cursor.
 
 <<< @/examples/05-dynamodb/src/contract.ts{list}
 
 <<< @/examples/05-dynamodb/src/app.ts{list}
 
-A page holds at most 20 notes, and a larger `limit` is refused with a 400. A list carries the five fields of `noteSummarySchema` and leaves the body out. The reason is the one from chapter 04: no single response should go past 20 KiB. When you need the body, you fetch it with `GET /notes/:id`. `version` is in the summary so that a client can tell whether a note has changed since it fetched the list.
+A page holds at most 20 notes, and a larger `limit` is refused with a 400. A list carries only the five fields of `noteSummarySchema` and leaves the body out. As in chapter 04, this keeps a single response under 20 KiB. When you need the body, you fetch it with `GET /notes/:id`. `version` is in the summary so that a client can tell whether a note has changed since it fetched the list.
 
-The body is dropped in `app.ts`, where the response is put together. The repository still reads each item with its body, so the list reads as much from DynamoDB as it did when it returned bodies.
+The body is dropped in `app.ts`, where the response is assembled. The repository still reads each item with its body, so the list reads as much from DynamoDB as it did when it returned bodies.
 
-The cursor goes out to the caller and comes back. By the time it comes back, it's an untrusted value like any other input. It isn't passed to DynamoDB as it is; it's decoded and its shape is checked.
+The cursor goes out to the caller and comes back with the next request. A cursor that comes back is an untrusted value like any other input. The API doesn't pass it to DynamoDB as it is. It decodes the cursor and checks its shape.
 
 <<< @/examples/05-dynamodb/src/repository.ts{cursor}
 
-The official documentation warns about this too: the presence of `LastEvaluatedKey` does not mean "there are more items". It is also present when the results end exactly at a page boundary. In that case the next page is empty and the cursor is `null`. So the caller's condition for stopping is "until `nextCursor` is `null`". Getting fewer items than `limit` must not be taken as the signal that the list has ended.
+As the official documentation also warns, the presence of `LastEvaluatedKey` doesn't mean there are more items. It is also present when the results end exactly at a page boundary. In that case the next page is empty and its cursor is `null`. So the caller stops when `nextCursor` is `null`. It must not treat a page with fewer items than `limit` as the end of the list.
 
 ## When the response never arrives
 
 <!-- section: 05.lost-response -->
 
-A write over a network has a third outcome besides success and failure: "unknown".
+A write over a network has a third outcome besides success and failure: you don't know which it was.
 
 ```figure
 caption: Retrying a save whose response was lost returns a 409 caused by the client's own first write.
@@ -161,23 +163,23 @@ step client -> server: t1 PUT expectedVersion=1
 step server -> server: applies the update
 note server: v2 "final"
 step server --x client: t2 200 OK (response is lost; timeout)
-step client -> client: t3 was it saved? unknown. retry
+step client -> client: t3 saved or not is unknown. retry
 step client -> server: t3 PUT expectedVersion=1
 step server -> server: version is 2, not 1
 note server: v2 "final"
 step server --> client: t4 409 conflict, current = v2 "final"
 ```
 
-At t2, the caller doesn't know whether the save went through. If it doesn't retry, the change is lost in the case where it wasn't saved. So it retries, and at t4 a 409 comes back. The cause is not someone else's write but **its own first write**.
+At t2, the caller doesn't know whether the save went through. If it doesn't retry, the change is lost in the case where it wasn't saved, so it retries. At t4 a 409 comes back. The cause is not someone else's write but **its own first write**.
 
-Optimistic locking does two things here. One is that the retry was not applied twice. The version is still 2; it has not become 3. The other is that the 409 carries `current`, so the caller can work out what happened.
+Optimistic locking does two things here. First, the retry was not applied twice. The `version` is still 2 and has not become 3. Second, the 409 carries `current`, so the caller can work out what happened.
 
 <<< @/examples/05-dynamodb/src/client.ts{outcome}
 
-If the stored note is exactly one version ahead and has the content that was sent, the write you wanted has been done. The typed client returns this case as a success.
+If the stored note is exactly one `version` ahead and has the content that was sent, the write you wanted has been done. The typed client returns this case as a success.
 
 <<< @/examples/05-dynamodb/src/client.ts{update}
 
-This decision has a limit. It can't tell this case apart from one where someone else saved exactly the same content at the same version. Even then, the stored content is what you wanted, so treating it as a success does no harm. In the opposite case, where your write went through and someone else saved again before your retry, the client returns a conflict. Your save did happen once, but what is stored now is someone else's content, so showing that is the safe outcome.
+This judgment has a limit. It can't tell this case apart from one where someone else saved exactly the same content at the same `version`. Even then, the stored content is what you wanted, so treating it as a success does no harm. In the opposite case, where your write went through and someone else saved again before your retry, the client returns a conflict. Your save did happen once, but what is stored now is someone else's content, so showing that content is the safe outcome.
 
-Creation, by the way, doesn't have this protection. `POST /notes` has nothing with which to tell a retry from the creation of a new note, so losing a response and retrying produces two notes with the same content. A test records this behavior as the specification. Fixing it requires the caller to send a value that shows "this is the same request". This book doesn't take the fix that far (the idea is the same one [chapter 08](/en/chapters/08-async.md) uses to make its worker idempotent).
+Creation doesn't have this protection. `POST /notes` has nothing with which to tell a retry from the creation of a new note, so losing a response and retrying produces two notes with the same content. A test records this behavior as the specification. Fixing it requires the caller to send a value that shows the two requests are the same one. This book doesn't take the fix that far (the idea is the same one [chapter 08](/en/chapters/08-async.md) uses to make its worker idempotent).

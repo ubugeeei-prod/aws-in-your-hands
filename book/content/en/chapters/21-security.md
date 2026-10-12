@@ -5,23 +5,23 @@ sourceRevision: 2
 
 # 21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations
 
-We've been saying "that's for chapter 21" for a while now. Narrowing chapter 01's `AdministratorAccess`. Chapter 03's WAF. Chapter 04's "secrets don't go in environment variables". This chapter takes all of them on.
+Earlier chapters put three things off until chapter 21: how to narrow chapter 01's `AdministratorAccess`, chapter 03's WAF, and chapter 04's rule that secrets don't go in environment variables. This chapter covers all three.
 
-It is not a chapter about switching on every AWS service with "security" in its name, though. The opposite. We'll separate what an account used by one person needs from what you need once people and accounts multiply, and build only the first group by hand. For the second, we'll pin down what each thing is for and what it costs.
+It does not switch on every AWS service with "security" in its name. It separates what an account used by one person needs from what you need once there are more people and more accounts, and it builds only the first group. For the second group it explains what each service is for and what it costs.
 
-Money first. With nothing specified, the only monthly fee in this chapter's stack is one secret (USD 0.40 a month, prorated by the hour). **A KMS key and a web ACL are billed every month just for existing, so they are created only when you explicitly ask.** GuardDuty, Inspector, and AWS Config are not in this chapter's stack at all. We'll get to why.
+On cost: deployed with no options, this chapter's stack has one monthly fee, for a single secret (USD 0.40 a month, prorated by the hour). **A KMS key and a web ACL are billed every month just for existing, so they are created only when you ask for them explicitly.** GuardDuty, Inspector, and AWS Config are not in this chapter's stack. [Build, Continued](/en/chapters/21-security/more.md) explains why.
 
-To be honest, none of the AWS-side steps in this chapter has been run for real yet. What was checked locally is the tests, the type check, the synth, and the local server. The breakdown is at the end.
+None of this chapter's AWS-side steps has been run against AWS yet. What was checked locally is the tests, the type check, the synth, and the local server, and the breakdown is in the [verification notes at the end of the chapter](/en/chapters/21-security/wrap.md).
 
-The prerequisites are [chapter 06](/en/chapters/06-auth.md) and [chapter 20](/en/chapters/20-shipping.md). The CloudFront and function URL pairing first appeared in [chapter 09](/en/chapters/09-ssr.md). The code is in `examples/21-security/`.
+The prerequisites are [chapter 06](/en/chapters/06-auth.md) and [chapter 20](/en/chapters/20-shipping.md). The pairing of CloudFront with a function URL was covered in [chapter 09](/en/chapters/09-ssr.md). The code is in `examples/21-security/`.
 
-## What to put in first
+## What to enable, in order
 
 <!-- section: 21.tiers -->
 
-Open "Security" in the AWS console and you get a long row of services. Enable them all and your bill grows, along with the notifications nobody reads. Do nothing and you won't notice a leaked key.
+The "Security" category of the AWS console lists many services. If you enable all of them, your bill grows and so does the number of notifications nobody reads. If you enable none, a leaked key goes unnoticed.
 
-This book thinks about it in three tiers.
+This book sorts them into three tiers.
 
 ```text
 tier            what                          what it costs                     how this chapter handles it
@@ -38,35 +38,35 @@ organization    CloudTrail trail              S3 storage                        
                 Organizations and SCPs        free                              policy JSON and tests only
 ```
 
-The first tier is what you do from the day you own the account. It costs next to nothing. The second is for once you hold data you'd hate to leak, or a service you'd hate to see down. The third is for once two or more people, or accounts, are involved.
+The first tier (everyone) is what you do from the day you own the account, and it costs almost nothing. The second (with-data) is for when you hold data that must not leak or run a service that must not go down. The third (organization) is for when two or more people or accounts are involved.
 
-This split is the book's judgment, not an official AWS classification. Move things earlier or later to fit your situation. What matters is being able to say that what you haven't enabled, you left out by choice and not by forgetting.
+These tiers are this book's judgment and not an official AWS classification, so move items earlier or later to suit your situation. What matters is that you can say you left a service out by choice and did not forget it.
 
-There's a task that shows where your account stands today.
+This task shows where your account stands today.
 
 ```bash
 vp run sec:posture
 ```
 
-It only reads; nothing changes. It asks six services and lays the answers out in the three tiers.
+The task only reads and changes nothing. It queries six services and sorts the answers into the three tiers.
 
 <<< @/examples/21-security/src/posture.ts{assess}
 
-Remember how drift detection in [chapter 02](/en/chapters/02-toolchain.md) kept "no difference found" apart from "everything compared and matched"? Same idea here. An item that couldn't be read for lack of permission is `unknown`, not `off`.
+Drift detection in [chapter 02](/en/chapters/02-toolchain.md) treated "no difference found" and "everything compared and matched" as different states. This task follows the same idea: an item it could not read for lack of permission is `unknown`, not `off`.
 
 <<< @/examples/21-security/src/posture.ts{snapshot}
 
-The task fails only when something in the first tier is not `on`.
+The task fails only when a first-tier item is not `on`.
 
 <<< @/examples/21-security/src/posture.ts{gate}
 
-GuardDuty being off does not fail the task. That is a choice. A root user without MFA is not a choice.
+The task does not fail when GuardDuty is off. Leaving GuardDuty out can be a choice, but a root user without MFA is not one.
 
 ## The big picture
 
 <!-- section: 21.architecture -->
 
-The subject is a small token API. `/token` issues a signed token and `/verify` checks one. The key it signs with is this chapter's "secret".
+The example is a small token API. `/token` issues a signed token and `/verify` checks it. The signing key is the secret this chapter protects.
 
 ```figure
 caption: On the path from the viewer to the secret sit the WAF, the function's role, and the key that encrypts the secret, and CloudTrail records the management calls made on them
@@ -87,43 +87,43 @@ edge secret -> key: encrypted with
 edge secret --> trail: management calls recorded
 ```
 
-From top to bottom, that is this chapter's table of contents. WAF at the entrance. The function's role. The secret and the key that encrypts it. And CloudTrail, recording what is done to all of them.
+The parts of this figure are the topics of the chapter: the WAF at the entry point, the function's role, the secret and the key that encrypts it, and CloudTrail, which records what is done to them.
 
 There are two stacks.
 
 <<< @/examples/21-security/infra/bin/app.ts{stacks}
 
-`AihSecurity` is the default stack. `AihSecurityWaf` is created only when you deploy it by name. The switches that add monthly fees are CDK context.
+`AihSecurity` is the default stack, and `AihSecurityWaf` is created only when you deploy it by name. CDK context switches on the parts that carry a monthly fee.
 
 <<< @/examples/21-security/infra/lib/config.ts{context}
 
-It's the same thinking as `-c store=valkey` in [chapter 14](/en/chapters/14-kv-cache.md). Nothing specified means the cheap variant. A slip such as `-c cmk=true` is not "treated as off"; it stops the synth. A switch that costs money should never quietly mean something else.
+As with `-c store=valkey` in [chapter 14](/en/chapters/14-kv-cache.md), passing nothing gives you the cheaper variant. A mistyped value such as `-c cmk=true` is not treated as off. It stops the synth, because a switch that costs money must not silently mean something else.
 
-`reservedConcurrency` is the one switch that costs nothing. It is still off by default, because a new account can have a concurrency limit so low that reserving any gets the deploy refused. When to turn it on comes up in the deploy section.
+`reservedConcurrency` is the one switch that costs nothing. It is still off by default, because a new account can have a concurrency limit so low that reserving any concurrency gets the deploy refused. The [deploy page](/en/chapters/21-security/deploy.md) explains when to turn it on.
 
 ## Narrowing permissions
 
 <!-- section: 21.least-privilege -->
 
-When chapter 01 used `AdministratorAccess`, it said that narrowing it was for chapter 21. The answer depends on whose permissions you're narrowing.
+When chapter 01 used `AdministratorAccess`, it said chapter 21 would cover how to narrow it. How you narrow permissions depends on whose they are.
 
-**The permissions of running code** can be narrowed right now, and that is where to start. A function's role is what the code handling requests from the internet gets to use. These are all the permissions this chapter's function has.
+**The permissions of running code** can be narrowed right now, and they are the first to narrow, because the function's role is what the code handling requests from the internet uses. The following code is every permission this chapter's function has.
 
 <<< @/examples/21-security/infra/lib/security-stack.ts{role}
 
-Write to its own log group. Read one secret. That's it. Not `secretsmanager:*`, and not every secret in the account. If this function's code has a hole, what an attacker gets is these three actions. This is what least privilege looks like in practice.
+The function can write to its own log group and read one secret, and nothing else. It has neither `secretsmanager:*` nor access to every secret in the account. If the function's code has a hole, an attacker gets these three actions. This is what least privilege looks like in practice.
 
-As in [chapter 20](/en/chapters/20-shipping.md), the permissions are written inline on the role. No AWS managed policy (such as `AWSLambdaBasicExecutionRole`) is attached. As chapter 04 showed, that one means "may write to any log group in the account".
+As in [chapter 20](/en/chapters/20-shipping.md), the permissions are written inline in the role. No AWS managed policy such as `AWSLambdaBasicExecutionRole` is attached, because, as chapter 04 showed, `AWSLambdaBasicExecutionRole` allows writing to any log group in the account.
 
-**The permissions of people** are a harder story. This book's samples create IAM roles on every deploy. Someone who can create a role can give it anything, which makes them an administrator in effect. In a learning account, finely narrowing only the deployer's permissions buys little.
+**The permissions of people** are harder to narrow. This book's examples create IAM roles on every deploy. Anyone who can create a role can give that role any permission, so they are an administrator in effect. In a learning account, finely narrowing only the deployer's permissions gains you little.
 
-A realistic order goes like this.
+A realistic order is this.
 
-1. Hold no long-term access keys. Chapter 01 did that
-2. Sign in with read-only permissions for everyday looking around, and switch to strong permissions only to deploy
-3. Move deploys from a person's hands to a CI role. Chapter 20 did that; that role can be used only from a fixed job of a fixed repository
-4. If people still hold strong permissions, narrow them from what was actually used
+1. Hold no long-term access keys. Chapter 01 did this
+2. Sign in with read-only permissions for everyday investigation, and switch to stronger permissions only to deploy
+3. Move deploys from a person to a CI role. Chapter 20 did this, and the CI role can be used only from a fixed job in a fixed repository
+4. If people still hold strong permissions, narrow them based on what they actually used
 
-There's a tool for step 4. IAM Access Analyzer's policy generation reads up to 90 days of CloudTrail records and produces a policy template listing only the actions that role or user really used. It needs a CloudTrail trail to read from, though, which is one of the reasons to create a trail that come up later. This book has not tried the feature.
+Step 4 has a dedicated feature. Policy generation in IAM Access Analyzer reads up to 90 days of CloudTrail records and produces a policy template that lists only the actions the role or user actually used. It needs a CloudTrail trail to read from, which is one reason to create a trail. Trails themselves are explained in [Build, Continued](/en/chapters/21-security/more.md). This book has not tried the feature.
 
-There is one more brake that works even on people with strong permissions: an SCP in Organizations. That comes in the second half of the chapter.
+One more safeguard works even on people with strong permissions: an SCP in Organizations, also covered in [Build, Continued](/en/chapters/21-security/more.md).

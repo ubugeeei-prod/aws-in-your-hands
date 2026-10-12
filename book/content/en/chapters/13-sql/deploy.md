@@ -4,6 +4,8 @@ title: "13 SQL: Deploy"
 
 # 13 SQL: Deploy
 
+So far the application has run on PGlite on your own machine. This page connects the same application, as a Lambda function, to an Aurora DSQL cluster, and goes on to the deploy and backup procedures.
+
 ## Connecting from Lambda
 
 <!-- section: 13.connect -->
@@ -12,19 +14,19 @@ title: "13 SQL: Deploy"
 
 <<< @/examples/13-sql/src/dsql.ts{dsql}
 
-Passing a function as `password` is the DSQL part. node-postgres calls it each time it opens a new connection, and the function signs a token on the spot.
+The part specific to DSQL is that `password` is a function. node-postgres calls it each time it opens a new connection, and the function signs a token on the spot and returns it.
 
-Signing a token is a local computation. It does not ask AWS anything. That makes it fast, but it also means a token can be produced from wrong credentials. You find out when you try to connect.
+Signing a token is a local computation that does not contact AWS. That makes it fast, but it also means that a token can be produced from wrong credentials, and the failure shows up only when the function tries to connect to the cluster.
 
-A token expires after 15 minutes by default. But the expiry is looked at only when connecting, and an open connection keeps working after its token has expired. Connections have a limit of their own: DSQL closes them at 60 minutes. Hence `maxLifetimeSeconds`, which retires a connection at 50.
+A token expires after 15 minutes by default. The expiry is checked only at connection time, though, and an open connection keeps working after its token has expired. Connections have a separate limit: DSQL closes a connection after 60 minutes. For that reason `maxLifetimeSeconds` is set so that the pool discards a connection once it is 50 minutes old.
 
-`max: 1` is because a Lambda execution environment handles one request at a time. The number of connections is roughly the number of execution environments running at once. A cluster allows 10,000 connections by default and 100 new ones per second.
+`max` is 1 because a Lambda execution environment handles only one request at a time. The number of connections is roughly the number of execution environments running at the same time. By default a cluster allows 10,000 connections and up to 100 new connections per second.
 
-TLS uses `rejectUnauthorized: true`: the certificate chain and the host name are checked against the certificate authorities Node.js ships with.
+TLS is set to `rejectUnauthorized: true`, so the certificate chain and the host name are checked against the certificate authorities that Node.js ships with.
 
 <<< @/examples/13-sql/src/lambda.ts{handler}
 
-As in chapter 04, the outermost level of the file runs once per execution environment. One pool is made there. Later invocations reuse the connection that is already open.
+As in chapter 04, the outermost level of the file runs once per execution environment, so the single pool is created there. Later invocations reuse the connection that is already open.
 
 The configuration is checked at startup.
 
@@ -34,94 +36,94 @@ The configuration is checked at startup.
 
 <<< @/examples/13-sql/infra/lib/sql-stack.ts{cluster}
 
-Almost disappointingly little. No instance size, no subnet, no password. The pinned CDK (aws-cdk-lib 2.273.0) has no higher-level construct for DSQL yet, so this uses `CfnCluster`, which mirrors CloudFormation's `AWS::DSQL::Cluster` directly.
+The cluster definition has no instance size, no subnet, and no password. The pinned version of the CDK (aws-cdk-lib 2.273.0) has no higher-level construct for DSQL yet, so the stack uses `CfnCluster`, which represents CloudFormation's `AWS::DSQL::Cluster` directly.
 
-Since it is for practice, deletion protection is off and the cluster goes away with the stack. In production you want the opposite.
+Because this is for practice, deletion protection is off and the cluster is deleted with the stack. In production you do the opposite.
 
 <<< @/examples/13-sql/infra/lib/sql-stack.ts{role}
 
 Permissions come in two layers.
 
-The first is IAM. `dsql:DbConnect` means "may connect to this cluster as a database role other than admin". The similarly named `dsql:DbConnectAdmin` allows connecting as `admin`. The function does not get it. As `admin` it could drop tables.
+The first layer is IAM. `dsql:DbConnect` allows connecting to this cluster as a database role other than admin. The similarly named `dsql:DbConnectAdmin` allows connecting as `admin`, and the function does not get it, because `admin` can drop tables.
 
-The second is inside the database. After connecting, what the function may do to which table is decided by `GRANT`s to its database role.
+The second layer is inside the database. After the function connects, `GRANT`s to its database role decide what it may do to which table.
 
 <<< @/examples/13-sql/src/grant.ts{grant}
 
-`AWS IAM GRANT` is DSQL's own statement. It registers "this IAM role may log in as this database role". The `GRANT`s hand over reading and writing rows, nothing else. The function cannot change the schema. Migrations are run by you, as `admin`, from your laptop.
+`AWS IAM GRANT` is a statement specific to DSQL. It registers that this IAM role may log in as this database role. The `GRANT`s give only the right to read and write rows, so the function cannot change the schema. You run the migrations yourself, as `admin`, from your own machine.
 
-These two statements accept no `$1`, so the names have to go into the text. That is right after saying values never do, and it is the exception. So their form is checked strictly before they are put in, and there is a test for it.
+These statements do not accept `$1`, so the database role name and the IAM role ARN have to be put into the SQL text. The [Design and Build](/en/chapters/13-sql/build.md) page said that the application never puts values into SQL, and this is the one exception. For that reason the code checks the form of both names strictly before inserting them, and a test covers it.
 
 <<< @/examples/13-sql/infra/lib/sql-stack.ts{function}
 
-The bundle format is CommonJS because node-postgres is CommonJS and loads Node.js's own modules with `require()`. The bundle from synth was loaded in a local Node.js 24, and the routes that do not touch the database answered. That is as far as it was checked.
+The bundle format is CommonJS because node-postgres is CommonJS and loads Node.js's built-in modules with `require()`. The bundle that synth produced was loaded in a local Node.js 24, and it was checked as far as the routes that do not touch the database responding.
 
-### A lid on what it accepts
+### A limit on how much it accepts
 
 <<< @/examples/13-sql/infra/lib/sql-stack.ts{throttle}
 
-The same stage throttling as chapter 04. Up to 10 requests a second for the whole API, and API Gateway turns away the rest with a 429. Neither the function nor the database is called. This API has no authentication either, so without a lid, the DPUs from whatever gets thrown at it go straight onto the bill. The rows are already held by the quota from earlier: 100 per owner.
+This is the same stage throttling as in chapter 04. The whole API accepts up to 10 requests a second, API Gateway rejects the rest with a 429, and neither the function nor the database is called for them. This API has no authentication either, so without a limit the DPUs for every call would go straight onto the bill. The number of rows is held by the quota implemented on the [Design and Build](/en/chapters/13-sql/build.md) page, at 100 rows per owner.
 
 ## Deploy, then run the migrations
 
 <!-- section: 13.deploy -->
 
-From here on, AWS is changed. To be honest, the steps in this section have not once been run against real AWS.
+From here on you change AWS. The steps in this section have not yet been run against real AWS even once.
 
 ```bash
 vp run sql:infra:diff
 vp run sql:infra:deploy
 ```
 
-That creates the cluster, the function, and the API. It does not work yet. The cluster is empty, and the function's role cannot get into the database. On D1, too, creating a database gives you no tables.
+This creates the cluster, the function, and the API, but they do not work yet. The cluster is empty, and the function's role cannot get into the database. On D1, too, creating a database gives you no tables.
 
 ```bash
 vp run sql:db:migrate
 vp run sql:db:grant
 ```
 
-`sql:db:migrate` runs the same migrations as locally, this time with `ASYNC` left in. It takes the job ID that the index statement returns and waits for completion by watching `sys.jobs`. `sql:db:grant` runs the `GRANT`s from above and ties the function's role to `notes_api`.
+`sql:db:migrate` runs the same migrations as locally, this time with `ASYNC` left in. It takes the job ID that the index statement returns and waits for the job to complete by watching `sys.jobs`. `sql:db:grant` runs the grant statements above and ties the function's role to `notes_api`.
 
-Both connect as `admin`. Your own credentials need `dsql:DbConnectAdmin`.
+Both tasks connect as `admin`, so your own credentials need `dsql:DbConnectAdmin`.
 
-Migrations come first. `GRANT ... ON ALL TABLES` covers the tables that exist at that moment. After a later migration adds a table, run `sql:db:grant` again.
+Run the migrations first, because `GRANT ... ON ALL TABLES` applies only to the tables that exist at that moment. If you later run a migration that adds a table, run `sql:db:grant` again as well.
 
 ```bash
 vp run sql:smoke
 ```
 
-It checks create, read back, update, an update from an old `version` (expecting 409), and delete, in that order. Unlike the smoke test of chapter 04, the read back must always succeed.
+It checks create, read back, update, an update with an old `version` (expecting a 409), and delete, in that order. Unlike the smoke test in chapter 04, the read back should always succeed.
 
-For seed data there is `vp run sql:db:seed`. Logs are `vp run sql:logs`, where the `transaction retry` lines tell you how often a conflict caused a rerun. The drift check is `vp run sql:infra:drift`.
+To load seed data, use `vp run sql:db:seed`. `vp run sql:logs` shows the logs, where the `transaction retry` lines tell you how many times a conflict caused a rerun. The drift check is `vp run sql:infra:drift`.
 
-One thing to keep in mind. The pinned cdkd (0.296.28) has no dedicated provider for `AWS::DSQL::Cluster`. It goes through Cloud Control API. Whether creating it, reading the identifier that the endpoint is built from, the drift read-back, and deleting it actually work is unconfirmed.
+The pinned version of cdkd (0.296.28) has no dedicated implementation for `AWS::DSQL::Cluster` and handles it through Cloud Control API. Whether creating the cluster, reading the identifier that the endpoint is built from, reading it back for drift, and deleting it actually work is unconfirmed.
 
 ### Why there is no reset for the cloud
 
-There is `sql:db:reset:local`, and there is no `sql:db:reset`. On purpose.
+`sql:db:reset:local` exists, and `sql:db:reset` deliberately does not.
 
-A reset in the cloud means dropping every table. Make that a single command, and one day it gets typed at production. To wipe a practice cluster, destroy the stack and create it again.
+A reset in the cloud means dropping every table. If one command could do that, someday someone would run it against production. To empty a practice cluster, destroy the stack and create it again.
 
-### Changing the schema of a database in use
+### Changing the schema of a running database
 
-As on D1, a migration and a code deploy never happen at the same instant. There is always a stretch where old code runs on the new schema.
+As on D1, a migration and a code deploy do not happen at the same moment, so there is always a period in which old code runs against the new schema.
 
-On DSQL the constraints stack on top of that. `ADD COLUMN` adds a column with no constraint and no default. So it becomes stages: add the column, ship the new code, backfill the old rows (3,000 rows per transaction at most). This chapter does not implement that far.
+On DSQL, the constraint on `ADD COLUMN` comes on top of that. You can add only a column with no constraint and no default, so the change becomes a sequence of stages: add the column, ship the new code, and fill in the old rows (at most 3,000 rows per transaction). This chapter does not implement that.
 
 ## Backup and restore
 
 <!-- section: 13.backup -->
 
-D1 has Time Travel: with nothing configured, you can go back to any minute of the last 30 days. If you are used to that, there is more work here.
+D1 has Time Travel, which lets you go back to any minute of the last 30 days with nothing configured. On Aurora DSQL the same thing takes more work.
 
-Aurora DSQL backups go through a separate service, AWS Backup. What you get is a backup of the whole cluster, taken once on demand or automatically on a schedule with a retention period. A restore always creates a **new cluster**. It does not rewind the original.
+Aurora DSQL backups go through a separate service, AWS Backup. A backup covers the whole cluster, and you either take one on demand or have them taken automatically on a schedule with a retention period. A restore does not rewind the original cluster. It always creates a **new cluster**.
 
-So after a restore, pointing the application at the new endpoint is still to do. In this chapter's stack the endpoint is built from the cluster identifier, so that is what you would replace. Whether database roles and `AWS IAM GRANT` carry over to the new cluster was not checked.
+After a restore, you therefore still have to point the application at the new endpoint. This chapter's stack builds the endpoint from the cluster identifier, so that identifier is what you would replace. Whether database roles and `AWS IAM GRANT` carry over to the new cluster was not checked.
 
-The backup page of the DSQL documentation did not describe restoring to a given minute. It is safest to assume that how much time you can lose is set by how often backups are taken.
+The backup page of the DSQL documentation did not describe a way to restore to a specified time. It is safest to assume that the amount of time you can lose is set by the interval between backups.
 
-One more. An unused cluster moves to Idle and then Inactive, where compute goes to zero. A backup can be taken only from an Active cluster. A nightly schedule failing on a cluster nobody is using is something that can happen.
+An unused cluster moves to the Idle state and then to Inactive, where its compute drops to zero. A backup can be taken only from an Active cluster, so a nightly schedule can fail to back up a cluster that nobody is using.
 
-RDS and Aurora have automated backups. Aurora's are continuous, and you can restore to any point within the retention period (1 to 35 days). There too, a restore produces a new instance or cluster.
+RDS and Aurora have automated backups. Aurora takes them continuously, and you can restore to any point within the retention period (1 to 35 days). On RDS and Aurora, too, a restore produces a new instance or cluster.
 
-This chapter creates no backup resources, since the data is for practice. The procedure was not tried either.
+Because the data is for practice, this chapter creates no backup resources. The procedure was not tried either.

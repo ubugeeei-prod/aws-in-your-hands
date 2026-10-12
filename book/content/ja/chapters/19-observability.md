@@ -5,11 +5,11 @@ revision: 3
 
 # 19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics
 
-04章から、API は 1 リクエストにつき 1 行の JSON をログに書いて、応答に `x-request-id` を付けてきました。でも、誰かがログを見にいかないかぎり、何も起きません。
+04章から、API はリクエスト 1 件につき 1 行の JSON をログに書き、レスポンスに `x-request-id` を付けてきました。ただ、ログは誰かが見にいかないかぎり何も知らせてくれません。
 
-この章の問いは 2 つです。何かおかしい、と気づけるか。気づいたら、原因まで辿れるか。[05章](/ja/chapters/05-dynamodb.md)のノート API を題材に、アラーム、ログの調べ方、trace を足していきます。アプリのコードは 05章のものを 1 行も変えずに、外側から包みます。
+この章では、異常に気づけるようにすることと、気づいたあとに原因まで辿れるようにすることの 2 つを扱います。[05章](/ja/chapters/05-dynamodb.md)のノート API を題材に、アラーム、ログの調べ方、トレースを足していきます。05章のアプリのコードは 1 行も変えず、外側から包みます。
 
-もう 1 つ、この章の主題は料金です。観測のための道具は、黙っていると本体より高くなります。「ログを 1 行増やすといくらか」を、最後に計算します。
+料金もこの章の主題です。観測のための道具は、何も考えずに足していくと、観測される本体より高くつきます。ログを 1 行増やすといくらかかるかまで、[最後のページ](/ja/chapters/19-observability/wrap.md)で計算します。
 
 前提は [04章](/ja/chapters/04-http-api.md)です。コードは `examples/19-observability/` にあります。
 
@@ -18,7 +18,7 @@ revision: 3
 <!-- section: 19.overview -->
 
 ```figure
-caption: リクエストの通り道から metric が出て、alarm は SNS を通して email で知らせる
+caption: リクエストの通り道からメトリクスが出て、アラームは SNS を通してメールで知らせる
 node client: Browser / curl
 node api: API Gateway HTTP API
 node fn: Lambda | 05章で作った Hono app
@@ -28,7 +28,7 @@ node alarms: Alarms | 5xx rate, p95 latency
 node dashboard: dashboard | 原因: throttles, server errors
 node sns: SNS topic
 node email: email
-edge client -> api: HTTPS（traceparent header、任意）
+edge client -> api: HTTPS（traceparent ヘッダー、任意）
 edge api -> fn
 edge api --> metrics: metrics
 edge fn -> table
@@ -39,81 +39,81 @@ edge sns -> email
 ```
 
 ```figure
-caption: Lambda は log を CloudWatch Logs へ、trace を X-Ray へ送る
+caption: Lambda はログを CloudWatch Logs へ、トレースを X-Ray へ送る
 node fn: Lambda | Node.js 24, active tracing
-node logs: CloudWatch Logs | JSON の event、7 日保存
-node xray: X-Ray | sampling: 毎秒最初の 1 件 + 5%
-node insights: Logs Insights の query | requestId, traceId, errors, slow
+node logs: CloudWatch Logs | JSON のイベント、7 日保存
+node xray: X-Ray | サンプリング: 毎秒最初の 1 件 + 5%
+node insights: Logs Insights のクエリ | requestId, traceId, errors, slow
 node filter: metric filter | status = 409
 node conflicts: NoteConflicts metric
-edge fn --> logs: logs: どの行にも traceId
-edge fn --> xray: traces: request ごと、table 呼び出しごとに span
+edge fn --> logs: ログ: どの行にも traceId
+edge fn --> xray: トレース: リクエストごと、テーブルの呼び出しごとにスパン
 edge logs -> insights
 edge logs -> filter
 edge filter -> conflicts
 ```
 
-道具は 3 種類で、答える問いが違います。
+使う道具はメトリクス、ログ、トレースの 3 種類で、それぞれ答えられる問いが違います。
 
-**メトリクス**は時刻ごとの数値です。リクエスト数、エラー数、応答時間。「いま、おかしいか」に答えます。安くて、ずっと残ります。そのかわり、どのリクエストがおかしいのかは教えてくれません。
+メトリクスは、リクエスト数、エラー数、応答時間のような、時刻ごとの数値です。いま異常が起きているかどうかがわかります。安く、長く残りますが、どのリクエストがおかしいのかまではわかりません。
 
-**ログ**は 1 件ごとの記録です。「どのリクエストが、どう失敗したか」に答えます。詳しいぶん、量に比例してお金がかかります。
+ログは 1 件ごとの記録で、どのリクエストがどう失敗したかがわかります。詳しいぶん、書いた量に比例して料金がかかります。
 
-**trace** は 1 件のリクエストが通った道筋と、区間ごとの時間です。「どこで時間を使ったか」に答えます。全部は残りません。これは後で大事になります。
+トレース（trace）は、1 件のリクエストが通った道筋と、区間ごとにかかった時間の記録です。どこで時間を使ったかがわかります。ただし全件が残るわけではなく、この点は[トレースは一部しか残らない](/ja/chapters/19-observability/more.md)で詳しく扱います。
 
-順番は、気づく（アラーム）、絞る（メトリクスとログ）、辿る（trace）です。
+使う順番は、アラームで気づき、メトリクスとログで絞り込み、トレースで辿る、です。
 
-### stack を 05章から分けた理由
+### スタックを 05章から分けた理由
 
-05章の `NotesStack` は、関数や API を外から触れる形で公開していません。アラームを付けるには関数の設定（trace と、ログの形式）も変えたいので、この章は同じ形の table と API を自分の stack に持ちます。インフラの定義は 60 行ほど重複しますが、アプリのコードは workspace の依存として 05章のものをそのまま読み込んでいます。監視の部分は `Monitoring` という construct に切り出してあるので、あなたの stack に持っていけます。
+05章の `NotesStack` は、関数や API を外から触れる形では公開していません。アラームを付けるには関数の設定（トレースとログの形式）も変えたいので、この章では同じ形のテーブルと API を自前のスタックに持たせました。インフラの定義は 60 行ほど重複しますが、アプリのコードは 05章のものをワークスペースの依存としてそのまま読み込んでいます。監視の部分は `Monitoring` というコンストラクトに切り出してあるので、自分のスタックへ持っていけます。
 
-同じ形なので、同じ歯止めも持たせています。この API も、URL を知っていれば誰でも呼べるからです。
+この API も URL を知っていれば誰でも呼べるので、05章と同じ歯止めを付けています。
 
 <<< @/examples/19-observability/infra/lib/observability-stack.ts{bounds}
 
 <<< @/examples/19-observability/infra/lib/observability-stack.ts{throttle}
 
-API は毎秒 10 件まで、table は毎秒の request unit に上限つき、ノートは 05章と同じく 100 件まで。超えたぶんは、請求ではなく 429 や 409 になります。これがダッシュボードでどう見えるか、いくらまでで止まるかは、「お金の話」の「叩かれたとき」で。
+API が受け付けるのは毎秒 10 件までで、テーブルには毎秒の request unit に上限があり、ノートは 05章と同じく 100 件までです。超えたぶんは請求にはならず、429 か 409 のレスポンスになります。上限に当たったときにダッシュボードでどう見えるか、料金がいくらで止まるかは、料金の節の[叩かれたとき](/ja/chapters/19-observability/wrap.md)に書きました。
 
-## まず、症状にアラームを付ける
+## 症状に付けるアラーム
 
 <!-- section: 19.alarms -->
 
-アラームは「原因」ではなく「症状」に付けます。利用者が困るのは、エラーが返ることと、遅いことです。DynamoDB が throttle したかどうかは原因の 1 つで、利用者から見えるのは結局その 2 つのどちらかです。原因ごとにアラームを作ると、数が増えて、鳴っても誰も見なくなります。
+アラームは原因ではなく症状に付けます。利用者が困るのは、エラーが返ることと、応答が遅いことの 2 つです。DynamoDB のスロットリングは原因の 1 つにすぎず、利用者から見えるのは結局このどちらかです。原因ごとにアラームを作ると数が増え、鳴っても誰も見なくなります。
 
-なので、アラームは 2 つだけにしました。
+そこで、アラームは 2 つだけにしました。
 
 <<< @/examples/19-observability/src/alarm-math.ts{rules}
 
-1 つ目は 5xx の割合です。数ではなく割合にしたのは、リクエストが増えれば失敗の数も自然に増えるからです。ただ、割合には落とし穴があります。深夜に 2 件来て 1 件が失敗すると「50%」です。これで起こされたくはないですよね。なので、1 分あたり 20 件に満たないときは、割合を 0 として扱います。
+1 つ目は 5xx の割合です。リクエストが増えれば失敗の数も増えるので、数ではなく割合を見ます。ただし割合だけで判断すると、深夜に 2 件届いて 1 件が失敗しただけで 50% になり、それで起こされることになります。これを避けるため、1 分あたり 20 件に満たないときは割合を 0 として扱います。
 
-この条件を、CloudWatch の式と同じ意味の関数として書いておきます。
+この条件を、CloudWatch の式と同じ意味の関数としても書いておきます。
 
 <<< @/examples/19-observability/src/alarm-math.ts{point}
 
-stack はこの定数と式をそのまま使います。
+スタックは、この定数と式をそのまま使います。
 
 <<< @/examples/19-observability/infra/lib/monitoring.ts{error-rate}
 
-ここに設定が 2 つ隠れています。
+このコードには、見落としやすい設定が 2 つあります。
 
-**5 分のうち 3 分。** `evaluationPeriods: 5` と `datapointsToAlarm: 3` で、直近 5 つのデータ点のうち 3 つが閾値を超えたら鳴ります。連続している必要はありません。1 分だけの跳ねでは鳴らず、続いていれば 3 分ほどで鳴ります。
+1 つは、5 分のうち 3 分という数え方です。`evaluationPeriods: 5` と `datapointsToAlarm: 3` を指定すると、直近 5 つのデータ点のうち 3 つが閾値を超えたときに鳴ります。3 つが連続している必要はありません。1 分だけ跳ねても鳴らず、異常が続いていれば 3 分ほどで鳴ります。
 
-**データが無い分をどう数えるか。** リクエストが 1 件も無い 1 分には、データ点そのものがありません。CloudWatch はこれを「欠損」として扱い、どう数えるかを `treatMissingData` で選ばせます。既定の `missing` だと、全部が欠損のときアラームは `INSUFFICIENT_DATA` になります。`breaching` にすると、誰も使っていない夜に毎晩鳴ります。ここでは `notBreaching`（問題なし）です。公式ドキュメントも、エラーのときだけ値が出るメトリクスには `notBreaching` を勧めています。
+もう 1 つは、データが無い 1 分の数え方です。リクエストが 1 件も無い 1 分には、データ点そのものがありません。CloudWatch はこれを欠損として扱い、どう数えるかを `treatMissingData` で選ばせます。既定の `missing` では、すべてが欠損のときアラームは `INSUFFICIENT_DATA` になります。`breaching` にすると、誰も使っていない夜に毎晩鳴ります。ここでは、欠損を問題なしと数える `notBreaching` にしました。公式ドキュメントも、エラーのときだけ値が出るメトリクスには `notBreaching` を勧めています。
 
-テストは、この判断を壊そうとします。
+テストでは、この判断が崩れる入力を与えて確かめます。
 
 <<< @/examples/19-observability/src/alarm-math.ts{state}
 
-`alarmState` は、考えるための模型です。CloudWatch 自身は、データが欠けているとき、5 点より前まで遡って評価します。模型はそこを再現していません。それでも、「静かな夜に鳴らない」「`breaching` にしたら毎晩鳴る」「1 分の跳ねでは鳴らない」は、この模型で確かめられます。
+`alarmState` は、条件を考えるための模型です。CloudWatch 自身は、データが欠けているときに 5 点より前まで遡って評価しますが、模型はそこを再現していません。それでも、静かな夜に鳴らないこと、`breaching` にすると毎晩鳴ること、1 分の跳ねでは鳴らないことは、この模型で確かめられます。
 
-そして、この模型が正直に示していることが 1 つあります。**静かな夜と、誰も到達できない障害は、このアラームからは同じに見えます。** どちらもリクエストが届かず、データ点がありません。これを見分けるには、外から定期的に呼ぶ仕組みが要ります（後で出てくる Synthetics です）。
+模型からわかる限界も 1 つあります。**静かな夜と、誰も到達できない障害は、このアラームからは同じに見えます。** どちらもリクエストが届かず、データ点がないからです。この 2 つを見分けるには、外から定期的に API を呼ぶ仕組みが要ります。[デプロイのページ](/ja/chapters/19-observability/deploy.md)で紹介する Synthetics がそれです。
 
-2 つ目は遅さです。
+2 つ目のアラームは遅さに付けます。
 
 <<< @/examples/19-observability/infra/lib/monitoring.ts{latency}
 
-平均ではなく p95（95 パーセンタイル）を見ます。平均は、速い大多数に遅い少数が埋もれます。測るのは Lambda の `Duration` ではなく API Gateway の `Latency` です。`Duration` には cold start の時間が入りません。利用者が待った時間に近いのは、入口で測ったほうです。
+平均は、速い大多数に遅い少数が埋もれてしまうので、p95（95 パーセンタイル）を見ます。測る対象は Lambda の `Duration` ではなく、API Gateway の `Latency` です。`Duration` にはコールドスタートの時間が入らないので、利用者が待った時間に近いのは入口で測った値のほうです。
 
 ### 通知先
 
@@ -121,26 +121,26 @@ stack はこの定数と式をそのまま使います。
 
 <<< @/examples/19-observability/infra/lib/monitoring.ts{actions}
 
-アラームは SNS の topic に通知し、topic がメールに配ります。メールアドレスは、デプロイのときに渡したときだけ購読されます。購読は、届いた確認メールのリンクを押すまで保留のままです。押し忘れると、アラームは鳴っているのに何も届きません。
+アラームは SNS のトピックに通知し、トピックがメールに配ります。メールアドレスが購読されるのは、デプロイのときにアドレスを渡した場合だけです。購読は、届いた確認メールのリンクを押すまで保留のままなので、押し忘れると、アラームが鳴っても何も届きません。
 
-`enforceSSL` は、暗号化されていない経路での publish を断る設定です。これを付けると topic に policy が 1 つできます。そして policy を自分で持った topic は、既定の policy を使わなくなります。なので、「このアカウントの CloudWatch アラームは publish してよい」を、こちらで書き足しています。書き忘れると、アラームは鳴るのに通知が出ません。正直に言うと、この組み合わせはまだ実機で確かめられていません。
+`enforceSSL` は、暗号化されていない経路からの publish を断る設定です。これを付けるとトピックにポリシーが 1 つでき、自分のポリシーを持ったトピックは既定のポリシーを使わなくなります。そのため、このアカウントの CloudWatch アラームに publish を許す statement を、こちらで書き足しています。書き忘れると、アラームは鳴るのに通知が出ません。この組み合わせは、まだ実際の AWS で確かめられていません。
 
-復旧（OK に戻ったとき）も通知しています。障害がいつ終わったかも、知りたい情報だからです。
+アラームが OK に戻ったときも通知します。障害がいつ終わったかも知りたいからです。
 
 ## 最初に見る数字
 
 <!-- section: 19.metrics -->
 
-アラームが鳴ったら、ダッシュボードを開きます。上の段が症状、下の段が原因の候補です。
+アラームが鳴ったら、ダッシュボードを開きます。上の段に症状を、下の段に原因の候補を並べてあります。
 
 <<< @/examples/19-observability/infra/lib/monitoring.ts{dashboard}
 
-サービスごとに、最初に見るものを並べます。
+サービスごとに、最初に見るメトリクスを挙げます。
 
-**API Gateway HTTP API。** `Count`、`4xx`、`5xx`、`Latency`、`IntegrationLatency`。`Latency` は受け取ってから返すまで、`IntegrationLatency` はそのうち Lambda を待っていた時間です。2 つの差が大きければ、API Gateway の側で時間を使っています。route ごとの数字は、詳細メトリクスを有効にしないと出ません。stage の流量制限で断ったリクエストは 429 なので、`4xx` に入ります。ダッシュボードの線にも、そう書いておきました。
+API Gateway HTTP API では、`Count`、`4xx`、`5xx`、`Latency`、`IntegrationLatency` を見ます。`Latency` はリクエストを受け取ってからレスポンスを返すまでの時間で、`IntegrationLatency` はそのうち Lambda を待っていた時間です。2 つの差が大きければ、API Gateway の側で時間を使っています。ルートごとの数字は、詳細メトリクスを有効にしないと出ません。ステージの流量制限で断られたリクエストは 429 なので、`4xx` に入ります。ダッシュボードの線の名前にも、そう書いてあります。
 
-**Lambda。** `Errors`、`Throttles`、`Duration`、`ConcurrentExecutions`。ここに罠があります。`Errors` が数えるのは、関数が例外で終わった呼び出しと、timeout です。このアプリは例外を捕まえて 500 の応答を返すので、利用者に 500 が返っていても、Lambda の `Errors` は 0 のままです。だから症状のアラームは API Gateway の `5xx` に付けました。逆に `Errors` が増えていたら、アプリの外（timeout、初期化の失敗、メモリ不足）を疑います。`Throttles` は `Invocations` にも `Errors` にも数えられないので、別に見ます。
+Lambda では、`Errors`、`Throttles`、`Duration`、`ConcurrentExecutions` を見ます。注意が要るのは `Errors` です。`Errors` が数えるのは、関数が例外で終わった呼び出しとタイムアウトだけです。このアプリは例外を捕まえて 500 のレスポンスを返すので、利用者に 500 が返っていても、Lambda の `Errors` は 0 のままです。症状のアラームを API Gateway の `5xx` に付けたのはこのためです。反対に `Errors` が増えていたら、タイムアウト、初期化の失敗、メモリ不足のような、アプリの外の原因を疑います。`Throttles` は `Invocations` にも `Errors` にも数えられないので、別に見ます。
 
-**DynamoDB。** `ThrottledRequests`、`SystemErrors`、それと `ConditionalCheckFailedRequests`。最後のは 05章の楽観ロックが働いた回数です。`ThrottledRequests` は、table に付けた上限に当たったときにも増えます。
+DynamoDB では、`ThrottledRequests`、`SystemErrors`、`ConditionalCheckFailedRequests` を見ます。`ConditionalCheckFailedRequests` は、05章の楽観ロックが働いた回数です。`ThrottledRequests` は、テーブルに付けた上限に当たったときにも増えます。
 
-ダッシュボードは 1 つで、参照するメトリクスは 50 個以内に収めています。無料枠がそこまでだからです。テストがこの上限を見張っています。
+ダッシュボードは 1 つで、参照するメトリクスは 50 個以内に収めています。無料枠に入るのがそこまでだからで、この上限はテストで見張っています。

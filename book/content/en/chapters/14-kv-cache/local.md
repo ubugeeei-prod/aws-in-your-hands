@@ -8,7 +8,7 @@ title: "14 Cache: Run It Locally"
 
 <!-- section: 14.local -->
 
-Memory first. Copy `examples/14-kv-cache/.env.example` to `.env` in the same directory.
+On this page you run the rate limit and the cache built so far as one API on your machine. Start with the memory store. Copy `examples/14-kv-cache/.env.example` to a file named `.env` in the same directory.
 
 <<< @/examples/14-kv-cache/.env.example
 
@@ -22,31 +22,31 @@ From another terminal, call it six times.
 curl -s -i http://localhost:8794/items
 ```
 
-The first call says `x-cache: miss` and takes about 300 ms. From the second on it says `x-cache: hit` and returns at once. `ratelimit-remaining` goes 4, 3, 2, and the sixth call gets 429 with `retry-after`.
+The first call returns `x-cache: miss` and takes about 300 ms. From the second call on, the response has `x-cache: hit` and comes back at once. `ratelimit-remaining` goes down through 4, 3, and 2, and the sixth call returns 429 with `retry-after`.
 
-Whose five calls they are is decided by the address the request came from.
+The app decides whose 5 calls these are by the address the request came from.
 
 <<< @/examples/14-kv-cache/src/caller.ts{address}
 
-On AWS that is the source IP address as API Gateway saw it. It arrives in the event's `requestContext`, and no header the caller sends can change it. On the local development server it is the address at the other end of the socket. Headers such as `x-forwarded-for` are never read, because the caller can write anything into them.
+On AWS, the app uses the source IP address that API Gateway saw. That address is in the event's `requestContext`, and the caller cannot change it with a header. On the local development server, the app uses the address of the peer on the socket. It does not read headers such as `x-forwarded-for`, because the caller can write any value into them.
 
 <<< @/examples/14-kv-cache/src/caller.ts{subject}
 
-IPv6 addresses are grouped by their first 64 bits, because one network hands a single caller that many addresses. Requests whose address could not be read all share one budget, so that a misconfiguration makes the limit stricter rather than looser.
+IPv6 addresses are counted together by their first 64 bits, because one network hands that many addresses to a single caller. Requests whose address could not be read are all counted in one shared budget, so that a configuration mistake makes the limit stricter and not looser.
 
-The sample does not ask callers to name themselves in a header such as `x-client-id`, because that protects nothing. Claim another name and you are counted separately, and every new name adds an item to the store. A rate limit in front of authentication counts by something the caller cannot choose.
+The sample does not ask callers to identify themselves in a header such as `x-client-id`, because that would be no defense. A caller who claims a different name is counted under a separate limit, and each new name adds one item to the store. A rate limit placed before authentication counts by something the caller cannot choose.
 
-An IP address has limits too. Behind one office or campus exit, everyone inside shares the five calls. And a caller with many addresses gets that many budgets. To tell users apart, take the ID from the verified token of [chapter 06](/en/chapters/06-auth.md). Counting by IP address is a rough brake in front of authentication.
+Counting by IP address has limits too. On a network with a single exit, such as an office or a school, everyone inside shares the 5 calls. In the other direction, a caller with many addresses has as many budgets as addresses. To tell users apart, take the ID from the verified token in [chapter 06](/en/chapters/06-auth.md). A rate limit that counts by IP address is a rough brake placed before authentication.
 
-In the app, the rate limit runs before the cache.
+Inside the app, the rate limit runs before the cache.
 
 <<< @/examples/14-kv-cache/src/app.ts{limit}
 
-Look inside the `catch`. When the counting store is down, do you let the request through or refuse it? That is a product decision, not a technical one. For a list API, let it through: a store outage shouldn't take the API down with it. For login attempts, refuse: you don't want to wave people through with the guard down. So it is a setting, `RATE_ON_ERROR`, and not something buried in a `catch`.
+The `catch` block decides whether to let a request through or refuse it when the counting store is down. That is a product decision, not a technical one. For a list API you would probably let the request through, because a store failure should not stop the API as well. For login attempts you would probably refuse, because you do not want to let requests through while the protection is missing. The choice is therefore a setting, `RATE_ON_ERROR`, and is not fixed inside the `catch`.
 
-This chapter's stack sets it to `allow`, and here is what that costs. While the store is down, the app's limit does not apply: the same caller gets through as often as they like. The only brake left is the stage throttle in front of the API (10 requests a second across all callers). If that is not enough for your API, set it to `deny`.
+This chapter's stack sets it to `allow`, and that has a cost. While the store is down, the app's limit does not apply, and the same caller can get through any number of times. The only brake left at that point is the stage throttling in front of the API (10 requests a second across the whole API, configured on the [Deploy](/en/chapters/14-kv-cache/deploy.md) page). If that is not enough for your API, set it to `deny`.
 
-Which store is used is decided at startup, from the environment.
+The store is chosen at startup from environment variables.
 
 <<< @/examples/14-kv-cache/src/env.ts{env}
 
@@ -62,19 +62,19 @@ vp run kv:local:migrate
 vp run kv:test:local
 ```
 
-`kv:local:start` needs a running Docker daemon. The devShell doesn't bring one, so start Docker Desktop or similar yourself. It starts `valkey/valkey:9.0.6-alpine` (port 6390) and `amazon/dynamodb-local:3.3.1` (port 8001).
+`kv:local:start` needs a running Docker daemon. Entering the devShell does not give you Docker, so start Docker Desktop or an equivalent separately. The task starts `valkey/valkey:9.0.6-alpine` (port 6390) and `amazon/dynamodb-local:3.3.1` (port 8001).
 
-`kv:test:local` runs the contract tests against those two. If either is not running, it fails instead of skipping, because a skip looks like a pass at a glance.
+`kv:test:local` runs the contract tests introduced on [the first page of the chapter](/en/chapters/14-kv-cache.md) against these two. If either one is not running, the task fails and does not skip, because a skip looks like a pass at a glance.
 
-Change `KV_STORE` in `.env` to `valkey` or `dynamodb`, and `vp run dev:kv` uses that store too.
+If you change `KV_STORE` in `.env` to `valkey` or `dynamodb`, `vp run dev:kv` uses that store too.
 
-One thing to be upfront about. The machine this chapter was written on had no Docker daemon, so `kv:local:start` was never run. Instead, Valkey 9.1.2 and DynamoDB Local 3.3.1 were started as plain processes, not containers, and the 22 contract tests and `dev:kv` ran against them. The tests and the app are checked against real servers; only the tasks that start the containers are not.
+The machine this chapter was written on had no Docker daemon, so `kv:local:start` has not been run. In its place, Valkey 9.1.2 and DynamoDB Local 3.3.1 were started as processes, not containers, and the 22 contract tests and `dev:kv` ran against them. The tests and the app have been checked against real servers, and only the tasks that start the containers are unconfirmed.
 
-Here is what a local run does not reproduce.
+Some things are not reproduced locally.
 
-- **IAM and TLS.** The local Valkey has no password and no TLS. Token signing and the TLS 1.3 connection can only be checked against ElastiCache
-- **Cluster mode.** The local Valkey is a single node. ElastiCache Serverless runs in cluster mode, and the client behaves differently
-- **TTL deletion.** Nothing locally depends on an expired item being gone
-- **Several execution environments.** The dev server is one process, so even the memory rate limit looks correct
+- IAM and TLS. The local Valkey has no password and no TLS. Token signing and the TLS 1.3 connection can only be checked against ElastiCache
+- Cluster mode. The local Valkey is a single node. ElastiCache Serverless runs in cluster mode, where the client behaves differently
+- Deletion by TTL. Nothing in the local run depends on whether an expired item has been deleted
+- Several execution environments. The development server is a single process, so even the memory rate limit appears to work correctly
 
-Watch the last one. `KV_STORE=memory` looks perfect on your machine and loosens the limit the moment it runs on Lambda.
+Pay particular attention to the last of these. `KV_STORE=memory` appears to work correctly on your machine, but on Lambda its limit becomes looser.

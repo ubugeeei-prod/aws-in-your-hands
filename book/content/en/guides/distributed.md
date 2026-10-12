@@ -5,13 +5,13 @@ sourceRevision: 3
 
 # Distributed Systems Guide
 
-The samples in this book are all small, but every one of them runs across several places: the browser, the CDN's edge locations, a function's execution environments, a database. Each holds state from a different point in time, and each fails separately.
+The samples in this book are all small, but each one runs across several places. The browser, the CDN's edge locations, a function's execution environments, and a database each hold state from a different point in time, and each fails separately.
 
-This page collects where that topic shows up in the book. It is not something only the distributed database chapters deal with.
+Distributed-systems topics are not confined to the distributed database chapter. They come up throughout the book, and this page collects which chapter deals with what.
 
-## Eight questions every chapter asks
+## Eight questions every chapter answers
 
-For an example that holds state, the chapter works through these questions.
+For a sample that holds state, the chapter answers these questions.
 
 1. Who owns the state? Which copy of the data is the correct one?
 2. Which path do reads and writes take?
@@ -22,13 +22,13 @@ For an example that holds state, the chapter works through these questions.
 7. If it stops after only part of it succeeded, how do you get back?
 8. What additional cost does that bring?
 
-Then the chapter states the property it wants to keep (the invariant) in one plain sentence, and adds a test that tries to break it.
+The chapter then states the property it wants to keep, its invariant, in one plain sentence, and adds a test that tries to break that invariant.
 
-The book does not infer guarantees from a service's name. Global, serverless, durable, exactly-once: words like these promise nothing on their own.
+The book does not infer guarantees from a service's name, because words such as global, serverless, durable, and exactly-once guarantee nothing on their own.
 
 ## Each chapter's answers
 
-Here are the chapters that hold state, in groups. Every test file named below exists in this repository.
+The chapters that hold state are listed below in several groups. Every test file named in the tables is in this repository.
 
 ### Foundations and the notes API (chapters 02–06)
 
@@ -58,7 +58,7 @@ Here are the chapters that hold state, in groups. Every test file named below ex
 | [13](/en/chapters/13-sql.md) | The Aurora DSQL cluster | A transaction either commits as a whole or is run again as a whole, and a rerun changes its outcome only through values read from the database again | Two transactions compete for the last slot and one loses at commit. `examples/13-sql/test/notes-repository.test.ts` injects the commit conflict, and `test/transaction.test.ts` looks at the retries. Interrupting and resuming a migration is in `test/migrate.test.ts` |
 | [14](/en/chapters/14-kv-cache.md) | The rate limit count belongs to the shared store (DynamoDB or Valkey). The list belongs to the source data. The cache owns nothing | However many requests arrive at once, no more than the limit pass in one window. A copy is never staler than its TTL | Two requests reach a read-then-write store together, an expired item comes back, the cache fails, refills stampede. `examples/14-kv-cache/test/rate-limit.test.ts`, `test/read-through.test.ts`, and `test/dynamodb-store.test.ts` |
 
-The conflict in chapter 13 never happens locally, because PGlite has a single connection. The tests show that this code behaves correctly when DSQL returns `40001` as documented. They do not prove that DSQL behaves that way.
+The conflict in chapter 13 does not happen locally, because PGlite has a single connection. What the tests establish is that this book's code behaves correctly when DSQL returns `40001` as documented. They do not prove that DSQL really behaves that way.
 
 ### Work that leaves the system, and long work (chapters 15–18)
 
@@ -69,7 +69,7 @@ The conflict in chapter 13 never happens locally, because PGlite has a single co
 | [17](/en/chapters/17-ai.md) | No state. What exists is the partial output that reached the caller | Output for which no `done` was received is never treated as a completed summary | The stream is cut off partway. `examples/17-ai/test/client.test.ts` truncates a complete response one byte at a time and checks that every cut gives `incomplete` |
 | [18](/en/chapters/18-live.md) | Whether the channel is live belongs to IVS. The events that arrive are signals | When the picture built from events disagrees with `GetStream`, `GetStream` is the one to trust | An event arrives twice, events arrive out of order, one goes missing. `examples/18-live/test/timeline.test.ts`. That each viewer sees the video with a different delay is covered in the prose, not by a test |
 
-### Operations (chapters 19–24)
+### Operations, and servers you run yourself (chapters 19–24)
 
 | Chapter | Owner of the state | invariant | How it breaks, and the test that shows it |
 | --- | --- | --- | --- |
@@ -80,14 +80,14 @@ The conflict in chapter 13 never happens locally, because PGlite has a single co
 | [23](/en/chapters/23-ec2.md) | A file on the data volume attached to one instance | A note that was answered with 201 can be read after the process restarts and after the instance is replaced | The process stops in the middle of a write, the instance is replaced. `examples/23-ec2/test/file-notes.test.ts` and `test/data-volume.test.ts` |
 | [24](/en/chapters/24-celld.md) | Three places: the bucket, the owning node's disk, and the followers' disks | A cell has one owner at a time. An acknowledged write is not lost. celld keeps these; this chapter's part is to operate it without breaking what it assumes | An update fails partway, one node is lost, a request is left without an answer. `examples/24-celld/test/rollout.test.ts` and `test/ledger.test.ts` |
 
-The chapter 24 tests run against a made-up fleet. celld itself has never been started, neither locally nor in AWS.
+The chapter 24 tests run against a simulated fleet built for the tests. celld itself has never been started, neither locally nor in AWS.
 
-## So far, all of these are local tests
+## Every test here was run locally
 
-To be honest, every test in the tables above was run on a local machine. In AWS, no chapter's checks have been run yet, not even once. Chapter 05's conditional writes have never been sent to DynamoDB, chapter 08's worker has never been handed a real S3 event, and chapter 13's transactions have never been made to conflict on a real cluster.
+Every test in the tables above was run on a local machine. In AWS, no chapter's checks have been run yet, not even once. Chapter 05's conditional writes have never been sent to DynamoDB, chapter 08's worker has never been handed a real S3 event, and chapter 13's transactions have never been made to conflict on a real cluster.
 
-Being able to reproduce a failure in a fixed order is the good part. But what the tests check is the decisions made by this book's code, not the behavior of AWS services. Actual propagation delay, how execution environments scale out, IAM propagation, the real shape of events, and what happens in a real outage can be checked only in a real environment. What is still open is listed chapter by chapter in the [Validation Record](/en/reference/validation.md).
+Local tests have the advantage that a failure can be reproduced in a fixed order. What they check, though, is the decisions made by this book's code, not the behavior of AWS services. Actual propagation delay, how execution environments scale out, IAM propagation, the real shape of events, and what happens in a real outage can be checked only in a real environment. What is still open is listed chapter by chapter in the [Validation Record](/en/reference/validation.md).
 
-The book does not jump to multiple Regions from the very first API. It goes in this order: a small ordinary example, then how that example fails, then a deeper lab if one is needed.
+The book does not start with a multi-Region setup from the very first API. It begins with a small ordinary example, then looks at how that example fails, and goes on to a deeper lab only where one is needed.
 
 Experiments that cause failures in a real environment are kept apart, in a dedicated environment and in tasks that you run explicitly. The everyday `vp run check:all` does not touch AWS.

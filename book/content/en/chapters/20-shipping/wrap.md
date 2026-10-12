@@ -4,11 +4,13 @@ title: "20 CI/CD: Costs, Pitfalls, and Cleanup"
 
 # 20 CI/CD: Costs, Pitfalls, and Cleanup
 
+This is the last page of the chapter. It covers how this differs from Cloudflare Workers, what it costs, where you are likely to get stuck, what to add for production, and how to clean up, and it ends with what was and was not verified.
+
 ## If you come from Workers
 
 <!-- section: 20.workers -->
 
-Compared with deploying Cloudflare Workers, the differences are roughly these.
+Compared with deploying Cloudflare Workers, these are the differences.
 
 | | Cloudflare Workers | This chapter |
 | --- | --- | --- |
@@ -18,51 +20,51 @@ Compared with deploying Cloudflare Workers, the differences are roughly these.
 | CI authentication | The documented setup stores an API token as a CI secret | OIDC, receiving credentials valid for one hour. No secret is stored |
 | What does not come back | The contents of KV, R2, D1, and so on are not part of a version | Data, schema, and whatever left the system |
 
-Workers gets there in far fewer steps. A Worker is one unit, and switching versions is instant. This chapter is long because it updates separate resources in sequence: API Gateway, Lambda, a role, a log group. The "stops half-way" story comes from that as well.
+Workers takes far fewer steps. A Worker is one unit, so switching versions is instant. This chapter is long because it updates separate resources in sequence, API Gateway, Lambda, a role, and a log group, and the problem of a deploy stopping half-way comes from the same place.
 
-On what does not come back, the two were the same.
+Both have things that do not come back.
 
 ## Money
 
 Amounts are in USD, for the Tokyo Region, on demand, before tax. The calculations are in [Pricing calculations](/en/reference/pricing.md).
 
-What this chapter adds costs almost nothing in itself. CloudFormation adds no charge for resource types beginning with `AWS::`. IAM roles and the OIDC provider are part of IAM, at no additional charge. The contents of the stack (an HTTP API and Lambda) are as in chapter 04: 0 when nobody calls. Drift detection incurs no CloudFormation charge either.
+What this chapter adds costs almost nothing in itself. CloudFormation makes no additional charge for resource types beginning with `AWS::`. IAM roles and the OIDC provider are part of IAM, also at no additional charge. The contents of the stack, an HTTP API and Lambda, are as in chapter 04 and cost 0 when nobody calls them. Drift detection incurs no CloudFormation charge either.
 
-What grows is the CDK asset bucket. Each deploy adds one zip of the function's code. Deploying once a day for a year and never cleaning up, the monthly storage charge came to less than one cent (USD 0.001192, assuming 137 KB per zip and S3 Standard at USD 0.025 per GB-month). The 137 KB is this chapter's bundle compressed locally, not a measurement of the zip the CLI actually makes. For a stack that uses container images, the order of magnitude changes.
+What grows is the CDK asset bucket. Each deploy adds one zip of the function's code. For one deploy a day over a year with no cleanup, the storage charge works out to less than one cent a month (USD 0.001192, assuming 137 KB per zip and S3 Standard at USD 0.025 per GB-month). The 137 KB is this chapter's bundle compressed locally, not a measurement of the zip the CLI actually makes. For a stack that uses container images, the order of magnitude changes.
 
-GitHub Actions charges are not an AWS bill. According to GitHub's documentation, standard runners are free in public repositories, and private repositories get free minutes each month by plan (2,000 on GitHub Free). How many minutes one run of this chapter's workflows takes is unknown, since they have not been run.
+GitHub Actions charges are not part of the AWS bill. According to GitHub's documentation, standard runners are free in public repositories, and private repositories get free minutes each month by plan (2,000 on GitHub Free). How many minutes one run of this chapter's workflows takes is unknown, since they have not been run.
 
-What a preview stack costs depends on what is in it, as the section above said.
+What a preview stack costs depends on what is in it, as the [preview section](/en/chapters/20-shipping/build.md) said.
 
-A word on being hammered, too. This chapter's API, in dev, prod, and every preview, has no authentication and can be called by anyone. What holds it back is the stage throttle: 10 requests a second (burst 20) per stack, and a 429 beyond that. Pinned there for 30 days is at most 25.92 million requests, which by chapter 04's arithmetic is **52.43 a month per stack** (API Gateway 33.44, Lambda 9.50, logs 9.49). With dev, prod, and three open previews, that's five times over, about 262. One more reason to delete stacks you aren't using.
+Consider also what it costs when the API gets hammered. This chapter's API, in dev, prod, and every preview, has no authentication and can be called by anyone. What holds it back is the stage throttle, which lets through 10 requests a second (burst 20) per stack and answers the rest with a 429. Requests at that limit for 30 days come to at most 25.92 million, which by chapter 04's arithmetic is **52.43 a month per stack** (API Gateway 33.44, Lambda 9.50, logs 9.49). With dev, prod, and three open previews, that is five times as much, about 262. It is one more reason to delete stacks you are not using.
 
-Notes live in chapter 04's in-memory repository, so they stop at 100 per execution environment. Response size is chapter 04's too: a list is 20 summaries and at most 20 KiB, and one note is at most 64 KiB. How far data transfer can go is the calculation under "If it gets hammered" in chapter 04, unchanged (up to about USD 180 a month). What to add before real users arrive is the same too: authentication (chapter 06), and AWS WAF with CloudFront in front (chapter 21; the web ACL is 8.00 a month).
+Notes are stored in chapter 04's in-memory repository, so they stop at 100 per execution environment. Response sizes are chapter 04's too: a list is 20 summaries and at most 20 KiB, and one note is at most 64 KiB. For how far data transfer can go, the calculation on [chapter 04's costs page](/en/chapters/04-http-api/wrap.md) applies unchanged (up to about USD 180 a month). What to add before real users arrive is also the same as in chapter 04: authentication (chapter 06), and AWS WAF with CloudFront in front (chapter 21; the web ACL is 8.00 a month).
 
 ## Where you get stuck
 
-These were not met by running anything. They are the places the documentation and the code say you are likely to get stuck.
+The table below does not list problems met by running anything. It lists the places where the documentation and the code show you are likely to get stuck.
 
 | If this happens | Look here |
 | --- | --- |
-| `cdk deploy` says the environment is not bootstrapped, or it cannot assume a role | Has `vp run ship:cfn:bootstrap` been run for this account and Region? cdkd's bootstrap is no substitute |
-| `AssumeRoleWithWebIdentity` is refused in GitHub Actions | The token's `sub` and the string in the trust policy must match to the character. Does the job have an `environment`? Does the repository use the form with IDs (`owner@123/repo@456`)? |
-| Deploying `AihShipCi` fails because the OIDC provider already exists | The account already has it. Add `-c existingOidcProviderArn=...` |
+| `cdk deploy` says the environment is not bootstrapped, or it cannot assume a role | Check that `vp run ship:cfn:bootstrap` has been run for this account and Region. cdkd's bootstrap is no substitute |
+| `AssumeRoleWithWebIdentity` is refused in GitHub Actions | The token's `sub` and the string in the trust policy must match to the character. Check whether the job has an `environment`, and whether the repository uses the form with IDs (`owner@123/repo@456`) |
+| Deploying `AihShipCi` fails because the OIDC provider already exists | The account already has one. Add `-c existingOidcProviderArn=...` |
 | The first deploy failed and the stack remains in `ROLLBACK_COMPLETE` | CloudFormation cannot update this stack. On the next `ship:cfn:deploy` the CLI deletes it and creates it again. Find the cause of the failure in the events first |
 | `ship:cfn:drift` is `failed` and the reason says `not authorized` | The DriftRole lacks permission to read that resource type. Add it in `ci-stack.ts` |
 | `ship:cfn:drift` ends with 11 every time | An unchecked type is not on the list in `drift-coverage.ts`. Check the support table to see whether it really cannot be checked, then add it |
 | `ship:cfn:diff` is empty but the behavior differs | The diff compares templates. Run `vp run ship:cfn:drift` |
-| The prod stack cannot be deleted | That is termination protection. If you really mean to delete it, turn it off in the console first |
+| The prod stack cannot be deleted | Termination protection is on. If you really mean to delete the stack, turn it off in the console first |
 
 ## Taking it to production
 
-- **Narrow the cfn-exec role.** The default is `AdministratorAccess`. Pass only the policies you need when bootstrapping, and add a permissions boundary. Every job that can use the deploy role reaches this far
-- **Separate the accounts.** As long as dev, preview, and prod share an account, only names keep them apart
-- **Previews for trusted branches only.** Enable previews with neither of the two above, and everyone who can push a branch can become an administrator of the account
-- **Protect the `production` environment.** Limit the branches that may deploy to main, and require approval. What the trust policy trusts is this environment's name
-- **Add something that stops on error rate, then shift gradually.** Alias weights and CodeDeploy go together with alarms ([chapter 19](/en/chapters/19-observability.md))
-- **Send the drift report somewhere people look.** Do not rely only on the notification of a failed job. Schedules can stop
-- **Clean up assets.** The pinned CLI has `cdk gc`. This chapter has not tried it
-- **Watch the OIDC provider and the CI roles for drift too.** This chapter's DriftRole can read only stacks whose names begin with `AihShipApi`. If someone rewrites `AihShipCi`, it goes unnoticed
+- Narrow the cfn-exec role. The default is `AdministratorAccess`. Pass only the policies you need when bootstrapping, and add a permissions boundary. Every job that can use the deploy role reaches as far as the cfn-exec role's permissions
+- Separate the accounts. As long as dev, previews, and prod share an account, only names keep them apart
+- Limit previews to branches you trust. If you enable previews with neither of the two items above, **everyone who can push a branch can become an administrator of the account**
+- Protect the `production` environment. Limit the branches that may deploy to main, and require approval. What the trust policy trusts is this environment's name
+- Add something that stops on error rate, then shift gradually. Alias weights and CodeDeploy go together with alarms ([chapter 19](/en/chapters/19-observability.md))
+- Send the drift report somewhere people look. Do not rely only on the notification of a failed job, because schedules can stop
+- Clean up assets. The pinned CLI has `cdk gc`. This chapter has not tried it
+- Watch the OIDC provider and the CI roles for drift too. This chapter's DriftRole can read only stacks whose names begin with `AihShipApi`. If someone rewrites `AihShipCi`, nobody will notice
 
 ## Cleaning up
 
@@ -74,38 +76,38 @@ vp run ship:cfn:destroy
 vp run ship:ci:destroy
 ```
 
-If preview stacks remain, delete them one at a time with `vp run ship:cfn:destroy -c stage=pr-<number>`. If you created prod, turn off termination protection, then use `-c stage=prod`. The prod log group remains after the stack is deleted.
+If preview stacks remain, delete them one at a time with `vp run ship:cfn:destroy -c stage=pr-<number>`. If you created prod, turn off termination protection and then delete it with `-c stage=prod`. The prod log group remains after the stack is deleted.
 
-`ship:ci:destroy` removes the OIDC provider and the four roles. Delete the variables in the GitHub repository and the workflows you copied to `.github/workflows/` yourself. If the workflows stay, they will try to assume roles that no longer exist and fail every day.
+`ship:ci:destroy` removes the OIDC provider and the four roles. Delete the variables in the GitHub repository and the workflows you copied to `.github/workflows/` yourself. Workflows left in place will try to assume roles that no longer exist and fail every day.
 
-What remains last is the CDK bootstrap. The `CDKToolkit` stack can be deleted from the CloudFormation console, but the asset bucket is set to remain, so empty it and delete it separately. If other CDK apps use `cdk deploy` in the same account, do not delete it. There is no task for this cleanup.
+The last thing left is the CDK bootstrap. You can delete the `CDKToolkit` stack from the CloudFormation console, but the asset bucket is configured to remain, so empty it and delete it separately. If other CDK apps use `cdk deploy` in the same account, do not delete the bootstrap. There is no task for cleaning it up.
 
 This chapter changed nothing in cdkd's bootstrap (chapter 02) or in chapter 04's `AihHttpApi`.
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** Unit tests (drift polling, classification, and gate; the call order through a substituted SDK client; trust policies and role permissions; a stack per stage; CDK CLI arguments; the next step for each stack status; preview listing; the workflow YAML). Type checks. Synthesis with the pinned CDK CLI (`ship:cfn:synth`, also with other stages). That an unknown stage, and a deploy of the CI roles without a repository, stop before any AWS call. All on macOS (Apple silicon).
+**Checked locally.** Unit tests (drift polling, classification, and gate; the call order through a substituted SDK client; trust policies and role permissions; a stack per stage; CDK CLI arguments; the next step for each stack status; preview listing; the workflow YAML). The type check. Synthesis with the pinned CDK CLI (`ship:cfn:synth`, also with other stages). That passing an unknown stage, and trying to deploy the CI roles without naming a repository, both stop before any AWS call. All of this was checked on macOS (Apple silicon).
 
-**Not checked yet.** Everything that touches AWS or GitHub is unrun: `ship:cfn:bootstrap`, `ship:cfn:diff`, `ship:cfn:deploy`, `ship:smoke`, `ship:cfn:status`, `ship:cfn:drift`, `ship:preview:list`, `ship:cfn:destroy`, `ship:ci:diff`, `ship:ci:deploy`, `ship:ci:destroy`, the four workflows, the "Break it on purpose" procedure, and `cdkd export` and `cdkd import --migrate-from-cloudformation`. In particular, these wait for a real environment.
+**Not checked yet.** Nothing that touches AWS or GitHub has been run: `ship:cfn:bootstrap`, `ship:cfn:diff`, `ship:cfn:deploy`, `ship:smoke`, `ship:cfn:status`, `ship:cfn:drift`, `ship:preview:list`, `ship:cfn:destroy`, `ship:ci:diff`, `ship:ci:deploy`, `ship:ci:destroy`, the four workflows, the "Break it on purpose" procedure, and `cdkd export` and `cdkd import --migrate-from-cloudformation`. In particular, the following points wait for a real environment.
 
 - That IAM accepts the trust policies and only the intended jobs can assume the roles. Whether a token is issued for a pull request from a fork
 - That `cdk diff` and `cdk deploy` work by assuming the bootstrap roles from the GitHub roles
-- That the DriftRole's read permissions suffice for a real detection
+- That the DriftRole's read permissions are enough for a real detection
 - The actual shape of CloudFormation's drift responses. The fixtures were written from the API reference and the SDK's types. The name and message of the error for a missing stack are also an expectation
 - That the integration goes unchecked, that a change to the inline policy shows as drift on the role, and that result times are at or after the detection's start time
 - What the rollback of a failed deploy looks like, and that old versions remain
 - That the Nix devShell works on an x86_64-linux runner
 - That the stage throttle (`DefaultRouteSettings`: 10 a second, burst 20) is applied through CloudFormation and that requests beyond it get a 429. A test sees it in the template. Whether drift detection compares this property is also unchecked
-- The path described in the preview section (that the pull request's own workflow file is the one that runs, and that the PreviewRole reaches as far as the cfn-exec role's permissions). It is read from GitHub's and the CDK's documentation and from this chapter's role definitions, not tried. For `--custom-permissions-boundary`, only its presence in the pinned CLI was confirmed
+- The path described in the preview section (that the pull request's own workflow file is the one that runs, and that the PreviewRole reaches as far as the cfn-exec role's permissions). It was read from GitHub's and the CDK's documentation and from this chapter's role definitions, and has not been tried. For `--custom-permissions-boundary`, only its presence in the pinned CLI was confirmed
 
-**Relation to cdkd.** This chapter's two stacks are not deployed with cdkd, but the rule says to check, so we did. The pinned cdkd (0.296.28) registers no dedicated implementation for `AWS::Lambda::Alias`, `AWS::Lambda::Version`, or `AWS::IAM::OIDCProvider`. The other types (`AWS::ApiGatewayV2::*`, `AWS::IAM::Role`, `AWS::Lambda::Function`, `AWS::Lambda::Permission`, `AWS::Logs::LogGroup`) have one.
+**Relation to cdkd.** This chapter's two stacks are not deployed with cdkd, but this book's rule is to check anyway. The pinned cdkd (0.296.28) registers no dedicated implementation for `AWS::Lambda::Alias`, `AWS::Lambda::Version`, or `AWS::IAM::OIDCProvider`. The other types (`AWS::ApiGatewayV2::*`, `AWS::IAM::Role`, `AWS::Lambda::Function`, `AWS::Lambda::Permission`, `AWS::Logs::LogGroup`) have one.
 
 **Where the code is.**
 
 | Section | Files | Tasks |
 | --- | --- | --- |
 | The two paths, once more | `examples/20-shipping/src/cdk-args.ts`, `scripts/cdk.ts`, `cdk.json` | `ship:cfn:bootstrap`, `ship:cfn:synth` |
-| An environment is a separate stack | `examples/20-shipping/infra/lib/config.ts`, `infra/lib/ship-api-stack.ts`, `infra/bin/app.ts`, `infra/test/ship-api-stack.test.ts` | `ship:cfn:synth`, `test:unit` |
+| A separate stack for each environment | `examples/20-shipping/infra/lib/config.ts`, `infra/lib/ship-api-stack.ts`, `infra/bin/app.ts`, `infra/test/ship-api-stack.test.ts` | `ship:cfn:synth`, `test:unit` |
 | Handing it to CloudFormation | `examples/20-shipping/src/cdk-args.ts`, `test/cdk-args.test.ts`, `scripts/smoke.ts`, `src/stack-info.ts` | `ship:cfn:diff`, `ship:cfn:deploy`, `ship:smoke` |
 | Getting into AWS without a stored key | `examples/20-shipping/infra/lib/ci-stack.ts`, `infra/lib/config.ts`, `infra/test/ci-stack.test.ts` | `ship:ci:diff`, `ship:ci:deploy`, `test:unit` |
 | What each role may do | `examples/20-shipping/infra/lib/ci-stack.ts`, `infra/test/ci-stack.test.ts` | `test:unit` |

@@ -4,17 +4,19 @@ title: "10 Edge: Run It Locally"
 
 # 10 Edge: Run It Locally
 
+The [previous page](/en/chapters/10-edge.md) read the edge function, `edge-router.js`, and ran it in tests under Node.js. This page runs the same function in a local server, then covers what KVS guarantees about consistency and the script that changes what KVS holds.
+
 ## Run it on your machine
 
 <!-- section: 10.local -->
 
-Beyond the tests, let's poke at it with a browser and `curl`.
+Besides the tests, you can call the function from a browser or `curl`.
 
 ```bash
 vp run dev:edge
 ```
 
-A server comes up at <http://localhost:8790> with the function wired in front of the contents of `site/`. No Docker, no AWS account.
+A server starts at <http://localhost:8790> with the function in front of the contents of `site/`. It needs neither Docker nor an AWS account.
 
 ```bash
 curl -si http://localhost:8790/plans | head -n 3
@@ -22,48 +24,46 @@ curl -s http://localhost:8790/ | grep '<h1>'
 curl -si 'http://localhost:8790/sale?ref=mail' | grep -i location
 ```
 
-`/plans` answers 301 to `/pricing/`. The data is `examples/10-edge/edge-data.json`.
+`/plans` answers with a 301 to `/pricing/`. The redirect table and the flags are in `examples/10-edge/edge-data.json`.
 
 <<< @/examples/10-edge/edge-data.json
 
-With the server still running, change `maintenance` to `true` and save. The next request gets a 503. Set `newHome` to `true` and the content of `/` swaps. The server's terminal shows how many times KVS was read for each request.
+With the server still running, change `maintenance` to `true` and save the file, and the next request gets a 503. Set `newHome` to `true` and the content of `/` changes. The server's terminal shows how many times KVS was read for each request.
 
 <<< @/examples/10-edge/src/local/dev.ts{dev}
 
-Here's what this server does not reproduce.
+This server does not reproduce four things.
 
-- **The propagation delay.** Here, the value changes on the request right after you save the file. The real KVS doesn't behave that way. The next section covers it
-- **The CloudFront cache.** Every request goes through the function and the "origin"
-- **The runtime's constraints.** Syntax, size, memory, execution time
-- **The details of S3's responses.** A missing file just gets a plain 404
+- The propagation delay. Here a value changes on the first request after you save the file. The real KVS doesn't behave that way, and "What KVS promises and what it does not" on this page covers the delay
+- The CloudFront cache. Every request goes through the function and the stand-in for the origin
+- The runtime's constraints. The limits on syntax, size, memory, and execution time are not reproduced
+- The details of S3's responses. A missing file gets a plain 404
 
-### cdkd's emulator works too
+### Running it in cdkd's emulator
 
-cdkd can run a synthesized distribution on your machine. The function runs in an environment cdkd provides, and a JSON file stands in for KVS.
+cdkd can run a synthesized distribution on your machine. The function runs in an environment that cdkd provides, and a JSON file can stand in for KVS.
 
 ```bash
 vp run dev:edge:cdkd
 ```
 
-This one is at <http://localhost:8791>. I ran the same `curl` commands against it and got the same responses. `import cf from "cloudfront"` and `cf.kvs()` without an ID both work as written. With only an S3 origin and a CloudFront Function, it didn't need Docker.
+This server listens at <http://localhost:8791>. I ran the same `curl` commands against it and got the same responses. `import cf from "cloudfront"` and `cf.kvs()` without an ID both work unchanged. With only an S3 origin and a CloudFront Function, it didn't need Docker.
 
-Still, this isn't CloudFront itself either. I haven't looked into how much of runtime 2.0's constraints cdkd's emulator reproduces. Treat it as "two different stand-ins gave the same result", and nothing more. Lambda@Edge isn't run by this emulator; it prints a warning and skips it.
+cdkd's emulator isn't CloudFront itself either. I haven't looked into how far the emulator reproduces the constraints of runtime 2.0. All that can be said is that two separate stand-ins gave the same result. The emulator does not run Lambda@Edge. It prints a warning and skips it.
 
-## What does KVS actually promise?
+## What KVS promises and what it does not
 
 <!-- section: 10.kvs -->
 
-As the name says, KVS holds keys and values. But its character is quite different from DynamoDB ([chapter 05](/en/chapters/05-dynamodb.md)).
-
-First, size.
+As the name says, KVS stores keys and values, but it behaves quite differently from DynamoDB ([chapter 05](/en/chapters/05-dynamodb.md)). It differs in three ways, and the first is size.
 
 <<< @/examples/10-edge/src/kvs/config.ts{limits}
 
-A key can be 512 bytes, a value 1 KB, and a whole KVS 5 MB. One update request can touch up to 50 keys (or 3 MB). Values are strings, byte strings, or JSON. It's a place for a configuration table, not a place for application data.
+A key can be 512 bytes, a value 1 KB, and a whole KVS 5 MB. One update request can change up to 50 keys (or 3 MB). A value can be a string, a byte string, or JSON. KVS is a place for a configuration table, not for application data.
 
-Next, who can write. The function only reads. "Write on every request" uses, such as counting visits, simply aren't possible.
+The second difference is who can write. The function only reads, so a use that writes on every request, such as counting visits, isn't possible.
 
-And the most important point: a value you just wrote can't be read right away.
+The third matters most. A value you have written can't be read right away.
 
 ```figure
 caption: After UpdateKeys succeeds, the value reaches each edge location at a different time, and at t1 two readers get two different answers
@@ -82,80 +82,78 @@ note a: t2 maintenance = on
 note b: t2 maintenance = on
 ```
 
-At t0, when the update API reports success, every edge may still be reading the old value. At t1, a reader in Tokyo can get a 503 while a reader somewhere else gets the normal page. Only at t2 do they agree.
+At t0, when the update API reports success, every edge location may still be reading the old value. At t1, a reader in Tokyo can get a 503 while a reader somewhere else gets the normal page. Only at t2 do all edge locations read the same value.
 
-How long is it from t0 to t2? I couldn't find a number or a guarantee in the Developer Guide. There are just two hints. One: about the last-updated time that `meta()` returns, the guide says it "doesn't include the propagation time to the edge". Two: AWS's official blog post at launch says changes "are propagated to all CloudFront edge locations in a few seconds". A blog post isn't a specification, so this book treats it as "usually a few seconds, apparently, with no promised upper bound". I haven't measured it either.
+I couldn't find a number or a guarantee in the Developer Guide for how long t0 to t2 takes. There are only two hints. One is that, about the last-updated time that `meta()` returns, the guide says it "doesn't include the propagation time to the edge". The other is that AWS's official blog post at launch says changes "are propagated to all CloudFront edge locations in a few seconds". A blog post isn't a specification, so this book treats the delay as "apparently a few seconds in most cases, with no promised upper bound". I haven't measured it either.
 
-Turned into design rules, that means:
+For the design, this behavior means three rules.
 
-- **Don't assume a write is readable everywhere right away.** "The sync finished" does not mean "the switch has flipped"
-- **Store only data that's fine in an in-between state.** Nobody is hurt if a redirect is stale for a few seconds. But if you need "from this instant, everyone is locked out for certain", a KVS switch is the wrong tool
-- **Don't depend on order.** Nowhere does the documentation say that an edge that sees B, written after A, must also see A
+- Don't assume a write can be read everywhere right away. When the sync script finishes, the switch may not have flipped yet
+- Store only data that causes no harm in an in-between state. Nobody is hurt if a redirect is stale for a few seconds. If you need everyone locked out for certain from a given instant, a KVS switch is the wrong tool
+- Don't depend on the order of writes. If you write A and then B, nothing in the documentation says that an edge location that sees B also sees A
 
-One more thing: a value never changes in the middle of a single function run. According to the documentation, updates are processed between invocations.
+A value does not change in the middle of a single function run. According to the documentation, updates are processed between invocations.
 
-### Decide the shape of the data
+### Deciding the shape of the data
 
-`edge-data.json` gets converted into KVS keys and values. Before that, a schema checks it.
+`edge-data.json` is converted into KVS keys and values. Before the conversion, a schema checks it.
 
 <<< @/examples/10-edge/src/kvs/config.ts{schema}
 
-The writing side enforces the same "never send the reader off the site" that the function did. On top of that, it catches mistakes that can only be found here. The same `from` twice. A redirect whose target is itself redirected (one edit away from a loop). A `from` the function would never look up (one with an extension, or too long).
+The writing side enforces the same rule the function does, that a reader is never sent off the site. It also catches mistakes that can only be found on the writing side: the same `from` listed twice, a redirect whose target is itself redirected, and a `from` the function would never look up (one with an extension, or one that is too long). A table where a redirect leads to another redirect is one edit away from a loop.
 
 <<< @/examples/10-edge/src/kvs/config.ts{entries}
 
-A flag that's off keeps its key, with the value `"off"`. That way the function's `get` doesn't have to go down the exception path.
+When a flag is off, its key is not deleted. It is written as `"off"`. With the key present, the function's `get` doesn't reject and never takes the exception path.
 
 ## Changing the table safely
 
 <!-- section: 10.sync -->
 
-Now a script that makes the KVS contents match `edge-data.json`. "Delete everything and put it all back" is the easiest, but then every redirect stops working between the delete and the put. Send only the difference.
+Next comes a script that makes the contents of KVS match `edge-data.json`. Deleting everything and putting it all back would be the easiest way, but every redirect would stop working between the delete and the put. The script sends only the difference instead.
 
 <<< @/examples/10-edge/src/kvs/plan.ts{plan}
 
-What to put, what to delete, what to leave. It's a pure function, so it's testable without AWS.
+`planSync` sorts keys into those to put, those to delete, and those to leave alone. It is a pure function, so it can be tested without AWS.
 
-It draws one line. This script deletes only keys that start with `flag:` or `redirect:`. If the KVS holds other keys, the script reports them and leaves them alone. If the same KVS is shared with another use, nobody's data gets deleted just because it's "not in the desired set".
+What the script may delete is limited. It deletes only keys that start with `flag:` or `redirect:`. If KVS holds other keys, the script reports that it found them and doesn't touch them. If the same KVS is shared with another use, this keeps the script from deleting someone else's data just because `edge-data.json` doesn't list it.
 
-### An ETag keeps you from trampling changes you haven't seen
+### Using the ETag to avoid overwriting changes you haven't seen
 
-What if two people change the table at the same time? While you're reading the KVS and computing a diff, a colleague fixes a line in the console. Your diff is based on the old contents, so writing it as is could overwrite the colleague's change without you ever knowing.
+Consider two people changing the table at the same time. While you read KVS and compute a diff, a colleague fixes one line in the console. Your diff is based on the old contents, so if you write it as is, you may overwrite the colleague's change without knowing it was there.
 
-The KVS API has a mechanism against this. A KVS has an ETag that stands for its version, and every write must carry an `If-Match` saying "this is the version I read". If the version has moved on, the write is refused. It's the same idea as the conditional writes in chapter 05, known as optimistic updating.
+The KVS API has a mechanism that prevents this. A KVS has an ETag that identifies its version, and every write must carry an `If-Match` header naming the version you read. If the version has moved on, the write is refused. It is the same idea as the conditional writes in chapter 05, and it is called optimistic concurrency.
 
 <<< @/examples/10-edge/src/kvs/sync.ts{port}
 
-From the script's point of view, KVS is just these two operations. The real one (which calls the AWS SDK) and the test double implement the same shape.
+The script sees KVS as two operations, `read` and `update`. The real implementation, which calls the AWS SDK, and the stand-in used in tests implement the same type.
 
 <<< @/examples/10-edge/src/kvs/sync.ts{sync}
 
-The point is that every retry reads again and plans again. It never resends an old plan.
+On every retry, `syncStore` reads KVS again and makes a new plan. It never sends an old plan a second time. That design settles what happens for each kind of failure.
 
-That settles what happens for each kind of failure.
+- If someone else wrote first, the write is refused and the script reads again. The new plan is made with the other person's change in view
+- If the write arrived but its response didn't (a timeout or a dropped connection), the script can't tell whether the write happened. Reading again answers that. If the write did happen, the diff is empty and the same change isn't sent twice
+- If the script stops partway through several requests, KVS is left half updated. A change of more than 50 keys is split into several requests, and while each request either succeeds or fails as a whole, the series of requests does not. Running the script again sends only what remains
+- If the write conflicts every time, the script gives up after five rounds and reports an error. It doesn't retry forever
+- If the caller lacks permission or a value is invalid, retrying would give the same result, so the script stops at once
 
-- **Someone wrote first.** The write is refused, so the script reads again. The new plan is made having seen their change
-- **The write arrived but the response didn't.** A timeout or a dropped connection. From here, you can't tell whether it was written. Reading again tells you. If it was, the diff is empty and nothing is sent twice
-- **It stopped partway through several requests.** A change of more than 50 keys is split into several requests. One request either fully succeeds or fully fails, but the sequence of requests as a whole does not. If it stops in the middle, the KVS is left half new. Run it again and only the rest is sent
-- **It conflicts no matter how often it tries.** It gives up after five rounds and reports an error. It doesn't spin forever
-- **No permission, or an invalid value.** Retrying wouldn't change the outcome, so it stops immediately
-
-Put what we want to protect in one sentence: "the sync never overwrites a change it hasn't read, and wherever it fails, running it again converges on `edge-data.json`." `examples/10-edge/test/sync.test.ts` takes a stand-in KVS with an ETag, triggers each of the failures above in a fixed order, and checks that the sentence still holds.
+In one sentence, what has to hold is this: "the sync never overwrites a change it hasn't read, and wherever it fails, running it again converges on `edge-data.json`." `examples/10-edge/test/sync.test.ts` causes each of the failures above, one at a time and in a fixed order, against a stand-in KVS that has an ETag, and checks that the sentence still holds.
 
 ### Where it calls AWS
 
 <<< @/examples/10-edge/src/kvs/store.ts{adapter}
 
-Watch the order of the reads: ETag first, contents second. The other way round, you can end up with a "new ETag" paired with "old contents". A write based on that pair goes through, because the ETag matches, and it overwrites a change nobody saw. Take the ETag first, and any mismatch always falls on the "old ETag" side, where the write is refused.
+`read` fetches the ETag first and the contents second. In the other order, it could end up holding a new ETag together with old contents. A write made with that pair would pass, because the ETag matches, and it would overwrite a change the script never saw. With the ETag fetched first, any mismatch leaves the script holding the old ETag, so the write is refused.
 
-Two odd things about the KVS API show up here.
+The KVS API differs from other services in two ways.
 
-One: there are two APIs. Creating and deleting the store itself is the ordinary CloudFront API. Reading and writing the keys and values inside is a separate API called CloudFront KeyValueStore. Both have a `DescribeKeyValueStore`, the ETags they return are different things, and you can't swap one for the other.
+The first is that there are two APIs. Creating and deleting the KVS itself goes through the ordinary CloudFront API. Reading and writing the keys and values inside it goes through a separate API named CloudFront KeyValueStore. Both have a `DescribeKeyValueStore` operation, and the ETags they return are different things that can't be used in place of each other.
 
-Two: signing. The key-value API is a global endpoint with no Region, and it uses a signing scheme called SigV4A. The AWS SDK for JavaScript ships the signer for it as a separate package. The example in the official documentation loads `@aws-sdk/signature-v4-crt`, which uses the CRT (a native binary); this chapter uses `@aws-sdk/signature-v4a`, which is plain JavaScript. Reading the SDK source, whichever one is loaded gets used. The local tests go as far as checking that the signature header has the SigV4A form (`AWS4-ECDSA-P256-SHA256`). That AWS accepts that signature is not yet confirmed.
+The second is signing. The API for keys and values is a global endpoint with no Region, and it uses a signing scheme called SigV4A. The AWS SDK for JavaScript keeps its SigV4A implementation in a separate package. The example in the official documentation loads `@aws-sdk/signature-v4-crt`, which uses the CRT (a native binary), but this chapter uses `@aws-sdk/signature-v4a`, which runs in JavaScript alone. Reading the SDK's source shows that it uses whichever of the two has been loaded. The local tests confirm that the signature header takes the SigV4A form (`AWS4-ECDSA-P256-SHA256`). I haven't yet confirmed that AWS accepts this signature.
 
-Errors are sorted like this.
+Errors are sorted as follows.
 
 <<< @/examples/10-edge/src/kvs/store.ts{errors}
 
-Honestly, there's something unconfirmed here. The API reference lists `ConflictException` (409), but it doesn't say "this is what you get for a stale ETag". This adapter treats only `ConflictException` as a conflict. If the real answer is some other error, the sync stops with that error instead of retrying. It won't overwrite anything, so it fails on the safe side, but it's something to fix.
+One point in this sorting is unconfirmed. The API reference lists `ConflictException` (409) but doesn't say that it is the error returned for a stale ETag. This adapter treats only `ConflictException` as a conflict. If a different error comes back in practice, the sync stops with an error instead of retrying. It still doesn't overwrite anything, so it fails on the safe side, but it would need fixing.

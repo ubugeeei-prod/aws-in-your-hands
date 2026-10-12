@@ -4,39 +4,41 @@ title: "17 AI: デプロイ"
 
 # 17 AI: デプロイ
 
+[手元で動かした](/ja/chapters/17-ai/local.md) API を Lambda にのせて、function URL から呼びます。権限、関数、URL の順に定義を見てから、デプロイします。
+
 ## AWS にのせる準備
 
 <!-- section: 17.infra -->
 
-Lambda の handler です。
+Lambda のハンドラーは次のとおりです。
 
 <<< @/examples/17-ai/src/lambda.ts{handler}
 
-04章の `handle` が `streamHandle` に変わりました。Hono の Lambda 用の adapter で、応答の body を、Lambda の response stream へ書き出してくれます。この本が固定している hono 4.13.13 に入っていることは、型定義とソースで確かめました。ソースには「`hono/aws-lambda` は v5 でなくなる。`@hono/aws-lambda` へ」という非推奨の印も付いています。版を上げるときに思い出してください。
+04章の `handle` が `streamHandle` に変わっています。`streamHandle` は Hono の Lambda 用アダプターで、レスポンスの本文を Lambda のレスポンスストリームへ書き出します。この本が固定している hono 4.13.13 に `streamHandle` が入っていることは、型定義とソースで確かめました。ソースには、`hono/aws-lambda` は v5 でなくなり `@hono/aws-lambda` へ移る、という非推奨の印も付いています。版を上げるときに確認してください。
 
 ### 権限
 
 <<< @/examples/17-ai/infra/lib/ai-stack.ts{role}
 
-`ConverseStream` を呼ぶのに要る action は `bedrock:InvokeModelWithResponseStream` です。API の名前と action の名前が違うので、最初は戸惑います。`Converse` のほうは `bedrock:InvokeModel`。この関数は `Converse` を呼ばないので、付けていません。
+`ConverseStream` を呼ぶのに必要な action は `bedrock:InvokeModelWithResponseStream` です。API の名前と action の名前が違うので、最初は戸惑うところです。`Converse` に必要な action は `bedrock:InvokeModel` ですが、この関数は `Converse` を呼ばないので、付けていません。
 
-対象は、さっきの profile と、行き先のモデルだけ。モデルのほうには条件を付けて、「この profile を通したときだけ」に絞っています。テストは、action がこの 1 つだけであること、対象に `*` がないことを見ています。
+対象は、[実行ロールに書く ARN](/ja/chapters/17-ai.md) で求めた profile と、行き先のモデルだけです。モデルには条件を付けて、この profile を通した呼び出しだけを許可しています。テストは、action がこの 1 つだけであることと、対象に `*` がないことを確かめています。
 
 ### 関数
 
 <<< @/examples/17-ai/infra/lib/ai-stack.ts{function}
 
-`timeout` の話をします。ここが、手元と一番違うところです。
+`timeout` は、手元の開発サーバーと動作が最も違うところに関わります。
 
-Lambda のドキュメントには、こう書いてあります。streaming の応答は、呼び出した側の接続が切れても中断されない。課金は関数の実行時間ぶんすべて。
+Lambda のドキュメントには、ストリーミングのレスポンスは呼び出した側の接続が切れても中断されず、関数の実行時間のすべてに課金される、と書かれています。
 
-手元の開発サーバーでは、切断すると `cancelled` になりましたよね。Lambda ではそうならない、ということです。Hono の `streamHandle` のソースを読んでも、書き込みの失敗を応答の body の中止につなぐ処理はありませんでした。なので Lambda の上では、呼び出し元がいなくなっても、モデルは最後まで書き続けると考えておきます。
+手元の開発サーバーでは、切断すると `cancelled` になりました。Lambda ではそうならないことになります。Hono の `streamHandle` のソースを読んでも、書き込みの失敗をレスポンス本文の中止につなげる処理はありませんでした。そのため、Lambda の上では、呼び出し元がいなくなっても、モデルは最後まで書き続けるものと考えておきます。
 
-止めてくれるのは 3 つ。`maxTokens`（出力の上限）、アプリの締め切り（30 秒）、そして関数の `timeout`（40 秒）です。関数の `timeout` を締め切りより長くしてあるのは、アプリが `error` イベントを送って終わる時間を残すため。テストがこの大小関係を見張っています。
+モデルを止めるものは 3 つあります。`maxTokens`（出力の上限）、アプリの締め切り（30 秒）、関数の `timeout`（40 秒）です。関数の `timeout` を締め切りより長くしてあるのは、アプリが `error` イベントを送って終わる時間を残すためで、この大小関係はテストが見張っています。
 
-この 3 つは、どれも「1 回の呼び出し」の歯止めです。同時に何件動くか、月に何回呼ばれるかは、止めていません。署名を通った script が loop に入ったら、頼れるのはアカウントの Bedrock の quota だけで、その値はこの本ではわかりません。
+3 つとも、1 回の呼び出しに対する歯止めです。同時に何件動くか、月に何回呼ばれるかは、止めていません。署名を通ったスクリプトがループに入った場合、頼れるのはアカウントの Bedrock のクォータだけで、その値はこの本ではわかりません。
 
-そこで、同時に動く数の上限を、頼んだときだけ付けられるようにしてあります。
+そこで、同時に動く数の上限を、指定したときだけ付けられるようにしてあります。
 
 <<< @/examples/17-ai/infra/lib/ai-stack.ts{reserved}
 
@@ -44,15 +46,15 @@ Lambda のドキュメントには、こう書いてあります。streaming の
 vp run ai:infra:deploy -c reservedConcurrency=2
 ```
 
-Lambda の reserved concurrency です。2 にすると、要約が同時に動くのは 2 件まで。3 件目は、Lambda が関数を動かさずに断ります。
+`reservedConcurrency` は、Lambda の reserved concurrency を設定します。2 にすると、要約が同時に動くのは 2 件までになり、3 件目は、Lambda が関数を動かさずに断ります。
 
-既定で付けていないのには、理由があります。予約は、アカウント全体の同時実行数から N を取り分ける操作です。新しいアカウントは、その全体の上限が低いことがあり、予約しただけでデプロイが失敗しえます。ここではそれを確かめられないので、頼まれたときだけにしました。自分 1 人が手で試すあいだは、付けなくて構いません。自分以外の何か（別のバックエンド、定期実行、CI）に呼ばせる前に、付けてください。
+既定で付けていないのは、付けただけでデプロイが失敗する場合があるからです。reserved concurrency の予約は、アカウント全体の同時実行数から N を取り分ける操作です。新しいアカウントは全体の上限が低いことがあり、予約しただけでデプロイが失敗しえます。ここではそれを確かめられないので、指定されたときだけ付けることにしました。自分 1 人が手で試している間は、付けなくて構いません。別のバックエンド、定期実行、CI など、自分以外のものに呼ばせる前に付けてください。
 
 ### URL
 
 <<< @/examples/17-ai/infra/lib/ai-stack.ts{url}
 
-`AWS_IAM` と `RESPONSE_STREAM`。stack には `AWS::Lambda::Permission` が 1 つもありません。誰かに呼ぶ権利を渡す resource-based policy を作っていない、という意味です。これもテストで固定しています。
+認証は `AWS_IAM`、呼び出しのモードは `RESPONSE_STREAM` です。スタックには `AWS::Lambda::Permission` が 1 つもありません。呼ぶ権利を誰かに渡すリソースベースのポリシーを作っていない、ということです。この点もテストで固定しています。
 
 ## デプロイして呼ぶ
 
@@ -63,9 +65,9 @@ vp run ai:infra:diff
 vp run ai:infra:deploy
 ```
 
-終わると、`FunctionUrl` に `https://xxxxxxxxxxxx.lambda-url.ap-northeast-1.on.aws/` の形の URL が出ます。
+デプロイが終わると、出力の `FunctionUrl` に、`https://xxxxxxxxxxxx.lambda-url.ap-northeast-1.on.aws/` の形の URL が表示されます。
 
-この URL は `curl` では呼べません。署名が要るからです。
+この URL は署名が必要なので、`curl` では呼べません。署名は次のコードで付けます。
 
 <<< @/examples/17-ai/scripts/sign.ts{sign}
 
@@ -74,17 +76,17 @@ vp run ai:smoke
 vp run ai:logs
 ```
 
-`ai:smoke` は課金されます。まず署名なしで呼んで、拒否されることを確かめます。次に署名付きで呼んで、要約を受け取ります。`delta` が届いた時刻も表示します。最初の `delta` と最後の `delta` が同じ時刻なら、経路のどこかが応答を溜め込んでいます。streaming は、サーバーが少しずつ書くだけでは成立しません。間にいる全員が、溜めずに流してくれて初めて成立します。
+`ai:smoke` は課金されます。最初に署名なしで呼んで拒否されることを確かめ、次に署名付きで呼んで要約を受け取ります。`delta` が届いた時刻も表示するので、最初の `delta` と最後の `delta` が同じ時刻なら、経路のどこかがレスポンスを溜め込んでいるとわかります。ストリーミングは、サーバーが少しずつ書くだけでは成り立ちません。途中にあるものすべてが、溜めずに流して初めて成り立ちます。
 
-アウトラインにあった「CDN とブラウザを通した確認」は、この章の構成には CDN もブラウザもないので、やっていません。
+執筆前のアウトラインにあった「CDN とブラウザを通した確認」は、この章の構成に CDN もブラウザもないので、していません。
 
-モデルを替えるなら、こうです。
+モデルを替えるときは、`modelId` を指定してデプロイします。
 
 ```bash
 vp run ai:infra:deploy -c modelId=global.amazon.nova-2-lite-v1:0
 ```
 
-drift の検査は 02章と同じです。
+ドリフトの検査は 02章と同じです。
 
 ```bash
 vp run ai:infra:drift

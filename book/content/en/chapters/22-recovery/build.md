@@ -4,58 +4,60 @@ title: "22 Backup: Design and Build"
 
 # 22 Backup: Design and Build
 
+[The previous page](/en/chapters/22-recovery.md) took the table back to a past time with PITR. This page brings the images in the bucket back, then finds and repairs the disagreement between the restored table and the bucket.
+
 ## Images come back from versions
 
 <!-- section: 22.versioning -->
 
-For the bucket, we don't use a single "take it all back to this minute" operation. We use versioning.
+The bucket is not restored by one operation that takes all of it back to a given time. It is restored with versioning.
 
 <<< @/examples/22-recovery/infra/lib/recovery-stack.ts{bucket}
 
-In a bucket with versioning, two things change. Writing to an existing key does not overwrite: a new version is stacked on top. And deleting without naming a version does not delete: a delete marker is placed as the newest version instead. A plain read answers 404, but the bytes are still underneath.
+Two things change in a bucket with versioning. A write to an existing key does not overwrite it, and a new version is stacked on top. A delete that names no version does not delete the object, and S3 places a delete marker as the newest version instead. A plain read returns 404, but the bytes are still there under the delete marker.
 
 How you bring a key back depends on what happened to it.
 
-- **A deleted key.** Delete the delete marker, naming its version ID. The version below is on top again
+- **A deleted key.** Delete the delete marker, naming its version ID. The version below it is on top again
 - **An overwritten key.** Copy the old version onto the same key. The copy is stacked as a new version and becomes the top
 
-There is another way to undo an overwrite: delete the newer version. This chapter doesn't. That cannot be taken back, and if the newer one turns out to have been right, it is gone. A copy loses nothing.
+You can also undo an overwrite by deleting the newer version. This chapter does not use that method, because deleting a version cannot be undone, and if the newer version turns out to have been the right one, it is gone. A copy loses nothing.
 
-Be careful how you delete a delete marker. Try it without a version ID and S3 does not remove the marker: it stacks one more. A delete that restores always names a version ID.
+Take care when you delete a delete marker. If you try it without a version ID, S3 does not remove the marker and stacks one more on top. A delete that restores always names a version ID.
 
-### Deciding which key, and how
+### Deciding which key to restore, and how
 
-The plan that moves a whole bucket toward "the state at a moment" is made key by key. This, too, is a function that doesn't call AWS.
+The plan that moves the whole bucket toward its state at a given time is made key by key. The function that makes the plan does not call AWS either.
 
 <<< @/examples/22-recovery/src/object-restore.ts{plan}
 
-A key created after the chosen moment is not deleted. It is named and left alone. Deleting data in the name of a restore is a second accident.
+A key created after the chosen time is not deleted. The plan names it and leaves it alone, because deleting data as part of a restore would be a second accident.
 
-The side that acts is short.
+The code that carries out the plan is short.
 
 <<< @/examples/22-recovery/src/object-restore.ts{apply}
 
-The plan is made from a fresh listing every time. If a run stops halfway, running it again finds the finished steps no longer in the plan. A key restored by a copy shows the same ETag on its top version as the version you wanted, which is how "already done" is recognized. The ETags match for this bucket's encryption (keys managed by S3) and for uploads that are not multipart. In a bucket where that isn't so, this test cannot be used.
+The plan is made from a fresh read of the bucket every time, so if a run stops halfway and you run it again, the finished steps no longer appear in the plan. A key restored by a copy has the same ETag on its top version as the version you wanted, and that is how the plan recognizes it as done. The ETags match when the bucket is encrypted with keys managed by S3, as this one is, and the upload was not multipart. In a bucket where those conditions do not hold, this test cannot be used.
 
-Reading the list of versions from S3 has one quirk.
+Reading the list of versions from S3 needs care in one place.
 
 <<< @/examples/22-recovery/src/s3-versioned-bucket.ts{list-versions}
 
-`ListObjectVersions` returns versions with bytes and delete markers as two separate lists. Their order relative to each other can only be rebuilt from the times. If two entries of one key share a time, the one S3 calls the latest goes on top. Whether the real service always yields the right order this way was not checked.
+`ListObjectVersions` returns versions with bytes and delete markers as two separate lists, so their order relative to each other can only be rebuilt from their times. If two entries for one key have the same time, the one S3 marks as the latest goes on top. Whether the real service yields the right order this way was not checked.
 
 ### Versioning changes what other chapters assumed
 
-Chapter 07's "going to production" list mentioned in passing that versioning changes how lifecycle rules behave. Concretely:
+Chapter 07's "Going to production" mentioned in one line that versioning changes how lifecycle rules behave. This is what changes.
 
-Chapter 07's bucket has a rule that removes unfinished uploads after a day. With versioning on, that rule does not remove the object: it places a delete marker, and the bytes live on as an old version. What really deletes them is `noncurrentVersionExpiration` in this chapter's rule, 30 days after they stopped being current. Those 30 days are how long an image can be brought back. Without that line, every byte ever uploaded is stored, and billed, forever.
+Chapter 07's bucket has a rule that removes unfinished uploads after a day. With versioning on, that rule does not remove the object. It places a delete marker, and the bytes stay as an old version. What actually deletes those bytes is `noncurrentVersionExpiration` in this chapter's rule, 30 days after they stopped being current. Those 30 days are how long an image can be brought back. Without `noncurrentVersionExpiration`, every byte ever uploaded is stored and billed forever.
 
-Chapter 08's worker is affected too. In a bucket with versioning, an ordinary delete becomes the event `ObjectRemoved:DeleteMarkerCreated`. Chapter 08's stack subscribes to `ObjectRemoved:Delete`, so deletes would no longer reach the worker. Turning versioning on for the bucket of chapters 07 and 08 means fixing that as well. It is why this chapter's stack is a separate one, not an addition to chapter 08's.
+Chapter 08's worker is affected too. In a bucket with versioning, an ordinary delete becomes the event `ObjectRemoved:DeleteMarkerCreated`. Chapter 08's stack subscribes to `ObjectRemoved:Delete`, so deletes would no longer reach the worker. If you turn versioning on for the bucket of chapters 07 and 08, you have to change that subscription as well. That is why this chapter's stack is a separate stack and not an addition to chapter 08's.
 
 ## Two stores return to two different times
 
 <!-- section: 22.skew -->
 
-Now for the main subject.
+When only the table goes back in time, it stops agreeing with the bucket. The two figures show the case where an image was deleted later and the case where an upload finished later.
 
 ```figure
 caption: Restoring only the table to T1 and leaving the bucket at "now" leaves a record that points at nothing
@@ -87,33 +89,33 @@ note bucket: "here are the bytes"
 step bucket -x table: an object nobody points at
 ```
 
-The table can go back to any second you like. The bucket goes back by choosing a version again for each key. AWS has no mechanism that lines the two up at "the same instant". Lining them up is your job, and it usually ends a little off. Restoring only the table and forgetting the bucket is common, too.
+The table can go back to any second you choose, while the bucket goes back by choosing a version again for each key. AWS has no mechanism that lines the two up at the same instant, so lining them up is your job, and the result is usually a little off. It is also common to restore only the table and forget the bucket.
 
-What breaks when they are off? The promises that chapters 07 and 08 kept by being careful about order. Chapter 07 decided that "a record must never outlive its object" and reversed the order of creating and deleting to make it so. Take only the table back in time, and all that care about order buys nothing.
+What breaks when they are off is the promises that chapters 07 and 08 kept by writing in a careful order. Chapter 07 decided that "a record must never outlive its object" and reversed the order of deleting relative to creating to make it so. When only the table goes back in time, that ordering does not help.
 
-One thing does work in our favor. Notes, attachment records, and inspection records live in the same table, so those three go back to the same moment. The only disagreement is between the table and the bucket. Chapter 05's choice of a single table pays off here.
+One thing does help. Notes, attachment records, and inspection records are in the same table, so those three go back to the same time, and the only disagreement is between the table and the bucket. Chapter 05's choice of a single table pays off in a restore.
 
-### What counts as a promise
+### What the check treats as a promise
 
 The check reads the table and the bucket and counts whatever matches one of these.
 
 <<< @/examples/22-recovery/src/invariants.ts{findings}
 
-They fall into two groups. `broken` means something the app relies on is not true: an attachment with no image, an inspection verdict about other bytes. `leftover` is garbage nobody points at, which cleanup is supposed to pick up. Only `broken` is a reason to hold a cutover.
+The findings fall into two groups. `broken` means that something the app relies on is not true, such as an attachment with no image or an inspection result about other bytes. `leftover` is garbage that nothing points at, which cleanup is supposed to remove. Only `broken` is a reason to hold a cutover.
 
-The check itself is a function of what was read, and nothing else.
+The check itself is a function that looks only at what was read.
 
 <<< @/examples/22-recovery/src/invariants.ts{check}
 
-`graceMs` is the allowance for chapter 07's "uploads waiting to be finished". On a running service, an object that just arrived having no record is normal, so young objects are not counted. When you check with writes stopped, nothing is waiting, and the allowance can be 0. On the tasks, that is `--frozen`.
+`graceMs` is the grace period for chapter 07's "uploads waiting to be finished". On a running service it is normal for an object that just arrived to have no record, so new objects are not counted. When you check with writes stopped, no upload is waiting, and the grace period can be 0. On the tasks, you pass `--frozen`.
 
-There is one rule on the reading side as well.
+The reading side has one rule as well.
 
 <<< @/examples/22-recovery/src/items.ts{classify}
 
-To the app, a restored table is data from outside. It may hold items in the shape of six months ago. So every item goes through a schema before it is believed. An item that cannot be read is not an exception: it is reported as `unreadable_item`. If one unreadable item stopped the whole check, you would learn nothing about the rest.
+To the app, a restored table is data from outside, and it may hold items in the shape they had six months ago. So every item goes through a schema before it is trusted. An item that cannot be read does not throw. It is reported as `unreadable_item`, because if one unreadable item stopped the whole check, you would learn nothing about the rest.
 
-The key formats (`NOTE#...`, `ATTACHMENT#...`, `INSPECTION#...`) are private to the files of chapters 05, 07, and 08. This chapter writes the same formats down again and pins, in a test, that it can read the items those three repositories really write. If any chapter changes its keys, that test fails.
+The key formats (`NOTE#...`, `ATTACHMENT#...`, `INSPECTION#...`) are private to the files of chapters 05, 07, and 08. This chapter writes the same formats down again, and a test pins that it can read the items those three repositories actually write. If any of the chapters changes its key format, that test fails.
 
 ### What each kind of restore leaves behind
 
@@ -125,37 +127,37 @@ The key formats (`NOTE#...`, `ATTACHMENT#...`, `INSPECTION#...`) are private to 
 | Only the table was restored; an image was overwritten after that time | `inspection_for_other_bytes`, `attachment_size_mismatch` |
 | Nothing was restored; right after the accident | Nothing |
 
-The last row is obvious, and it matters. Cleanly deleted data is consistent. The check finds disagreement; it does not find mistakes. What notices the accident is a person, or some other monitoring, not this check.
+The last row looks obvious, and it matters. Cleanly deleted data is consistent, so the check reports nothing. The check finds disagreement and does not find mistakes. A person, or some other monitoring, has to notice the accident.
 
 ## Repairing the disagreement
 
 <!-- section: 22.repair -->
 
-To repair, you have to decide which side is right. This chapter says: **the table is right, and the bucket follows.** The table can go back to any one second, so the judgment "the data as of this time is correct" can be expressed on the table's side.
+To repair, you have to decide which side is right. In this chapter **the table is right, and the bucket is made to match it.** The table can go back to any one second, so the decision about which time holds the correct data can be expressed on the table's side.
 
 <<< @/examples/22-recovery/src/repair.ts{repair}
 
-One at a time.
+The repair depends on the kind of finding.
 
-**An attachment record with no image.** Look at the bucket's versions. If a version with bytes survives, remove the delete markers above it and the image is back. If none does, the record goes. The latter means data was lost. The report says `record_deleted`, and that goes into the drill record.
+For an attachment record with no image, the repair looks at the bucket's versions. If a version with bytes survives, it removes the delete markers above that version and the image is back. If none survives, it deletes the record. Deleting the record means that data was lost. The report says `record_deleted`, and you write that in the drill record.
 
-**An inspection record with no object.** The two paths chapter 08 listed as open gaps both end in this shape: a delete event never arrived, or was ignored because its order was unknown, and the record stayed. The check finds these with no restore involved. Before deleting, the repair looks at the object once more, because an earlier step of the same run may have brought the image back.
+An inspection record with no object has the same shape as the result of the two paths that chapter 08 listed as open gaps. A delete event never arrived, or it was ignored because its order was unknown, and only the record stayed. The check finds these records even when no restore took place. Before it deletes one, the repair looks at the object once more, because an earlier step of the same run may have brought the image back.
 
-**An inspection verdict about other bytes.** Steps 1 to 3 of chapter 08's worker are done again, for the bytes that are there now.
+For an inspection result about other bytes, the repair runs steps 1 to 3 of chapter 08's worker again on the bytes that are there now.
 
-### A repair has no event, so what about the sequencer?
+### The sequencer a repair uses without an event
 
-Chapter 08's records were ordered by the sequencer that an S3 event carries. A repair has no event, and therefore no sequencer.
+Chapter 08's records were ordered by the sequencer that an S3 event carries. A repair has no event, so it has no sequencer.
 
 <<< @/examples/22-recovery/src/repair.ts{sequencer}
 
-It uses the stale record's sequencer plus one. That beats the stale record, and nothing else: every later event for the same key carries a sequencer at least that large. A real event that arrives late either overwrites as usual, or is correctly ignored as a duplicate about the same bytes.
+The repair uses the stale record's sequencer plus one. That value beats the stale record and nothing else, because every later event for the same key carries a sequencer at least that large. A real event that arrives late either overwrites as usual or is correctly ignored as a duplicate about the same bytes.
 
-Deleting uses the same value. Passed to chapter 08's condition, "delete only a record older than this sequencer", it removes the record the check saw and leaves a newer one that a real event wrote in the meantime.
+Deleting uses the same value. Passed to chapter 08's condition, "delete only a record older than this sequencer", it removes the record the check saw and leaves a newer record that a real event wrote in the meantime.
 
 ### Run any number of times, stopped anywhere
 
-A repair is something a person in a hurry runs again after it failed. So the tests were written by breaking things. As in chapter 08, the clock and the order are fixed, and the place to stop is injected. Nothing waits on real time.
+A repair is something a person in a hurry runs again after it failed. So the tests were written by breaking the repair partway through. As in chapter 08, the clock and the order are fixed and the place to stop is injected. Nothing depends on waiting.
 
 | What is injected | Result |
 | --- | --- |
@@ -172,19 +174,19 @@ The code was also broken on purpose in six places (dropping the "already copied"
 
 ### What is left for a person
 
-The repair keeps its hands off two things.
+The repair leaves two things alone.
 
-One is an object with no record. That belongs to chapter 07's cleanup. But there is a trap. Take the table back in time, and every upload finished since then becomes "an object with no record". Chapter 08's cleanup runs every hour and deletes recordless objects past their grace period. So: **restore the table, leave it for an hour or so, and the cleanup starts deleting the images whose records the restore lost.** The local tests reproduce this with chapter 07's cleanup code as it is. With versioning on, what it deletes can be brought back from the versions. Without, it cannot. Stop the cleanup schedule before you cut over.
+One is an object with no record. Removing those is the job of chapter 07's cleanup, but after a restore the cleanup does harm. When the table goes back in time, every upload finished after that time becomes an object with no record. Chapter 08's cleanup runs every hour and deletes recordless objects past their grace period. So **if you restore the table and leave it for an hour or so, the cleanup starts deleting the images whose records the restore lost.** The local tests reproduce this with chapter 07's cleanup code unchanged. With versioning on, a deleted image can be brought back from its versions. Without versioning, it cannot. Stop the cleanup schedule before you cut over.
 
-The other is an image whose size does not match its record. Was it overwritten, or is the record the old one? The repair cannot decide. Restoring the bucket to the same time resolves it. If you can't, a person decides whether the attachment goes or stays.
+The other is an image whose size does not match its record. The repair cannot tell whether the image was overwritten or the record is the old one. Restoring the bucket to the same time resolves it. If you cannot do that, a person decides whether to delete the attachment or leave it.
 
 ## Version numbers that went backwards
 
 <!-- section: 22.versions -->
 
-Restoring the table opens a hole in chapter 05's promise as well. This one is not found by the check.
+Restoring the table also opens a hole in chapter 05's promise. The check does not find this one.
 
-Chapter 05's optimistic lock compared version numbers. "I saw version 3. If it is still 3, save it as 4." Numbers only ever grow, so the same number means the same content. That was the premise.
+Chapter 05's optimistic lock compared the version numbers of a note. The comparison was "I saw version 3, and if it is still 3, save it as 4." It assumed that numbers only grow, so the same number means the same content.
 
 A restore winds the numbers back.
 
@@ -193,9 +195,9 @@ A restore winds the numbers back.
 3. Someone else edits the restored note twice. The version becomes 2, then 3
 4. The browser that stayed open sends its save "from version 3"
 
-Step 4 passes, because the numbers match. But this 3 is not that 3. The browser overwrites edits it never saw. A test reproduces exactly this order.
+The save in step 4 passes, because the numbers match. But version 3 after the restore is not the content the browser was showing as version 3. The browser overwrites edits it never saw. A test reproduces exactly this order.
 
-The fix is to move the restored table's numbers past whatever the old table handed out.
+The fix is to move the restored table's numbers past the numbers the old table handed out.
 
 <<< @/examples/22-recovery/src/table-diff.ts{fence}
 
@@ -203,16 +205,16 @@ A note that was at version 3 in the old table is set to version 4 in the restore
 
 <<< @/examples/22-recovery/src/dynamodb-table.ts{raise-version}
 
-It only raises, never lowers. Running it twice, or after someone edited past the fence, breaks nothing.
+It only raises the number and never lowers it. Running it twice, or after someone edited past the fence, breaks nothing.
 
-To be honest, this closes only half the hole. A note that the accident **deleted** is not in the old table any more, so there is no telling how far its numbers had gone. Closing it properly means mixing "after which restore" into the version comparison. This chapter doesn't implement that.
+This closes only half the hole. A note that the accident **deleted** is no longer in the old table, so there is no way to know how far its numbers had gone. Closing the hole properly means mixing "after which restore" into the version comparison. This chapter does not implement that.
 
-### Counting what the cutover costs, first
+### Counting what the cutover loses before you cut over
 
-The fence is fed by the difference between the old table and the restored one. The same difference tells you something more important.
+The fence is built from the difference between the old table and the restored one. The same difference also tells you what the cutover loses.
 
 <<< @/examples/22-recovery/src/table-diff.ts{diff}
 
-`returning` is the notes that come back: the goal. `lost` is the notes created after the restore point, which vanish from view when you cut over. `rolledBack` is the edits that are undone.
+`returning` is the notes that come back, which is the purpose of the restore. `lost` is the notes created after the restore point, which disappear from view when you cut over. `rolledBack` is the edits that are undone.
 
-**"Data lost" is the second and the third.** The numbers for the drill record come from here. Restore to five minutes before the accident, and whatever was written in those five minutes is not on the other side of the cutover. It is still in the old table, so it can be picked up and written back. This chapter has no tool for that.
+**The data you lose is `lost` and `rolledBack`.** The numbers for the drill record come from these two. If you restore to five minutes before the accident, whatever was written in those five minutes is not there after the cutover. It is still in the old table, so it can be picked up and written back, but this chapter has no tool for that.

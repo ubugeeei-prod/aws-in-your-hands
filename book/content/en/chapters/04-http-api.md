@@ -5,11 +5,9 @@ sourceRevision: 5
 
 # 04 HTTP API: Lambda and API Gateway HTTP API
 
-The SPA is live. Next up: an API.
+Chapter 03 put the SPA online, and this chapter builds an API. You write a small HTTP API that creates, reads, and deletes notes, run it on your machine, and then put the same code on Lambda. Docker isn't used, and as long as you only run it locally you don't need an AWS account either.
 
-In this chapter you'll write a small HTTP API that creates, reads, and deletes notes. You'll run it on your machine first, then put the same code on Lambda. No Docker needed. And as long as you're only trying it locally, no AWS account either.
-
-Two things before we start. This chapter's API keeps notes in memory and doesn't save them (saving is [chapter 05](/en/chapters/05-dynamodb.md)). There's no authentication either, so anyone who knows the URL can call it (authentication is [chapter 06](/en/chapters/06-auth.md)). To make up for that, it accepts at most 10 requests a second, holds at most 100 notes, and lists at most the newest 20 of them as summaries. Please don't put in anything you'd mind losing, or anything you'd mind other people seeing.
+This chapter's API has two gaps that later chapters fill. Notes are kept in memory and not saved, so they vanish when the execution environment is replaced ([chapter 05](/en/chapters/05-dynamodb.md) adds storage). There is no authentication, so anyone who knows the URL can call it ([chapter 06](/en/chapters/06-auth.md) adds that). To limit the damage, the API accepts at most 10 requests a second, holds at most 100 notes, and lists at most the newest 20 of them as summaries. Don't put in anything you would mind losing or mind other people seeing.
 
 The only prerequisite is [chapter 02](/en/chapters/02-toolchain.md). The code is in `examples/04-http-api/`.
 
@@ -18,7 +16,7 @@ The only prerequisite is [chapter 02](/en/chapters/02-toolchain.md). The code is
 <!-- section: 04.architecture -->
 
 ```figure
-caption: API Gateway passes only the requests that match a route to the Lambda function, and the function writes to CloudWatch Logs.
+caption: API Gateway passes only the requests that match a route to the Lambda function, and the function writes its logs to CloudWatch Logs.
 node client: Client | curl, typed client, later the SPA
 node health: /health | GET
 node notes: /notes | GET, POST
@@ -48,15 +46,13 @@ edge service -> repo
 group fn: Lambda function = hono, service, repo
 ```
 
-There are three players.
+Three services are involved. API Gateway is the entry point: it accepts HTTPS and passes on to Lambda only the requests that match a route you defined. Lambda is where your code runs. It starts when a request arrives and goes back to waiting when the request is done, so no server stays up. The logs Lambda writes collect in CloudWatch Logs.
 
-The front door is **API Gateway**. It accepts HTTPS and passes along only the requests that match a route you defined. Your code runs in **Lambda**. It starts up only when a request comes in, and goes back to waiting when it's done. There's no server that stays up. And the logs Lambda writes pile up in **CloudWatch Logs**.
+Lambda runs inside the Tokyo Region, not at the edge the way CloudFront does.
 
-Lambda runs inside the Tokyo Region. It isn't at the edge, the way CloudFront is.
+### HTTP API and REST API
 
-### Which one is "HTTP API"?
-
-API Gateway comes in several kinds, and the one we use here is the "HTTP API". The name is confusing, but think of it as a different product from the "REST API".
+API Gateway comes in several kinds, and this chapter uses the one called "HTTP API". It looks like a general term, but it is a product name, and it is a different product from API Gateway's "REST API".
 
 | | HTTP API | REST API |
 | --- | --- | --- |
@@ -65,67 +61,65 @@ API Gateway comes in several kinds, and the one we use here is the "HTTP API". T
 | AWS WAF, API keys, request validation, caching, X-Ray | No | Yes |
 | Response streaming | No | Yes |
 
-To borrow the official documentation's framing, an HTTP API is the one with fewer features at a lower price. All the notes API needs is routes and the JWT authorizer we'll use in chapter 06, so this one is enough.
+The official documentation describes HTTP APIs as the kind with fewer features and a lower price. The notes API needs little more than routes and the JWT authorizer that chapter 06 uses, so an HTTP API is enough.
 
-On the other hand, if you want WAF right in front of the API, or you want to stream responses, it's time to choose again. The trick is not to blur the kinds together in your head, as in "API Gateway can't stream".
+If you want AWS WAF directly in front of the API, or want to stream responses, choose a REST API instead. The kind that can't stream is the HTTP API, not API Gateway as a whole, and keeping the two apart makes that later choice easier.
 
-### When Lambda isn't the right fit
+### Where Lambda doesn't fit
 
-What's nice about Lambda is that it costs 0 while nobody is using it, and that you can add one API without designing a network. There are cases where it doesn't fit, though.
+Lambda costs 0 while nobody uses it, and you can add an API without designing a network. It is a poor fit in these cases.
 
 - One unit of work takes more than 30 seconds. An HTTP API waits at most 30 seconds for Lambda's response ([chapter 08](/en/chapters/08-async.md) and [chapter 16](/en/chapters/16-long-jobs.md))
 - You need connections that stay open, or you want to run a container you already have as it is ([chapter 12](/en/chapters/12-containers.md))
-- You want to run right next to the reader ([chapter 10](/en/chapters/10-edge.md))
+- You want the code to run close to each user ([chapter 10](/en/chapters/10-edge.md))
 
-## Start with the contract
+## Decide the contract first
 
 <!-- section: 04.contract -->
 
-Before writing any code, let's turn the shapes of the API's input and output into schemas.
+Before writing any code, write the shapes of the API's input and output as schemas.
 
 <<< @/examples/04-http-api/src/contract.ts{note}
 
-Both the server and the client use this definition. The server validates incoming requests with it, and the client validates the responses it gets back with it. The TypeScript types come from here too, through `z.infer`. Since there's only one definition, "I fixed the server and forgot the client" can't happen.
+The server and the client use this one definition. The server validates incoming requests against it, and the client validates the responses it gets back. The TypeScript types come from it too, through `z.infer`. With a single definition, you can't fix the server and forget the client.
 
-The shape of a list is decided separately from the note.
+The shape of a list is decided separately from the shape of one note.
 
 <<< @/examples/04-http-api/src/contract.ts{list}
 
-A list carries the ID, the title, and the creation time, and leaves the body out. When you need the body, you fetch one note with `GET /notes/:id`. The list also stops at the newest 20 notes. A body can hold 10,000 characters, so returning every note with its body would make a single response several MB. With summaries only, and 20 at most, the response stays under 20 KiB whatever the titles contain. `list` in `createNoteService` does the cutting, and because the schema is strict, a response that lets a body through fails the client's check.
+A list carries the ID, the title, and the creation time, and leaves the body out. When you need the body, you fetch one note with `GET /notes/:id`. The list also stops at the newest 20 notes. A body can hold 10,000 characters, so returning every note with its body would make a single response several MB. With summaries only, and 20 at most, the response stays under 20 KiB whatever the titles contain. `list` in `createNoteService` does the cutting, and because the schema is strict, a response that lets a body through fails the client's validation.
 
 Notes older than the newest 20 no longer appear in the list, but you can still read or delete one if you know its ID. Chapter 05 adds a way to fetch the rest of a list.
 
-Let's settle the shape of errors as well.
+The shape of an error is fixed as well.
 
 <<< @/examples/04-http-api/src/contract.ts{error}
 
-The caller can branch on `code` without having to interpret the wording of a message. `requestId` is your lead when you go looking through the logs later.
+The caller can branch on `code` without interpreting the wording of a message. `requestId` is what you search the logs for later.
 
 ## Write the app
 
 <!-- section: 04.app -->
 
-For HTTP handling we'll use Hono. It's a small framework built on the web-standard `Request` and `Response`, so the same app runs as is on Node.js and on Lambda. Plenty of you have probably used it on Workers.
+HTTP handling uses Hono, a small framework built on the web-standard `Request` and `Response`, so the same app runs unchanged on Node.js and on Lambda. You may have used it on Workers.
 
 <<< @/examples/04-http-api/src/app.ts{app}
 
-Three things to notice.
+The app receives everything it needs as arguments: the clock, the ID generator, where logs go, and where notes are stored. Nothing inside `createApp` touches `Date.now()` or `process.env` directly, so a test can pass fixed values and production can pass the real ones.
 
-**Everything it needs comes in as an argument.** The clock, the ID generator, where logs go, where notes are stored. Inside `createApp`, nothing touches `Date.now()` or `process.env` directly. A test can pass fixed values, and production can pass the real thing.
+Requests are checked at run time. TypeScript types are gone by the time the code runs, so a parameter typed `CreateNote` says nothing about the JSON that actually arrived. `validator` checks that JSON against the schema and, when it doesn't match, returns a 400 that names the fields at fault.
 
-**Requests get checked at run time.** TypeScript types are gone by the time the code runs. You can't say "the type is `CreateNote`, so it's fine". `validator` runs the JSON that arrived through the schema, and if it doesn't match, returns a 400 that says which fields are the problem.
+An unexpected exception doesn't leak its cause. `onError` writes it to the log and gives the caller only the `requestId`, because a stack trace in the response would show outsiders how the app is built inside.
 
-**Unexpected exceptions don't leak their cause.** `onError` writes to the log and gives the caller only the `requestId`. Putting a stack trace in the response would tell people how the inside is built.
-
-Where notes are stored is an interface.
+The place notes are stored is an interface.
 
 <<< @/examples/04-http-api/src/notes.ts{repository}
 
-Right now what's behind it is a plain `Map`. A `Map` is memory, and on an API anyone can `POST` to, it grows by whatever it's handed. So it stops at 100 notes: note 101 throws `NoteLimitError`, and the app's `onError` turns that into a 409 with `quota_exceeded`. Not a 429, because waiting doesn't free a place. Deleting a note does, hence the 409.
+The implementation today is a plain `Map`. A `Map` lives in memory, and on an API anyone can `POST` to, it grows by whatever it is handed. So it stops at 100 notes, and the 101st throws `NoteLimitError`, which the app's `onError` turns into a 409 with `quota_exceeded`. The status is 409 and not 429 because waiting doesn't free a place and deleting a note does.
 
-Chapter 05 swaps in DynamoDB, but this interface stays as it is.
+Chapter 05 replaces the store with DynamoDB and keeps this interface as it is.
 
-And the real clock, real random numbers, and real environment variables are touched in this one place only.
+The real clock, real random numbers, and real environment variables are touched in one place only.
 
 <<< @/examples/04-http-api/src/compose.ts{compose}
 
@@ -133,10 +127,10 @@ And the real clock, real random numbers, and real environment variables are touc
 
 <!-- section: 04.env -->
 
-Environment variables are values that come from outside the type system, too. The type of `process.env` is "everything is `string` or `undefined`". Looking at the type won't tell you whether a required variable is actually set.
+Environment variables also come from outside the type system. The type of `process.env` says only that every variable is `string` or `undefined`, so it can't tell you whether a required one is set.
 
 <<< @/examples/04-http-api/src/env.ts{env}
 
-The check happens once, at startup. If something is missing, the first invocation fails with a message that names the variable. That's a lot easier to find than "it reads `undefined` and breaks only under certain conditions", isn't it?
+The variables are checked once, at startup. If one is missing, the first invocation fails with a message that names it. That leads you to the cause much sooner than code that reads `undefined` and breaks only under certain conditions.
 
-By the way, what lives here is configuration, not secrets. Lambda environment variables can be read by anyone who can see the function's configuration in the console. Secrets such as API keys don't go directly into environment variables; you fetch them at run time from Secrets Manager or something like it. This chapter's example has no secrets, so that code isn't in this chapter ([chapter 21](/en/chapters/21-security.md) covers it).
+What is kept here is configuration, not secrets. Anyone who can see the function's configuration in the console can read a Lambda environment variable. Secrets such as API keys don't go into environment variables directly. You fetch them at run time from Secrets Manager or a similar service. This chapter's example has no secrets, so it has no code for that ([chapter 21](/en/chapters/21-security.md) covers it).

@@ -4,9 +4,11 @@ title: "08 Queue: Costs, Pitfalls, and Cleanup"
 
 # 08 Queue: Costs, Pitfalls, and Cleanup
 
+This page closes the chapter. For the setup built on the [first page](/en/chapters/08-async.md) and prepared for AWS on the [deploy page](/en/chapters/08-async/deploy.md), it covers how it differs from Cloudflare Queues, what it costs, where it tends to go wrong, and how to clean up.
+
 ## If you come from Queues
 
-Cloudflare has parts that play the same roles. Here they are side by side, as far as the official documentation was checked.
+Cloudflare has parts that play the same roles. The table sets them side by side, as far as the official documentation was checked.
 
 | | Cloudflare | This chapter |
 | --- | --- | --- |
@@ -18,21 +20,21 @@ Cloudflare has parts that play the same roles. Here they are side by side, as fa
 | Bucket events | R2 event notifications go to Queues | S3 event notifications go to SQS |
 | Scheduled runs | Workers Cron Triggers | EventBridge Scheduler |
 
-The biggest difference is how a consumer is written. With Queues, a Worker's `queue()` handler receives the messages and calls `ack()` or `retry()`. In this chapter, Lambda reads the queue and calls the function, and the function returns a list of the IDs that failed. A setting called the event source mapping sits between the queue and the function, and the batch size and the concurrency limit are written there.
+The biggest difference is how you write a consumer. With Queues, a Worker's `queue()` handler receives the messages and calls `ack()` or `retry()`. In this chapter, Lambda reads the queue and calls the function, and the function returns a list of the IDs that failed. A setting called the event source mapping sits between the queue and the function, and it holds the batch size and the concurrency limit.
 
-The idempotency story is the same on both. Cloudflare's documentation, too, says to use a unique ID as a key if duplicates would be a problem.
+Idempotency works the same way on both. Cloudflare's documentation also says to use a unique ID as a key if duplicates would be a problem.
 
-The example message of an R2 notification has the object's key, size, ETag, and time, but nothing that corresponds to S3's sequencer was found. How to order operations on the same key with R2 has not been checked. The delivery guarantee of Cron Triggers was not stated on the page that was read either.
+The example message of an R2 notification has the object's key, size, ETag, and time, but nothing that corresponds to S3's `sequencer` was found in it. How to order operations on the same key with R2 has not been checked. The page that was read did not state the delivery guarantee of Cron Triggers either.
 
 ## What it costs
 
 Amounts are in USD, for the Tokyo Region, before tax. The inputs and unit prices are in the [pricing worksheets](/en/reference/pricing.md).
 
-Two unit prices are new. An SQS standard queue costs USD 0.40 per million requests. Sending, receiving, and deleting are each one request. The first million a month are free, shared by every queue in the account. EventBridge Scheduler is USD 0 up to 14 million invocations a month and USD 1.25 per million after that. Once an hour is 730 a month.
+Two unit prices are new. An SQS standard queue costs USD 0.40 per million requests, and sending, receiving, and deleting each count as one request. The first million a month are free, an allowance shared by every queue in the account. EventBridge Scheduler is USD 0 up to 14 million invocations a month and USD 1.25 per million after that. Once an hour is 730 a month.
 
-The example comes in two parts. Both are what is added on top of chapter 07's example (10,000 uploads a month).
+The example comes in two parts. Both are added on top of chapter 07's example (10,000 uploads a month).
 
-First, the part driven by events. Suppose 10,000 creates and 1,000 deletes in the month.
+The first part is driven by events. Suppose 10,000 creates and 1,000 deletes in the month.
 
 | Item | List price |
 | --- | --- |
@@ -43,9 +45,9 @@ First, the part driven by events. Suppose 10,000 creates and 1,000 deletes in th
 | Logs | 0.01 |
 | Subtotal | **0.04** |
 
-Four cents. After the monthly free allowances it is 0.01. Next to chapter 07's data transfer, the cost per upload is a rounding error.
+That is four cents, and 0.01 after the monthly free allowances. Next to chapter 07's data transfer, the cost per upload is a rounding error.
 
-Then, the part driven by the clock: 10,000 images sit in the bucket and housekeeping runs every hour.
+The second part is driven by the clock. Suppose 10,000 images sit in the bucket and housekeeping runs every hour.
 
 | Item | List price |
 | --- | --- |
@@ -55,58 +57,58 @@ Then, the part driven by the clock: 10,000 images sit in the bucket and housekee
 | DynamoDB reads (29.2 million units) | 4.16 |
 | Subtotal | **4.72** |
 
-This one is 4 dollars 72 cents, and nearly all of it is DynamoDB reads. On every run, housekeeping reads the table four times for each of the 10,000 images. And it does that 730 times a month. After free allowances it is 4.23.
+This part is 4 dollars 72 cents, and nearly all of it is DynamoDB reads. On every run, housekeeping reads the table four times for each of the 10,000 images, and it runs 730 times a month. After free allowances it is 4.23.
 
-**The cost of work driven by events grows with the number of things that happen. The cost of reconciliation grows with the number of things stored, times the number of runs.** Ten times the images means ten times the housekeeping cost. And the 200 seconds per run is an assumption, not a measurement. With more images, the function's timeout (15 minutes) is in the way too. Running every 6 hours would cost one sixth. In exchange, a "rejected" image stays longer before it is deleted.
+**The cost of work driven by events grows with the number of things that happen. The cost of reconciliation grows with the number of things stored, times the number of runs.** Ten times the images means ten times the housekeeping cost. The 200 seconds per run is also an assumption, not a measurement. With more images, the function runs into its timeout (15 minutes) as well. Running every 6 hours would cost one sixth, and in exchange a "rejected" image would stay longer before it is deleted.
 
-What about a month in which nobody uses it? With an empty bucket, housekeeping lists and stops, so it is USD 0.01 a month. One thing is not in that number, though. Lambda goes and reads the empty queue as well (long polling). Each `ReceiveMessage` counts as an SQS request. How often it reads is not given as a number in the documentation, so it could not be estimated. It is not zero. Whether it fits within the free million a month has not been checked either.
+In a month when nobody uses it, housekeeping lists an empty bucket and stops, so it costs USD 0.01 a month. One thing is not in that number, though. Lambda also reads the empty queue (long polling), and each `ReceiveMessage` counts as an SQS request. The documentation gives no number for how often Lambda reads, so it could not be estimated. It is not zero. Whether it fits within the free million a month has not been checked either.
 
-Delete the stack and the queues, the functions, and the schedule are gone, and this chapter's share of the charges stops.
+When you delete the stack, the queues, the functions, and the schedule are gone, and this chapter's share of the charges stops.
 
 ### When it gets hammered
 
-Nothing this chapter adds can be called directly from outside. Only S3 can send to the queue, only Lambda calls the worker, and only the schedule calls housekeeping. What arrives from outside is chapter 07's API, and uploads that went through chapter 07's permits. The ceiling on the API side is the one chapter 07 describes.
+Nothing this chapter adds can be called directly from outside. Only S3 can send to the queue, only Lambda calls the worker, and only the schedule calls housekeeping. What arrives from outside is requests to chapter 07's API, and uploads that went through chapter 07's permits. The ceiling on the API side is the one described under ["When it gets hammered" in chapter 07](/en/chapters/07-uploads/wrap.md).
 
-This chapter's own ceilings look like this.
+These are the ceilings for what this chapter adds.
 
-- **Worker duration.** Two at once at most, so even running the whole month it's 1,296,000 GB-seconds: USD 17.28. However many events arrive, it doesn't go above that
-- **Housekeeping duration.** Once an hour, 15 minutes at the longest. Running to the timeout every time is 164,250 GB-seconds a month: USD 2.19
-- **DynamoDB.** The worker and housekeeping read and write the same table as chapter 07. The table's limits (150 read units and 40 write units a second) are for everything together, the API included. It doesn't go above the two rows in chapter 06's table (USD 129.53 a month)
-- **The charge per event.** No ceiling. Counted the same way as the example above, it's USD 3.89 per million (SQS 1.20, worker 0.87, `GetObject` 0.37, DynamoDB 0.86, logs 0.59). The upload POST that causes the event is USD 4.70 per million
+- Worker duration. At most two workers run at once, so even running the whole month they use 1,296,000 GB-seconds, which is USD 17.28. However many events arrive, it does not go above that
+- Housekeeping duration. It runs once an hour for 15 minutes at the longest. Running to the timeout every time is 164,250 GB-seconds a month, which is USD 2.19
+- DynamoDB. The worker and housekeeping read and write the same table as chapter 07. The table's limits (150 read units and 40 write units a second) apply to everything together, the API included. It does not go above the two rows in [chapter 06's table](/en/chapters/06-auth/wrap.md) (USD 129.53 a month)
+- The charge per event. This one has no ceiling. Counted the same way as the example above, it is USD 3.89 per million (SQS 1.20, worker 0.87, `GetObject` 0.37, DynamoDB 0.86, logs 0.59). The upload POST that causes the event costs USD 4.70 per million
 
-The last row is the resending of one form from "The queue grows". Only a signed-in user can do it, but nothing in this setup limits how often. The worker row stops at 17.28, so what keeps growing is SQS and S3 requests, plus logs for whatever the worker gets through.
+The last item is the resending of one form, described under ["The queue grows" on the deploy page](/en/chapters/08-async/deploy.md). Only a signed-in user can resend, but nothing in this setup limits how often. Worker duration stops at 17.28, so what keeps growing is SQS and S3 requests, plus logs for whatever the worker gets through.
 
-There's one thing to watch with the table's limits. The API, the worker, and housekeeping share them. While housekeeping is reading heavily, DynamoDB can refuse reads from the API. When a worker's write is refused, that message goes back on the queue and lands in the DLQ on the fifth try. At how many images this starts to happen wasn't measured.
+One thing needs watching with the table's limits. The API, the worker, and housekeeping share them. While housekeeping is reading heavily, DynamoDB can refuse reads from the API. When a worker's write is refused, that message goes back on the queue and lands in the DLQ on the fifth try. At how many images this starts to happen has not been measured.
 
 ## Where it goes wrong
 
 | If this happens | Look here |
 | --- | --- |
-| `dev:async` stops, naming `LOCAL_AUTH_SECRET` or `NOTES_STORE` | Is there an `examples/08-async/.env`? Copy `.env.example` |
-| The deploy fails creating the bucket with `Unable to validate the following destination configurations` | Was the queue policy created before the bucket? Does the policy's `aws:SourceArn` match the bucket's ARN? |
-| The deploy says the bucket name is already taken | Is a bucket named `aih-async-uploads-<account ID>` left over somewhere? |
-| There is one message in the DLQ right after deploying | Is the S3 test event being failed? This chapter's worker accepts it and does nothing |
-| An image is put, and no record appears | Use `vp run async:queue` to see whether a message reached the queue. If not, it is the S3 notification. If it stays there, it is the event source mapping or the worker |
-| The worker's log says `carries no eTag or no sequencer` | The create event has no sequencer. See "Not checked yet" in the notes at the end |
+| `dev:async` stops, naming `LOCAL_AUTH_SECRET` or `NOTES_STORE` | Check that `examples/08-async/.env` exists. If it does not, copy `.env.example` |
+| The deploy fails creating the bucket with `Unable to validate the following destination configurations` | Check that the queue policy is created before the bucket, and that the policy's `aws:SourceArn` matches the bucket's ARN |
+| The deploy says the bucket name is already taken | Check whether a bucket named `aih-async-uploads-<account ID>` is left over somewhere |
+| There is one message in the DLQ right after deploying | Check that the S3 test event is not being failed. This chapter's worker accepts it and does nothing |
+| An image is put, and no record appears | Use `vp run async:queue` to see whether a message reached the queue. If none did, look at the S3 notification. If it stays there, look at the event source mapping or the worker |
+| The worker's log says `carries no eTag or no sequencer` | The create event has no `sequencer`. See "Not checked yet" in the verification notes at the end of this page |
 | The worker's log has a 403, and messages land in the DLQ | Without `s3:ListBucket` on the worker's role, `GetObject` on a deleted object is a 403, not a 404 |
-| Messages that should have succeeded are processed again and again | Is the shape of `batchItemFailures` right? An ID that is not in the batch, or an empty ID, makes everything count as failed |
-| A message that should have failed is gone | Does the event source mapping have `ReportBatchItemFailures`? Without it, the list the function returns should go unused |
-| Messages with nothing wrong in them pile up in the DLQ | Is the worker returning "already done" as a failure? |
+| Messages that should have succeeded are processed again and again | Check the shape of the `batchItemFailures` the worker returns. An ID that is not in the batch, or an empty ID, makes everything count as failed |
+| A message that should have failed is gone | Check that the event source mapping has `ReportBatchItemFailures`. Without it, the list the function returns should go unused |
+| Messages with nothing wrong in them pile up in the DLQ | Check that the worker is not returning "already done" as a failure |
 | The worker's or housekeeping's log shows a DynamoDB throttling error | The API, the worker, and housekeeping share the table's request unit limits (150 read, 40 write). Have housekeeping read less, or raise the limits |
-| The queue keeps growing, and the events are all for the same key | The same form is being sent again and again. See "The queue grows" and "When it gets hammered" |
-| The housekeeping function times out | There are too many objects. See "What it costs" and "Before production" |
+| The queue keeps growing, and the events are all for the same key | The same form is being sent again and again. See ["The queue grows" on the deploy page](/en/chapters/08-async/deploy.md) and "When it gets hammered" on this page |
+| The housekeeping function times out | There are too many objects. See "What it costs" and "Before production" on this page |
 
 ## Before production
 
-- **Put an alarm on the DLQ.** A DLQ that nobody looks at is just a bin. Raise an alert when `ApproximateNumberOfMessagesVisible` is no longer 0. On the source queue, alarm on the age of the oldest message (for how to put an alarm together, see [chapter 19](/en/chapters/19-observability.md))
+- **Put an alarm on the DLQ.** A DLQ that nobody looks at only collects messages. Raise an alert when `ApproximateNumberOfMessagesVisible` is no longer 0. On the source queue, alarm on the age of the oldest message ([chapter 19](/en/chapters/19-observability.md) shows how to put an alarm together)
 - **Limit at the entrance.** A queue accepts everything that arrives. Close the resending of a form on chapter 07's side, and count uploads
-- **Do not show an image until it is inspected.** The API in this chapter does not look at the inspection result. A "rejected" image is listed until housekeeping deletes it. Read the inspection record when listing attachments and give a URL only to the ones that are `ok`
-- **Stop housekeeping from growing with the number of images.** Look only at recent objects instead of all of them. Or use S3 Inventory (a feature in which S3 periodically writes a listing of the bucket to files) as the input. This chapter tried neither
-- **Check the sequencer.** Look at the real shape of POST events and lifecycle events, then settle the worker's assumptions again
-- **Close the way inspection records are left behind.** The tombstone and TTL from "What is still open"
+- **Do not show an image until it is inspected.** The API in this chapter does not look at the inspection result, so a "rejected" image is listed until housekeeping deletes it. Read the inspection record when listing attachments and give a URL only to the ones that are `ok`
+- **Stop housekeeping from growing with the number of images.** Look only at recent objects instead of all of them, or use S3 Inventory (a feature in which S3 periodically writes a listing of the bucket to files) as the input. This chapter tried neither
+- **Check `sequencer`.** Look at the real shape of POST events and lifecycle events, then settle the worker's assumptions again
+- **Close the way inspection records are left behind.** This is the tombstone and TTL from ["What is still open" on the first page](/en/chapters/08-async.md)
 - **Decide whether to encrypt the queues with a KMS key.** This chapter uses keys that SQS manages. With a key you manage, the key's policy has to let S3 use it
-- **Decide how buckets are named.** The fixed name is this chapter's convenience. Accept the custom resource, put EventBridge in between, or agree on a naming rule in your organization
-- **Make the create API idempotent.** The homework left from chapter 05
+- **Decide how buckets are named.** The fixed name was chosen for this chapter's convenience. Accept the custom resource, put EventBridge in between, or agree on a naming rule in your organization
+- **Make the create API idempotent.** This is left over from chapter 05
 
 ## Cleaning up
 
@@ -118,7 +120,7 @@ vp run async:unpublish --yes
 vp run async:infra:destroy
 ```
 
-As in chapter 07, empty the two buckets first. Deleting images with `async:empty` puts one delete event on the queue per image, and the worker removes the inspection records one by one. If you are deleting the stack right away, there is no need to wait for that. The table goes with it.
+As in chapter 07, empty the two buckets first. Deleting images with `async:empty` puts one delete event on the queue per image, and the worker removes the inspection records one by one. If you are deleting the stack right away, you do not need to wait for that, because the records go with the table.
 
 `async:infra:destroy` deletes the queue, the DLQ, the two functions, the schedule, and all of chapter 07's resources (buckets, table, user pool, API, distribution). Messages still on the queues are deleted too. None of it can be brought back.
 
@@ -126,16 +128,16 @@ What remains is the storage that cdkd's bootstrap created (chapter 02) and the d
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** Worker tests (the same message delivered again, the same event under another ID, two workers at once, an older create event, a delete that arrives first, a delete that arrives late, an interruption before and after the record, the repair after a form is sent twice, verdicts on things that are not images). Tests around the queue (a partly failed batch, moving to the DLQ, a function that throws, the S3 test event, a key that is not this chapter's, moving back from the DLQ). Housekeeping tests (deleting a "rejected" attachment, not using a stale verdict, taking the tag off again, a dry run, two runs, concurrent runs, an interruption). Reading image type and size (real files written by `sips` and `cwebp`). Parsing the event JSON and comparing sequencers. The shape of requests to DynamoDB and S3. Infrastructure assertions. Type checking and synth. In addition, two of the worker's conditions were broken on purpose, and four tests failed. `dev:async` was started and driven over HTTP by a script to check: sign-in, creating a note, a form upload, the worker's record (`ok`, 1×1), finishing, the record turning to `rejected` when the same form sends HTML, a housekeeping dry run, and the record disappearing on delete. This time, assertions confirm that the throttle and the table limits inherited from chapter 07 are in the template.
+**Checked locally.** Worker tests (the same message delivered again, the same event under another ID, two workers at once, an older create event, a delete that arrives first, a delete that arrives late, an interruption before and after the record, the repair after a form is sent twice, verdicts on things that are not images). Tests around the queue (a partly failed batch, moving to the DLQ, a function that throws, the S3 test event, a key that is not this chapter's, moving back from the DLQ). Housekeeping tests (deleting a "rejected" attachment, not using a stale verdict, taking the tag off again, a dry run, two runs, concurrent runs, an interruption). Reading image type and size (real files written by `sips` and `cwebp`). Parsing the event JSON and comparing `sequencer` values. The shape of requests to DynamoDB and S3. Infrastructure assertions. Type checking and synth. In addition, two of the worker's conditions were broken on purpose, and four tests failed. `dev:async` was started and driven over HTTP by a script to check: sign-in, creating a note, a form upload, the worker's record (`ok`, 1×1), finishing, the record turning to `rejected` when the same form sends HTML, a housekeeping dry run, and the record disappearing on delete. This time, assertions confirm that the throttle and the table limits inherited from chapter 07 are in the template.
 
-**Not checked yet.** Nothing has been run against AWS. None of `async:infra:diff`, `async:infra:deploy`, `async:smoke`, `async:queue`, `async:logs`, `async:housekeeping`, `async:publish`, `async:smoke:web`, `async:user:create`, `async:infra:drift`, `async:empty`, `async:unpublish`, or `async:infra:destroy`. So the following are unconfirmed on the real services. That the event for an object created with a form (POST Object), and the event for a delete by a lifecycle rule, carry a sequencer (the documentation says it is "only used with PUT and DELETE requests"). That the template that fixes the bucket's name to avoid the cycle deploys with cdkd. That S3 validates the queue when the notification is configured. That S3 can send to a queue encrypted with keys SQS manages (the S3 documentation explains only the case of a KMS key you manage). That `If-Match` with a quoted ETag gets a 412 for an object that was replaced. How the event source mapping and the partial batch response really behave. That Scheduler starts the function. The DynamoDB and S3 implementations have only had the shape of their requests pinned by tests; nothing was sent to the real services. How often Lambda reads an empty queue, and how long housekeeping runs, were not measured. The numbers in "The queue grows" and "When it gets hammered" are also computed from unit prices and an assumption (200 ms a message). How many messages a second the worker gets through, how the worker and housekeeping behave at the table's limits, and how many POSTs a second S3 accepts for one key haven't been checked. Of the image formats, the JPEG specification (ITU-T T.81) was not re-read; the behaviour was checked only against files written by a real encoder.
+**Not checked yet.** Nothing has been run against AWS. None of `async:infra:diff`, `async:infra:deploy`, `async:smoke`, `async:queue`, `async:logs`, `async:housekeeping`, `async:publish`, `async:smoke:web`, `async:user:create`, `async:infra:drift`, `async:empty`, `async:unpublish`, or `async:infra:destroy`. So the following are unconfirmed on the real services. That the event for an object created with a form (POST Object), and the event for a delete by a lifecycle rule, carry a `sequencer` (the documentation says it is "only used with PUT and DELETE requests"). That the template that fixes the bucket's name to avoid the cycle deploys with cdkd. That S3 validates the queue when the notification is configured. That S3 can send to a queue encrypted with keys SQS manages (the S3 documentation explains only the case of a KMS key you manage). That `If-Match` with a quoted ETag gets a 412 for an object that was replaced. How the event source mapping and the partial batch response really behave. That Scheduler starts the function. The DynamoDB and S3 implementations have only had the shape of their requests pinned by tests; nothing was sent to the real services. How often Lambda reads an empty queue, and how long housekeeping runs, were not measured. The numbers in "The queue grows" and "When it gets hammered" are also computed from unit prices and an assumption (200 ms a message). How many messages a second the worker gets through, how the worker and housekeeping behave at the table's limits, and how many POSTs a second S3 accepts for one key have not been checked. Of the image formats, the JPEG specification (ITU-T T.81) was not re-read; the behaviour was checked only against files written by a real encoder.
 
 **Where the code is.**
 
 | Section | Files | Tasks |
 | --- | --- | --- |
 | Looking inside the image | `examples/08-async/src/inspect.ts`, `src/inspection.ts`, `test/inspect.test.ts`, `test/fixtures.ts` | `test:unit` |
-| Nobody said "delivered exactly once" | `examples/08-async/src/events.ts`, `src/worker.ts`, `test/events.test.ts`, `test/queue.test.ts` | `test:unit` |
+| Delivery is guaranteed "at least once" | `examples/08-async/src/events.ts`, `src/worker.ts`, `test/events.test.ts`, `test/queue.test.ts` | `test:unit` |
 | Twice delivered, one result | `examples/08-async/src/worker.ts`, `src/sequencer.ts`, `src/object-reader.ts`, `src/s3-object-reader.ts`, `src/dynamodb-inspection-repository.ts`, `test/worker.test.ts`, `test/adapters.test.ts`, `test/harness.ts` | `test:unit` |
 | Housekeeping by the clock | `examples/08-async/src/housekeeping.ts`, `src/housekeeping-lambda.ts`, `test/housekeeping.test.ts`, `scripts/housekeeping.ts` | `test:unit`, `async:housekeeping` |
 | Running it locally | `examples/08-async/src/dev.ts`, `src/local.ts`, `src/local-queue.ts`, `src/local-bucket.ts`, `.env.example` | `dev:async`, `dev:uploads:web`, `test:unit` |

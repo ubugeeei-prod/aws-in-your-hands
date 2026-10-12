@@ -4,13 +4,13 @@ title: "14 Cache: Design and Build"
 
 # 14 Cache: Design and Build
 
+[The previous page](/en/chapters/14-kv-cache.md) settled the interfaces for the counting side and the cache side. On this page you implement both on DynamoDB and on Valkey.
+
 ## Read, then write, and you miscount
 
 <!-- section: 14.atomic -->
 
-Written the obvious way, a rate limit goes: "Read the count. If it is below the limit, write the count plus one."
-
-That breaks when two requests arrive together.
+Written the obvious way, a rate limit reads the current count and, if it is below the limit, writes the count plus one. That code breaks when two requests arrive at the same time.
 
 ```figure
 caption: With a limit of 1, two requests that read and then write at the same time both pass, and one increment is lost
@@ -29,85 +29,85 @@ note a: allowed
 note b: allowed
 ```
 
-Both read "zero so far", and both pass. The stored count is still 1. The limit was broken, and no record of it remains.
+Both requests read a count of 0, so both pass. The stored count is still 1 afterwards. The limit was broken, and no record of the breach remains.
 
-One test reproduces this in a fixed order. It builds a store that reads and then writes on purpose, and holds both writes until both reads are done.
+One test reproduces this in a fixed order. It builds a store that reads and then writes on purpose, and holds back the writes until both requests have finished reading.
 
 <<< @/examples/14-kv-cache/test/rate-limit.test.ts{lost-update}
 
-There is one fix: make the read and the write a single step inside the store. In DynamoDB it looks like this.
+The fix is to make the read and the write a single step inside the store. On DynamoDB you write it like this.
 
 <<< @/examples/14-kv-cache/src/dynamodb-store.ts{increment}
 
-`ADD #hits :one` says "add 1 to whatever is there". Your code reads nothing; DynamoDB does the addition. The condition expression from chapter 05 then narrows it to "only while below the cap". DynamoDB evaluates the condition and applies the addition as one operation. When two requests arrive together, one is applied first and the other is judged against its result.
+`ADD #hits :one` is an instruction to add 1 to the current value. The app reads nothing, and DynamoDB does the addition. The condition expression you used in chapter 05 restricts the addition to counts below the cap. DynamoDB evaluates the condition and applies the addition as one operation. When two requests arrive together, one is applied first and the other is evaluated against its result.
 
-A unit test pins this "add without reading" shape: exactly one `UpdateItem` is sent, with no read before it. And the contract test "of 50 at once, exactly 20 pass and the count is 20" passes against DynamoDB Local.
+A unit test pins the fact that the store adds without reading. The store sends a single `UpdateItem` command, with no read before it. A contract test also runs against DynamoDB Local and passes, checking that of 50 requests arriving at once exactly 20 pass and the count ends at 20.
 
-Two things you should know.
+There are two things to know about this approach.
 
-**A refused request is billed too.** A write whose condition fails still consumes one write unit. Someone hammering past the limit generates DynamoDB charges for every attempt. The place to absorb a flood is further out, not here. This chapter's stack throttles the HTTP API stage and also caps the writes the table accepts per second. The numbers are in "Getting ready for AWS" and "The money".
+The first is that a refused request is billed too. A write whose condition fails still consumes one write unit. A caller who keeps calling past the limit generates a DynamoDB charge for every call. A flood of requests has to be stopped further out, not by the rate limit in the app. This chapter's stack throttles the HTTP API stage and also caps the writes the table accepts per second. The settings are on the [Deploy](/en/chapters/14-kv-cache/deploy.md) page, and the amounts are under "The money" on [the last page](/en/chapters/14-kv-cache/wrap.md).
 
-**The addition is not idempotent.** Suppose the write succeeds and the response is lost. The SDK retries and adds one more: a single request counted twice. For a rate limit that only means a caller loses one call, so the sample leaves it. Don't count money or stock this way. That needs the technique from chapter 05's "When the response never arrives": give the same operation the same ID.
+The second is that the addition is not idempotent. If a write to DynamoDB succeeds and its response never arrives, the SDK retries and adds one more, so a single request is counted twice. For a rate limit that only costs the caller one call, so the sample leaves it as it is. Do not count money or stock this way, where a miscount is not acceptable. That kind of data needs the technique from "When the response never arrives" in chapter 05, which gives the same operation the same ID.
 
-## TTL does not mean "delete now"
+## TTL deletes late
 
 <!-- section: 14.ttl -->
 
-A rate limit item is useless once its window has passed. A cached copy is useless once it has expired. Left alone they pile up in the table, so you use DynamoDB's TTL (time to live): write "this may be deleted after this time" on the item in Unix seconds, and DynamoDB deletes it for you, at no write cost.
+A rate limit item is no longer needed once its window has passed, and a cached copy is no longer needed once it has expired. Left alone, they pile up in the table, so the sample uses DynamoDB's TTL (time to live). You write the time after which an item may be deleted on the item itself, in Unix seconds, and DynamoDB deletes it for you without charging for a write.
 
-Here's the catch. **Nothing is deleted at the moment it expires.** The documentation's wording is "within a few days of their expiration time". And until it is deleted, the item reads like any other.
+An item is not deleted at the moment it expires, however. The official documentation says items are deleted "within a few days of their expiration time". Until then, the item can be read like any other.
 
-If you are used to expiry in Valkey or Workers KV, you'll assume an expired entry simply doesn't come back. In DynamoDB it does. So the reader checks.
+If you are used to expiry in Valkey or Workers KV, you expect an expired value not to come back, but DynamoDB returns it. The reader therefore checks the expiry.
 
 <<< @/examples/14-kv-cache/src/dynamodb-store.ts{cache-get}
 
-That is why `get` takes `now`. Whether an entry has expired is decided by the reader's clock, not by DynamoDB. TTL is for housekeeping and nothing else.
+This is why `get` takes `now`. The reader's clock decides whether an entry has expired, not DynamoDB. TTL is left with the cleanup and nothing else.
 
-A test pins it.
+A test pins the reader's check.
 
 <<< @/examples/14-kv-cache/test/dynamodb-store.test.ts{ttl-test}
 
-Each item carries two expiries. `expiresAtMs` is in milliseconds, for the reader's check. `expiresAt` is in seconds, for DynamoDB's cleanup, because a TTL attribute has to be in seconds.
+Each item carries two expiries. `expiresAtMs` is in milliseconds and is used for the reader's check. `expiresAt` is in seconds and is used by DynamoDB for cleanup. A TTL attribute has to be in seconds, which is why there are two.
 
-The same thing applies to the lock that appears later. An expired lock is still in the table, so "free to take" has to include "present but expired", not only "absent".
+The lock used on [the next page](/en/chapters/14-kv-cache/more.md) is in the same position. An expired lock stays in the table, so the condition for taking the lock covers a lock that exists but has expired as well as a lock that does not exist.
 
 <<< @/examples/14-kv-cache/src/dynamodb-store.ts{lock}
 
-The rate limit, by the way, doesn't care how late TTL is. Its key contains the start of the window, so an old window's item is invisible to a new window whether it has been deleted or not. Design so that correctness never depends on TTL, and "a few days" stops being your problem.
+The rate limit is not affected by late TTL deletion. Its key contains the start of the window, so an item left over from an old window is invisible to a new one. If correctness never depends on TTL, the "few days" stop mattering.
 
-To be honest, I haven't measured how long real DynamoDB takes to delete an item.
+I have not measured how long real DynamoDB takes to delete an item.
 
 ## The same thing on Valkey
 
 <!-- section: 14.valkey -->
 
-Valkey is a key-value server that runs in memory. The project was forked from open source Redis right before its license changed, and Redis commands work as they are. It is one of the engines ElastiCache runs, next to Redis OSS and Memcached.
+Valkey is a key-value server that runs in memory. The project was forked from the open source version of Redis just before Redis changed its license, and Redis commands work on it unchanged. It is one of the engines ElastiCache can run, along with Redis OSS and Memcached.
 
-Valkey has an "add one" command too (`INCR`). What it lacks is a single command for "add one only while below a cap". So that becomes a small script.
+Valkey has a command that adds 1 (`INCR`), but no single command that adds 1 only while the count is below a cap. The sample does that with a small script.
 
 <<< @/examples/14-kv-cache/src/valkey-store.ts{scripts}
 
-Valkey runs a script from start to finish with no other command in between. It gives the same guarantee as DynamoDB's "condition and update in one step", by a different route.
+Valkey runs a script from start to finish with no other command in between. That gives the same guarantee as DynamoDB's condition and update in one step, reached another way.
 
-The cache is more direct.
+The cache is simpler.
 
 <<< @/examples/14-kv-cache/src/valkey-store.ts{valkey-cache}
 
-`get` doesn't use `now`. Valkey stops returning a key once it has expired (its documentation puts the error at 0 to 1 millisecond), so the reader has nothing to check. This is where the difference from DynamoDB shows most clearly.
+`get` does not use `now`. Valkey stops returning a key once it has expired (its documentation puts the expiry error at 0 to 1 millisecond), so the reader has nothing to check. This is where the difference from DynamoDB shows most clearly.
 
-The price is that the clock changes hands. Expiry is judged by the Valkey server's clock, and a test cannot replace that. The contract tests really do wait when they run against Valkey (`test/local-stores.test.ts`). Memory and DynamoDB accept a fake clock; Valkey doesn't. The difference is right there in the tests.
+In exchange, the clock that judges expiry is the Valkey server's, and a test cannot replace it. The memory and DynamoDB stores accept a fake clock and Valkey does not, so the contract tests really wait when they run against Valkey (`test/local-stores.test.ts`).
 
-The other big difference: **what is in Valkey can disappear.** ElastiCache Serverless replicates data across Availability Zones asynchronously. Asynchronous means that a failure right after a write was acknowledged can lose that write. And at the storage maximum, keys with an expiry are evicted. When a rate limit count disappears, that caller gets a fresh allowance. Whether you can live with that decides whether counts belong in Valkey.
+The other large difference is that the contents of Valkey can disappear. ElastiCache Serverless replicates data to several Availability Zones asynchronously. Because replication is asynchronous, a failure right after a write was acknowledged can lose that write. And when the cache reaches its storage limit, keys that have an expiry are evicted. When a rate limit count disappears, that caller can call up to the limit again. Whether you can accept that decides whether counts belong in Valkey.
 
 ## What ElastiCache adds
 
 <!-- section: 14.elasticache -->
 
-A local Valkey is one container. On AWS there is more to decide.
+A local Valkey runs as soon as you start one container. On AWS there is more to decide.
 
 ### Node-based or Serverless
 
-ElastiCache comes in two shapes.
+ElastiCache can be set up in two ways.
 
 | | Node-based | Serverless |
 | --- | --- | --- |
@@ -117,22 +117,22 @@ ElastiCache comes in two shapes.
 | TLS | Your choice | Always on |
 | Cluster mode | Your choice | Enabled only; the client has to support it |
 
-Both **cost money without being called**. This is not "zero when unused" like DynamoDB or Lambda. If the word Serverless makes you expect pay-per-use only, this is where it goes wrong. The pricing page is plain about it: billing starts when the cache becomes available and continues until you delete it.
+Both cost money even when nobody calls them. Neither drops to zero when unused, as DynamoDB and Lambda do. If the name Serverless leads you to expect to pay only for what you use, this is where the expectation fails. The pricing page says that billing starts when the cache becomes available and continues until you delete it.
 
-### The VPC is no longer required
+### A public endpoint, without a VPC
 
-As chapter 11 said, a node-based cluster lives inside a VPC and nowhere else. To reach it, a Lambda function has to join the VPC and loses its route to the internet. This chapter's outline originally said "Valkey brings a VPC".
+As chapter 11 said, a node-based cluster can only be placed inside a VPC. To connect from Lambda you put the function in the VPC, and the function loses its route to the internet. The outline of this chapter originally said that Valkey brings a VPC with it.
 
-Reading the current documentation again, ElastiCache Serverless has two connection types: VPC and public. A public endpoint is reached over the internet, with no VPC. It is available only on Serverless with Valkey 9.0 or later.
+The current documentation, read again, lists two connection types for ElastiCache Serverless, VPC and public. A public endpoint can be reached over the internet without a VPC. It is available only on Serverless with Valkey 9.0 or later.
 
-This chapter's stack uses the public endpoint, because it keeps the function out of a VPC. The function runs where it did in earlier chapters and calls DynamoDB the same way. The VPC variant (connection type `vpc`, subnets and security groups passed in, the function attached to chapter 11's VPC) is not in this chapter's code.
+This chapter's stack uses the public endpoint because it keeps the Lambda function out of a VPC. The function runs in the same place as in earlier chapters and calls DynamoDB the same way. The VPC setup (connection type `vpc`, subnets and security groups passed in, and the function attached to chapter 11's VPC) is not in this chapter's code.
 
-"A cache reachable from the internet" should make you wary. It comes with two conditions:
+A cache that can be reached from the internet deserves caution. A public endpoint comes with two conditions.
 
-- **Every connection needs IAM authentication.** Password users are not allowed: the user group attached to the cache may contain only users that authenticate with IAM
-- **TLS 1.3 is required.** An older handshake fails
+- Every connection needs IAM authentication. Users that authenticate with a password cannot be used, and every user in the user group attached to the cache must authenticate with IAM
+- TLS 1.3 is required. The handshake fails with any older version of TLS
 
-So what protects it is not a network wall but IAM. That is the same thinking as "what does this role allow", which you have applied since chapter 04.
+What protects the cache, then, is IAM and not a network wall. The approach you have followed since chapter 04, deciding what a role is allowed to do, applies here unchanged.
 
 ### A signature instead of a password
 
@@ -140,27 +140,27 @@ With IAM authentication you send a token that is valid for 15 minutes in place o
 
 <<< @/examples/14-kv-cache/src/elasticache-token.ts{token}
 
-This function talks to nobody. It signs with whatever credentials it has, and ElastiCache verifies the signature when it receives it. Inside Lambda that means the execution role's credentials. The role needs `elasticache:Connect` on both the cache and the ElastiCache user.
+This function makes no network call. It only signs with the credentials at hand, and ElastiCache verifies the signature when it receives the token. Inside Lambda, the function signs with the execution role's credentials. The role must be allowed `elasticache:Connect` on both the cache and the ElastiCache user.
 
-The reference implementation in the AWS documentation is Java, and I found no official building block for Node.js (GLIDE, the official Valkey client, generates and refreshes the token itself). The code above follows the Java version. A test recomputes SigV4 by hand and checks that the signatures match. But **this token has never been presented to a real ElastiCache cache.**
+The reference implementation in the AWS documentation is Java code, and I found no official component for Node.js (GLIDE, the official Valkey client, generates and refreshes the token itself). The code above follows that Java implementation. A test computes SigV4 separately by hand and checks that the signatures match. However, **this token has never been presented to a real ElastiCache cache.**
 
 ### Why the client is iovalkey
 
 I checked two Valkey clients for Node.js on npm.
 
-- `@valkey/valkey-glide` 2.5.3: the official Valkey client, with IAM authentication built in. Its core is Rust, shipped as native packages per OS and CPU
-- `iovalkey` 0.4.0: a client forked from ioredis, written in JavaScript only
+- `@valkey/valkey-glide` 2.5.3 is the official Valkey client. It has IAM authentication built in. Its core is written in Rust, and it uses a native package for each OS and CPU
+- `iovalkey` 0.4.0 is a client forked from ioredis and is written in JavaScript only
 
-This book bundles Lambda code into one file with esbuild at synth time, without Docker. A native package needs a different build on the machine that bundles (macOS, say) and the place that runs it (Linux on arm64), which doesn't sit well with that. So the sample uses iovalkey. GLIDE would probably need less authentication code. If you run in a container ([chapter 12](/en/chapters/12-containers.md)), choose again.
+This book bundles Lambda code into one file with esbuild at synth time and does not use Docker. A native package needs one build for the machine that bundles (macOS, for example) and another for the place the code runs (Linux on arm64), which does not fit that approach well. The sample therefore uses iovalkey, which is JavaScript only. GLIDE should need less authentication code. If you run in a container ([chapter 12](/en/chapters/12-containers.md)), you are free to choose again.
 
 <<< @/examples/14-kv-cache/src/valkey-client.ts{elasticache}
 
-Choosing iovalkey has one cost. It takes the password as a fixed string, so a reconnect after 15 minutes would send a stale token. The sample replaces the connection every 10 minutes instead.
+Choosing iovalkey has one cost. iovalkey takes the password as a fixed string, so a reconnect after 15 minutes would send a stale token. The sample therefore replaces the connection every 10 minutes.
 
 <<< @/examples/14-kv-cache/src/valkey-client.ts{rotating}
 
-One more piece: something to keep a silent cache from dragging the request down with it.
+The sample has one more mechanism, which keeps a cache that does not answer from taking the request down with it.
 
 <<< @/examples/14-kv-cache/src/valkey-client.ts{deadline}
 
-It waits one second at most. After that the request carries on as if there were no cache. Without it, a cache outage reaches the caller as a wait as long as the Lambda timeout (10 seconds).
+The request waits at most 1 second and then continues as if there were no cache. Without this limit, a cache failure would reach the caller as a wait that lasts until the Lambda timeout (10 seconds).
