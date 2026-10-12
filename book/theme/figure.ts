@@ -370,7 +370,31 @@ function renderFlow(figure: Figure): string {
     let d: string;
     let label: { x: number; y: number; anchor: "middle" | "start" };
 
-    if (ra === rb) {
+    // Two arrows between the same pair of nodes run side by side, not on top of each other.
+    const twins = figure.edges.filter(
+      (other) =>
+        other.from !== other.to &&
+        ((other.from === edge.from && other.to === edge.to) || (other.from === edge.to && other.to === edge.from)),
+    );
+    const shift = (twins.indexOf(edge) - (twins.length - 1) / 2) * 18;
+    if (down !== (ra === rb)) {
+      ac.x += shift;
+      bc.x += shift;
+    } else {
+      ac.y += shift;
+      bc.y += shift;
+    }
+    // Several arrows arriving at one node would stack their labels there. Each keeps its label near its own start.
+    const arriving = figure.edges.filter(
+      (other) => other.to === edge.to && other.from !== other.to && (rank.get(other.from) ?? 0) < rb,
+    ).length;
+
+    if (edge.from === edge.to) {
+      // Something a node does to itself: a small turn out of its side and back.
+      const x = a.x + a.width;
+      d = `M${round(x)} ${round(ac.y - 8)} H${round(x + 22)} V${round(ac.y + 8)} H${round(x + 2)}`;
+      label = { x: x + 30, y: ac.y + 4, anchor: "start" };
+    } else if (ra === rb) {
       // Side by side: a straight line between the facing sides.
       if (down) {
         const leftToRight = ac.x < bc.x;
@@ -397,19 +421,22 @@ function renderFlow(figure: Figure): string {
         label =
           Math.abs(ac.x - bc.x) < 1
             ? { x: ac.x + 10, y: y1 + 22, anchor: "start" }
-            : { x: bc.x + 10, y: y2 - 12, anchor: "start" };
+            : arriving > 1
+              ? { x: ac.x + 10, y: y1 + 22, anchor: "start" }
+              : { x: bc.x + 10, y: y2 - 12, anchor: "start" };
       } else {
         const [x1, x2] = [a.x + a.width, b.x];
-        const mid = x1 + 22;
-        d =
-          Math.abs(ac.y - bc.y) < 1
-            ? `M${round(x1)} ${round(ac.y)} H${round(x2)}`
-            : `M${round(x1)} ${round(ac.y)} H${round(mid)} V${round(bc.y)} H${round(x2)}`;
-        label = {
-          x: (Math.abs(ac.y - bc.y) < 1 ? x1 + x2 : mid + x2) / 2,
-          y: bc.y - 8,
-          anchor: "middle",
-        };
+        const straight = Math.abs(ac.y - bc.y) < 1;
+        // One of several arriving: travel along its own row and turn at the end. Otherwise turn at once.
+        const mid = arriving > 1 ? x2 - 22 : x1 + 22;
+        d = straight
+          ? `M${round(x1)} ${round(ac.y)} H${round(x2)}`
+          : `M${round(x1)} ${round(ac.y)} H${round(mid)} V${round(bc.y)} H${round(x2)}`;
+        label = straight
+          ? { x: (x1 + x2) / 2, y: ac.y - 8, anchor: "middle" }
+          : arriving > 1
+            ? { x: (x1 + mid) / 2, y: ac.y - 8, anchor: "middle" }
+            : { x: (mid + x2) / 2, y: bc.y - 8, anchor: "middle" };
       }
     } else {
       // Back to an earlier node: out to the side, around, and in again.
