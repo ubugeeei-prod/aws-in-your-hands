@@ -61,7 +61,7 @@ export class SsrStack extends Stack {
     const role = new iam.Role(this, "ServerRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    logGroup.grantWrite(role);
+    logGroup.grants.write(role);
 
     const server = new lambda.Function(this, "Server", {
       // Already bundled by Nitro, node_modules included. CDK only zips it.

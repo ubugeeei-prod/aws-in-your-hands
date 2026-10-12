@@ -191,7 +191,7 @@ Design can reduce the unchecked resources as well. This stack writes the functio
 
 <<< @/examples/20-shipping/infra/lib/ship-api-stack.ts{role}
 
-Chapter 04's way (`grantWrite`) makes the permissions a separate `AWS::IAM::Policy` resource, and that type is not in the support table. Written inside the role, the permissions become a property of the role, and the role is checked. For the same reason, the stack does not emit the `AWS::CDK::Metadata` resource. Each unchecked resource removed widens what the report can vouch for.
+Chapter 04's way (`grants.write`) makes the permissions a separate `AWS::IAM::Policy` resource, and that type is not in the support table. Written inside the role, the permissions become a property of the role, and the role is checked. For the same reason, the stack does not emit the `AWS::CDK::Metadata` resource. Each unchecked resource removed widens what the report can vouch for.
 
 All of this, however, comes from reading the support table. Whether the integration really goes unchecked, and whether changing the role's permissions by hand is detected as drift, will not be known until the procedure in the next section has been run.
 

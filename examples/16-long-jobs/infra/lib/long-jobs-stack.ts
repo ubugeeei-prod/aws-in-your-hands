@@ -79,7 +79,7 @@ export class LongJobsStack extends Stack {
       const role = new iam.Role(this, `${name}Role`, {
         assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
       });
-      logGroup.grantWrite(role);
+      logGroup.grants.write(role);
       const fn = new nodejs.NodejsFunction(this, name, {
         entry: source(entry),
         handler: "handler",
@@ -212,7 +212,7 @@ export class LongJobsStack extends Stack {
       const durableRole = new iam.Role(this, "DurableExportRole", {
         assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
       });
-      durableLogs.grantWrite(durableRole);
+      durableLogs.grants.write(durableRole);
       durableRole.addToPolicy(
         new iam.PolicyStatement({ actions: ["dynamodb:Scan"], resources: [table.tableArn] }),
       );

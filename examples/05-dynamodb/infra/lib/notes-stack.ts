@@ -48,7 +48,7 @@ export class NotesStack extends Stack {
     const role = new iam.Role(this, "HandlerRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    logGroup.grantWrite(role);
+    logGroup.grants.write(role);
     // Only what the repository calls. `table.grantReadWriteData(role)` would
     // also allow Scan and the batch operations.
     role.addToPolicy(

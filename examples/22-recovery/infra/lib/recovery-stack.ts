@@ -86,7 +86,7 @@ export class RecoveryStack extends Stack {
     const role = new iam.Role(this, "AuditRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    logGroup.grantWrite(role);
+    logGroup.grants.write(role);
     // Reads everything, changes nothing. Repairs run from a laptop, under a person's credentials.
     role.addToPolicy(
       new iam.PolicyStatement({ actions: ["dynamodb:Scan"], resources: [active.tableArn] }),

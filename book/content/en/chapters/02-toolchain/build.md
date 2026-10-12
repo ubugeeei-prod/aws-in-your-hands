@@ -40,6 +40,8 @@ vp run check:all
 
 `check:all` runs format, lint, type checking, tests, synth for every CDK app, and the book build and link check. It does not touch AWS, and it does not include drift detection.
 
+On top of Oxlint's built-in rules, the lint step runs [awscdk-lint](https://awscdk-lint.dev/), a linter for CDK code made by ren-yamanashi, a colleague of the author. It points out things CDK accepts without complaint, such as a construct ID assembled from a variable, or `scope` passed where `this` was meant. The book applies its published recommended rules, unchanged, to every CDK app. The setting is under `lint` in `vite.config.ts`.
+
 Type checking uses `vp run typecheck`, not `vp check`. The task only runs `tsc` once per project. While this book was being written, this task failed in a way that was hard to explain. On unchanged sources, a type error that mistook an `aws-cdk-lib` import for a different module appeared in 2 runs out of 5 on identical input. The cause was pnpm and TypeScript 7 together. pnpm places files with identical content as hard links to one underlying file. `aws-cdk-lib` has 3,501 `index.d.ts` files that contain nothing but `export * from './lib';`, and all of them pointed at the same inode. TypeScript 7 tells files apart by inode, so it could no longer distinguish them. After `packageImportMethod: clone-or-copy` in `pnpm-workspace.yaml` made pnpm copy instead of hard-link, the error stopped appearing. A check that fails now and then tends to be left alone because a rerun passes, but there is usually a cause somewhere.
 
 ## What types protect, and what they don't

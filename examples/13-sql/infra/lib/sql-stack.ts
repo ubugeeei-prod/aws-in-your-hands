@@ -49,7 +49,7 @@ export class SqlStack extends Stack {
     const role = new iam.Role(this, "HandlerRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    logGroup.grantWrite(role);
+    logGroup.grants.write(role);
     // May open a connection as a custom database role, on this one cluster.
     // Not dsql:DbConnectAdmin: the function never becomes `admin`. What it may
     // do once connected is decided inside the database, by GRANT.

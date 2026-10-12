@@ -1,7 +1,13 @@
 {
   "recordedAt": "2026-10-11",
-  "verifiedPlatforms": ["aarch64-darwin (macOS 26, Darwin 25.6.0)"],
-  "unverifiedPlatforms": ["x86_64-darwin", "aarch64-linux", "x86_64-linux"],
+  "verifiedPlatforms": [
+    "aarch64-darwin (macOS 26, Darwin 25.6.0)"
+  ],
+  "unverifiedPlatforms": [
+    "x86_64-darwin",
+    "aarch64-linux",
+    "x86_64-linux"
+  ],
   "tools": [
     {
       "name": "Nix",
@@ -146,6 +152,12 @@
       "version": "2.6.0 and 1.3.0",
       "providedBy": "pnpm",
       "pinnedIn": "examples/16-long-jobs/package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "awscdk-lint for Oxlint (oxlint-plugin-awscdk), by ren-yamanashi",
+      "version": "1.0.3",
+      "providedBy": "pnpm",
+      "pinnedIn": "package.json, pnpm-lock.yaml"
     }
   ]
 }

@@ -1,3 +1,4 @@
+import awscdk from "oxlint-plugin-awscdk";
 import { defineConfig } from "vite-plus";
 
 // Local tasks touch only this checkout, and a few are cached. `live` tasks read
@@ -945,7 +946,12 @@ export default defineConfig({
     // Types are checked by `vp run typecheck` (tsc per project) and by Vize for .vue files.
     options: { typeAware: false, typeCheck: false },
     plugins: ["typescript", "import", "unicorn", "oxc"],
+    // awscdk-lint by ren-yamanashi (https://awscdk-lint.dev/): the mistakes CDK lets you make
+    // without complaint, such as a construct ID built from a variable or `scope` passed where
+    // `this` was meant. Its recommended set, as published.
+    jsPlugins: awscdk.configs.recommended.jsPlugins,
     rules: {
+      ...awscdk.configs.recommended.rules,
       curly: "warn",
       eqeqeq: "warn",
       "object-shorthand": "warn",
@@ -965,6 +971,16 @@ export default defineConfig({
       "unicorn/prefer-string-replace-all": "warn",
       "unicorn/no-lonely-if": "warn",
     },
+    // The CDK rules ask the type checker about each `new`, and a .vue file is not in any
+    // TypeScript project it can ask. No CDK code lives in one.
+    overrides: [
+      {
+        files: ["**/*.vue"],
+        rules: Object.fromEntries(
+          Object.keys(awscdk.configs.recommended.rules).map((rule) => [rule, "off"]),
+        ),
+      },
+    ],
   },
   fmt: {
     // The book shows code in a column about this wide; longer lines would scroll sideways.

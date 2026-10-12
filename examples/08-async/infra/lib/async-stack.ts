@@ -124,7 +124,7 @@ export class AsyncStack extends UploadsStack {
     const workerRole = new iam.Role(this, "WorkerRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    workerLogs.grantWrite(workerRole);
+    workerLogs.grants.write(workerRole);
     workerRole.addToPolicy(
       // Lambda polls the queue with the function's own role.
       new iam.PolicyStatement({
@@ -188,7 +188,7 @@ export class AsyncStack extends UploadsStack {
     const housekeepingRole = new iam.Role(this, "HousekeepingRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    housekeepingLogs.grantWrite(housekeepingRole);
+    housekeepingLogs.grants.write(housekeepingRole);
     housekeepingRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ["s3:DeleteObject", "s3:DeleteObjectTagging"],

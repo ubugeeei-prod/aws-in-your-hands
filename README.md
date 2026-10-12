@@ -43,7 +43,7 @@ Everything runs as `vp run <task>` from the repository root. All tasks are defin
 | 目的 / Purpose | タスク / Task | AWS |
 | --- | --- | --- |
 | 全ローカル検査 / all local checks | `check:all` | 触らない / none |
-| format・lint / format, lint | `check` | none |
+| format・lint（CDK のコードには [awscdk-lint](https://awscdk-lint.dev/)、ren-yamanashi さん作） / format, lint (CDK code with [awscdk-lint](https://awscdk-lint.dev/) by ren-yamanashi) | `check` | none |
 | 型検査 / type checks | `typecheck`, `typecheck:vue` (Vize) | none |
 | Vue の lint / Vue lint | `lint:vue` (Vize) | none |
 | テスト / tests | `test:unit` | none |

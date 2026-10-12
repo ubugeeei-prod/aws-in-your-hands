@@ -26,7 +26,7 @@ export type MonitoringProps = {
 export const METRIC_NAMESPACE = "AihObservability";
 
 export class Monitoring extends Construct {
-  readonly topic: sns.Topic;
+  readonly topic: sns.ITopic;
   readonly dashboard: cloudwatch.Dashboard;
 
   constructor(scope: Construct, id: string, props: MonitoringProps) {
@@ -35,23 +35,24 @@ export class Monitoring extends Construct {
     const minute = Duration.minutes(1);
 
     // #region topic
-    this.topic = new sns.Topic(this, "Alarms", {
+    const topic = new sns.Topic(this, "Alarms", {
       displayName: "AWS in Your Hands: notes API alarms",
       // Refuses a publish that arrives over plain HTTP.
       enforceSSL: true,
     });
+    this.topic = topic;
     // Any topic policy replaces the default one, so the alarms' right to publish is spelled out.
-    this.topic.addToResourcePolicy(
+    topic.addToResourcePolicy(
       new iam.PolicyStatement({
         sid: "AlarmsOfThisAccount",
         actions: ["sns:Publish"],
         principals: [new iam.ServicePrincipal("cloudwatch.amazonaws.com")],
-        resources: [this.topic.topicArn],
+        resources: [topic.topicArn],
         conditions: { StringEquals: { "aws:SourceAccount": Stack.of(this).account } },
       }),
     );
     if (props.alarmEmail !== undefined) {
-      this.topic.addSubscription(new subscriptions.EmailSubscription(props.alarmEmail));
+      topic.addSubscription(new subscriptions.EmailSubscription(props.alarmEmail));
     }
     // #endregion topic
 
@@ -95,9 +96,9 @@ export class Monitoring extends Construct {
 
     // #region actions
     for (const alarm of [errorRateAlarm, latencyAlarm]) {
-      alarm.addAlarmAction(new cwActions.SnsAction(this.topic));
+      alarm.addAlarmAction(new cwActions.SnsAction(topic));
       // The recovery is news too: it says when the incident ended.
-      alarm.addOkAction(new cwActions.SnsAction(this.topic));
+      alarm.addOkAction(new cwActions.SnsAction(topic));
     }
     // #endregion actions
 

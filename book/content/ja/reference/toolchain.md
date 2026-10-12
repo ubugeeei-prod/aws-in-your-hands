@@ -35,6 +35,7 @@ generated: true
 | Nitro (nitropack) and h3 | 2.13.4 and 1.15.11 | pnpm | `examples/09-ssr/package.json, pnpm-lock.yaml` |
 | Vize Nuxt module (@vizejs/nuxt) | 0.443.0 | pnpm | `examples/09-ssr/package.json, pnpm-lock.yaml` |
 | AWS Durable Execution SDK for JavaScript (@aws/durable-execution-sdk-js, -testing) | 2.6.0 and 1.3.0 | pnpm | `examples/16-long-jobs/package.json, pnpm-lock.yaml` |
+| awscdk-lint for Oxlint (oxlint-plugin-awscdk), by ren-yamanashi | 1.0.3 | pnpm | `package.json, pnpm-lock.yaml` |
 
 - 検証済みの OS/CPU: aarch64-darwin (macOS 26, Darwin 25.6.0)
 - Nix 式はあるが未検証の OS/CPU: x86_64-darwin, aarch64-linux, x86_64-linux

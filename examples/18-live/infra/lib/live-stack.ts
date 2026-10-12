@@ -53,7 +53,7 @@ export class LiveStack extends Stack {
     const role = new iam.Role(this, "EventHandlerRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    logGroup.grantWrite(role);
+    logGroup.grants.write(role);
 
     const onEvent = new nodejs.NodejsFunction(this, "EventHandler", {
       entry: fileURLToPath(new URL("../../src/handler.ts", import.meta.url)),

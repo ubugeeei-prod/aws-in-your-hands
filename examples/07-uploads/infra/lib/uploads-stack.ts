@@ -157,7 +157,7 @@ export class UploadsStack extends Stack {
     const role = new iam.Role(this, "HandlerRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    logGroup.grantWrite(role);
+    logGroup.grants.write(role);
     role.addToPolicy(
       new iam.PolicyStatement({
         actions: [

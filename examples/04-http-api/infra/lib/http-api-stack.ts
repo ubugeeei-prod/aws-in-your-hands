@@ -34,7 +34,7 @@ export class HttpApiStack extends Stack {
     const role = new iam.Role(this, "HandlerRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    logGroup.grantWrite(role);
+    logGroup.grants.write(role);
     // #endregion role
 
     // #region function

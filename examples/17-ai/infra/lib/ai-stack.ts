@@ -59,7 +59,7 @@ export class AiStack extends Stack {
     const role = new iam.Role(this, "HandlerRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    logGroup.grantWrite(role);
+    logGroup.grants.write(role);
 
     const arns = modelArns(props.profileId, {
       partition: this.partition,

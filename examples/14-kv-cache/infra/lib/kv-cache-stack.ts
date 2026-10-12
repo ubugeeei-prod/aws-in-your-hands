@@ -60,7 +60,7 @@ export class KvCacheStack extends Stack {
     const role = new iam.Role(this, "HandlerRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    logGroup.grantWrite(role);
+    logGroup.grants.write(role);
     // The four calls the stores make. No Query, no Scan.
     role.addToPolicy(
       new iam.PolicyStatement({

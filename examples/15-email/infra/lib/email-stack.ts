@@ -94,7 +94,7 @@ export class EmailStack extends Stack {
     const apiRole = new iam.Role(this, "ApiRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    apiLogs.grantWrite(apiRole);
+    apiLogs.grants.write(apiRole);
     apiRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem"],
@@ -124,7 +124,7 @@ export class EmailStack extends Stack {
     const eventsRole = new iam.Role(this, "EventsRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
-    eventLogs.grantWrite(eventsRole);
+    eventLogs.grants.write(eventsRole);
     eventsRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ["dynamodb:PutItem", "dynamodb:UpdateItem"],

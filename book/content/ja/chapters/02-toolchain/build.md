@@ -40,6 +40,8 @@ vp run check:all
 
 `check:all` は、format、lint、型検査、テスト、すべての CDK アプリの synth、本のビルドとリンク検査を実行します。AWS には触らず、ドリフトの検出も含みません。
 
+lint には、Oxlint の組み込みのルールに加えて、[awscdk-lint](https://awscdk-lint.dev/) を入れてあります。筆者の同僚の ren-yamanashi さんが作っている、CDK のコードのための lint です。コンストラクトの ID を変数から組み立てている、`this` を渡すべきところに `scope` を渡している、といった、CDK が黙って受け入れてしまう書き方を指摘してくれます。この本では、公開されている recommended のルールをそのまま、すべての CDK アプリにかけています。設定は `vite.config.ts` の `lint` にあります。
+
 型検査には、`vp check` ではなく `vp run typecheck` を使います。プロジェクトごとに `tsc` を実行するだけのタスクです。このタスクでは、執筆中に原因のわかりにくい失敗がありました。変更していないソースに対して、`aws-cdk-lib` の import を別のモジュールと取り違える型エラーが、同じ入力で 5 回実行して 2 回出たのです。原因は pnpm と TypeScript 7 の組み合わせでした。pnpm は、中身が同じファイルを 1 つの実体へのハードリンクとして配置します。`aws-cdk-lib` には `export * from './lib';` とだけ書かれた `index.d.ts` が 3,501 個あり、そのすべてが同じ inode を指していました。TypeScript 7 はファイルを inode で見分けるので、これらを区別できなくなっていました。`pnpm-workspace.yaml` に `packageImportMethod: clone-or-copy` を指定し、ハードリンクをやめて複製にしたところ、エラーは出なくなりました。ときどき失敗する検査は、もう一度実行すれば通るので放置されがちですが、原因はたいていどこかにあります。
 
 ## 型が守るもの、守らないもの
