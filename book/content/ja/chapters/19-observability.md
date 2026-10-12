@@ -1,9 +1,9 @@
 ---
-title: "19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics"
+title: "19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics"
 revision: 1
 ---
 
-# 19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics
+# 19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics
 
 04章から、API は 1 リクエストにつき 1 行の JSON をログに書いて、応答に `x-request-id` を付けてきました。でも、誰かがログを見にいかないかぎり、何も起きません。
 
@@ -17,25 +17,40 @@ revision: 1
 
 <!-- section: 19.overview -->
 
-```text
-Browser / curl
-  |  HTTPS  (traceparent header, optional)
-  v
-API Gateway HTTP API  --metrics-->  CloudWatch Metrics: Count, 4xx, 5xx, Latency
-  |                                        |
-  v                                        v
-Lambda (Node.js 24, active tracing)     Alarms: 5xx rate, p95 latency
-  |  Hono app from chapter 05              |  ALARM / OK
-  |  + span per request                    v
-  |  + span per table call               SNS topic --> email
-  |  + traceId on every log line
-  |
-  +--logs---> CloudWatch Logs (JSON events, kept 7 days)
-  |             |-- Logs Insights queries (by requestId, by traceId, errors, slow)
-  |             `-- metric filter: status = 409 --> NoteConflicts metric
-  +--traces-> X-Ray (sampled: first request each second + 5%)
-  v
-DynamoDB table  --metrics-->  dashboard (causes: throttles, server errors)
+```figure
+caption: リクエストの通り道から metric が出て、alarm は SNS を通して email で知らせる
+node client: Browser / curl
+node api: API Gateway HTTP API
+node fn: Lambda | 05章で作った Hono app
+node metrics: CloudWatch Metrics | Count, 4xx, 5xx, Latency
+node table: DynamoDB table
+node alarms: Alarms | 5xx rate, p95 latency
+node dashboard: dashboard | 原因: throttles, server errors
+node sns: SNS topic
+node email: email
+edge client -> api: HTTPS（traceparent header、任意）
+edge api -> fn
+edge api --> metrics: metrics
+edge fn -> table
+edge metrics -> alarms
+edge table --> dashboard: metrics
+edge alarms -> sns: ALARM / OK
+edge sns -> email
+```
+
+```figure
+caption: Lambda は log を CloudWatch Logs へ、trace を X-Ray へ送る
+node fn: Lambda | Node.js 24, active tracing
+node logs: CloudWatch Logs | JSON の event、7 日保存
+node xray: X-Ray | sampling: 毎秒最初の 1 件 + 5%
+node insights: Logs Insights の query | requestId, traceId, errors, slow
+node filter: metric filter | status = 409
+node conflicts: NoteConflicts metric
+edge fn --> logs: logs: どの行にも traceId
+edge fn --> xray: traces: request ごと、table 呼び出しごとに span
+edge logs -> insights
+edge logs -> filter
+edge filter -> conflicts
 ```
 
 道具は 3 種類で、答える問いが違います。
@@ -332,17 +347,24 @@ trace ID を次の処理に渡す方法は、W3C の Trace Context という仕�
 
 <<< @/examples/19-observability/src/telemetry.ts{propagation}
 
-```text
-Browser                    API (Lambda)                 Queue              Worker (Lambda)
-  | traceparent:             |                            |                   |
-  |  00-<trace>-<a>-01       |                            |                   |
-  |------------------------->| span b, parent a           |                   |
-  |                          | log: traceId=<trace>       |                   |
-  |                          |-- message + trace header ->|                   |
-  |                          |   (traceparent / AWSTraceHeader)               |
-  |                          |                            |-- deliver ------->| span c, parent b
-  |                          |                            |-- deliver again ->| span c', parent b
-  |                          |                            |                   | log: traceId=<trace>
+```figure
+caption: trace は browser から worker まで運ばれ、同じ message が 2 回届くと、同じ親を持つ span が 2 つできる
+type: sequence
+actor browser: Browser
+actor api: API | Lambda
+actor queue: Queue
+actor worker: Worker | Lambda
+note browser: traceparent
+step browser -> api: 00-<trace>-<a>-01
+note api: span b, parent a
+note api: log: traceId=<trace>
+step api -> queue: message + trace header
+note queue: traceparent / AWSTraceHeader
+step queue -> worker: deliver
+note worker: span c, parent b
+step queue -> worker: deliver again
+note worker: span c', parent b
+note worker: log: traceId=<trace>
 ```
 
 ブラウザが `traceparent` を付けて呼ぶと、API はその trace を引き継ぎます。API が queue にメッセージを入れるとき、同じ情報をメッセージに載せます。worker はそこから続きを始めます。全員のログに同じ `traceId` が残るので、1 つの query で全部の行が出てきます。

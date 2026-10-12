@@ -1,9 +1,9 @@
 ---
-title: "10 edge を理解する: CloudFront Functions、KeyValueStore、Lambda@Edge"
+title: "10 Edge: CloudFront Functions、KeyValueStore、Lambda@Edge"
 revision: 1
 ---
 
-# 10 edge を理解する: CloudFront Functions、KeyValueStore、Lambda@Edge
+# 10 Edge: CloudFront Functions、KeyValueStore、Lambda@Edge
 
 [03章](/ja/chapters/03-spa.md)で、十数行の関数を CloudFront に付けましたよね。path に `.` が無ければ `index.html` に書き換える、あれです。この章では、あの「edge で動く小さなコード」をもう少し働かせます。
 
@@ -17,29 +17,34 @@ revision: 1
 
 <!-- section: 10.architecture -->
 
-```text
-Reader
-  |  HTTPS
-  v
-CloudFront edge location
-  |  viewer-request: CloudFront Function "edge-router" (runtime 2.0)
-  |     reads KeyValueStore: flag:maintenance, redirect:<path>, flag:new-home
-  |     -> 503 (maintenance) or 301/302 (redirect): answered here, nothing below runs
-  |     -> otherwise: rewrites the URI and passes the request on
-  v
-CloudFront cache --(hit)--> response
-  |  miss
-  |  origin-request: Lambda@Edge "body-digest" (optional, only on /digest)
-  v
-S3 bucket (private, ap-northeast-1)
+```figure
+caption: 読者のリクエストは cache より先に CloudFront Function を通り、関数が KeyValueStore を読んで、その場で応答するか先へ流すかを決める
+node reader: Reader
+node fn: CloudFront Function "edge-router" | viewer-request, runtime 2.0
+node cache: CloudFront cache
+node kvs: KeyValueStore
+node digest: Lambda@Edge "body-digest" | origin-request, 任意, /digest だけ
+node resp: response
+node s3: S3 bucket | private, ap-northeast-1
+edge reader -> fn: HTTPS
+edge fn --> reader: 503 か 301/302: ここで応答、先は動かない
+edge fn -> cache: それ以外: URI を書き換えて渡す
+edge fn -> kvs: 読むだけ
+edge cache -> digest: miss
+edge cache --> resp: hit
+edge digest -> s3
+group edge: CloudFront edge location = fn, cache, kvs
+mark fn
+```
 
-Operator
-  |  edge-data.json -> vp run edge:kvs:sync
-  v
-KeyValueStore API (global endpoint, SigV4A, If-Match: ETag)
-  |  propagation to edge locations: not immediate
-  v
-CloudFront KeyValueStore (read-only from the function)
+```figure
+caption: 値を書き換える道は関数の外にあり、書いた値が edge location に届くまでには遅れがある
+node op: Operator | edge-data.json
+node api: KeyValueStore API | global endpoint, SigV4A, If-Match: ETag
+node kvs: CloudFront KeyValueStore | flag:maintenance, redirect:<path>, flag:new-home
+edge op -> api: vp run edge:kvs:sync
+edge api --> kvs: edge location への伝播: すぐではない
+mark kvs
 ```
 
 上半分は、読者のリクエストが通る道です。CloudFront はリクエストを受け取ると、cache を調べる前に関数を呼びます。このタイミングを viewer request と言います。関数は KeyValueStore（以下 KVS）を読んで、その場で応答を返すか、URL を書き換えて先へ流すかを決めます。
@@ -215,11 +220,21 @@ KVS は名前のとおりキーと値の入れ物ですが、DynamoDB（[05章](
 
 そして、いちばん大事な点。書いた値は、すぐには読めません。
 
-```text
-time  operator                    edge location A      edge location B
-t0    UpdateKeys succeeds         maintenance = off    maintenance = off
-t1                                maintenance = on     maintenance = off   <- two readers, two answers
-t2                                maintenance = on     maintenance = on
+```figure
+caption: UpdateKeys が成功したあと、値は edge location ごとに別々の時刻に届き、t1 では 2 人の読者が別々の答えを受け取る
+type: sequence
+actor op: Operator
+actor a: edge location A
+actor b: edge location B
+step op -> op: t0 UpdateKeys が成功
+note a: t0 maintenance = off
+note b: t0 maintenance = off
+step op --> a: t1 届く
+note a: t1 maintenance = on
+note b: t1 maintenance = off
+step op --> b: t2 届く
+note a: t2 maintenance = on
+note b: t2 maintenance = on
 ```
 
 更新の API が成功を返した t0 の時点では、どの edge も古い値を読んでいるかもしれません。t1 では、東京の読者には 503 が、別の場所の読者には普通のページが返る、ということが起こりえます。t2 でようやく揃います。

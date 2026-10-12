@@ -1,9 +1,9 @@
 ---
-title: "06 ログインを足す: Cognito と認可"
+title: "06 Auth: Cognito と認可"
 revision: 2
 ---
 
-# 06 ログインを足す: Cognito と認可
+# 06 Auth: Cognito と認可
 
 SPA は公開できて、ノートは table に残るようになりました。足りないのは「誰のノートか」です。
 
@@ -17,23 +17,29 @@ SPA は公開できて、ノートは table に残るようになりました。
 
 <!-- section: 06.architecture -->
 
-```text
-Browser (SPA from CloudFront + S3)
-  |  1. redirect to sign in                      2. password typed here, not in the SPA
-  +-------------------------------------------> Cognito managed login (user pool domain)
-  |  3. redirect back with ?code=...&state=...
-  |  4. POST /oauth2/token  (code + PKCE code_verifier)  ->  access token
-  |
-  |  5. GET /notes   Authorization: Bearer <access token>
-  v
-API Gateway HTTP API
-  |  JWT authorizer: signature, issuer, expiry, client, scope
-  |  fails -> 401/403 here; Lambda is not invoked
-  v
-Lambda function
-  |  reads the verified claims from the event; owner = claims.sub
-  v
-DynamoDB table   pk = OWNER#<sub>   sk = NOTE#<note id>
+```figure
+caption: SPA は Cognito の managed login でサインインし、code を access token に交換する
+type: sequence
+actor browser: Browser | CloudFront + S3 から配る SPA
+actor cognito: Cognito managed login | user pool domain
+step browser -> cognito: 1. サインインへ redirect
+note cognito: 2. パスワードはここで入力する。SPA ではない
+step cognito --> browser: 3. ?code=...&state=... を付けて redirect で戻す
+step browser -> cognito: 4. POST /oauth2/token (code + PKCE code_verifier)
+step cognito --> browser: access token
+```
+
+```figure
+caption: API Gateway の JWT authorizer が access token を検証し、通ったリクエストだけが Lambda と table に届く
+node browser: Browser | CloudFront + S3 から配る SPA
+node api: API Gateway HTTP API | JWT authorizer: signature, issuer, expiry, client, scope
+node fn: Lambda function | owner = claims.sub
+node table: DynamoDB table | pk = OWNER#<sub>, sk = NOTE#<note id>
+edge browser -> api: 5. GET /notes + access token
+edge api -> fn: 検証済みの claims を event で渡す
+edge fn -> table
+edge api -x browser: 失敗は 401/403。Lambda は呼ばれない
+mark api
 ```
 
 新しい登場人物は 3 つです。
@@ -321,12 +327,22 @@ access token は、発行された後は誰にも問い合わせずに検証で�
 
 さて、利用者を無効にしたら、何が起きるでしょう。
 
-```text
-time   event                                            access token (exp = t0 + 1h)
-t0     Alice signs in                                   issued
-t0+10m admin disables Alice / revokes her tokens        Cognito's own APIs now refuse it
-t0+11m Alice's browser calls GET /notes                 API Gateway: signature ok, not expired -> 200
-t0+1h  token expires                                    API Gateway -> 401
+```figure
+caption: 利用者を無効にしても、発行済みの access token は期限が切れるまで API Gateway を通る
+type: sequence
+actor cognito: Cognito
+actor alice: Alice のブラウザ
+actor api: API Gateway | JWT authorizer
+step alice -> cognito: t0 サインイン
+step cognito --> alice: access token (exp = t0 + 1h)
+note cognito: t0+10m 管理者が Alice を無効にする /
+note cognito: token を失効させる
+note cognito: Cognito 自身の API はもう拒否する
+step alice -> api: t0+11m GET /notes
+step api --> alice: 200（署名は正しい、期限内）
+note alice: t0+1h token の期限が切れる
+step alice -> api: GET /notes
+step api --x alice: 401
 ```
 
 t0+11m を見てください。通っています。

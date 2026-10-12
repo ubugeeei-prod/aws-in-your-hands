@@ -1,9 +1,9 @@
 ---
-title: 03 Publish a SPA: A Private S3 Origin and CloudFront
+title: 03 Static Hosting: A Private S3 Origin and CloudFront
 sourceRevision: 2
 ---
 
-# 03 Publish a SPA: A Private S3 Origin and CloudFront
+# 03 Static Hosting: A Private S3 Origin and CloudFront
 
 The tools are in place. The first thing you'll publish is a notes app that runs entirely in the browser.
 
@@ -15,21 +15,32 @@ This chapter builds on [chapter 02](/en/chapters/02-toolchain.md). The code is i
 
 <!-- section: 03.architecture -->
 
-```text
-Browser
-  |  HTTPS
-  v
-CloudFront distribution (edge locations)
-  |  viewer-request: CloudFront Function "spa-fallback"
-  |    /notes/abc        -> /index.html
-  |    /assets/app-1a.js -> unchanged
-  |  cache
-  |  SigV4-signed request (origin access control)
-  v
-S3 bucket (ap-northeast-1, Block Public Access on)
-  index.html
-  assets/index-<hash>.js
-  assets/index-<hash>.css
+```figure
+caption: The browser talks only to CloudFront, and CloudFront reads the files from the S3 bucket with a signed request.
+node browser: Browser
+node fn: CloudFront Function | viewer-request, "spa-fallback"
+node cache: cache
+node index: index.html
+node js: assets/index-<hash>.js
+node css: assets/index-<hash>.css
+edge browser -> fn: HTTPS
+edge fn -> cache
+edge cache -> index: SigV4 (origin access control)
+edge cache -> js
+edge cache -> css
+group cf: CloudFront distribution (edge locations) = fn, cache
+group s3: S3 bucket (ap-northeast-1, Block Public Access on) = index, js, css
+```
+
+```figure
+caption: The spa-fallback function rewrites /notes/abc to /index.html and leaves /assets/app-1a.js unchanged.
+direction: right
+node screen: /notes/abc
+node file: /assets/app-1a.js
+node rewritten: /index.html
+node same: unchanged
+edge screen -> rewritten: spa-fallback
+edge file -> same: spa-fallback
 ```
 
 Let's sort out what runs where before going further.

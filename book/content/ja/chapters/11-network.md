@@ -1,9 +1,9 @@
 ---
-title: "11 本当に必要なネットワーク: VPC、subnet、NAT、endpoint"
+title: "11 Network: VPC、subnet、NAT、endpoint"
 revision: 1
 ---
 
-# 11 本当に必要なネットワーク: VPC、subnet、NAT、endpoint
+# 11 Network: VPC、subnet、NAT、endpoint
 
 ここまでの章は、ネットワークを 1 行も設計せずに来ました。この章で初めて、自分のネットワークを作ります。
 
@@ -36,21 +36,23 @@ VPC そのものに料金はありません。かかるのは、中に置く一�
 
 <!-- section: 11.architecture -->
 
-```text
-Region ap-northeast-1
-└─ VPC AihNetwork  10.20.0.0/16
-   ├─ internet gateway                                    (no charge)
-   ├─ zone ap-northeast-1a
-   │   ├─ Public1   10.20.0.0/20    route table: 0.0.0.0/0 -> internet gateway
-   │   └─ Private1  10.20.128.0/20  route table: no route out of the VPC
-   ├─ zone ap-northeast-1c
-   │   ├─ Public2   10.20.16.0/20   route table: 0.0.0.0/0 -> internet gateway
-   │   └─ Private2  10.20.144.0/20  route table: no route out of the VPC
-   ├─ gateway endpoints: S3, DynamoDB                     (no charge)
-   │     a route in the two private route tables
-   └─ not created unless asked for                        (billed by the hour)
-         NAT gateway + Elastic IP     -c egress=nat | nat-per-az
-         interface endpoints          -c interfaceEndpoints=ecr.api,ecr.dkr,logs
+```figure
+caption: ap-northeast-1 の VPC AihNetwork は、ap-northeast-1a と ap-northeast-1c の 2 つの zone に、public と private の subnet を 1 つずつ持つ
+direction: right
+node pub1: Public1 | zone 1a, 10.20.0.0/20
+node pub2: Public2 | zone 1c, 10.20.16.0/20
+node priv1: Private1 | zone 1a, 10.20.128.0/20, 外への経路なし
+node priv2: Private2 | zone 1c, 10.20.144.0/20, 外への経路なし
+node nat: NAT gateway + Elastic IP | -c egress=nat または nat-per-az
+node iface: interface endpoints | -c interfaceEndpoints=ecr.api,ecr.dkr,logs
+node igw: internet gateway | 料金なし
+node gwep: gateway endpoints | S3, DynamoDB, 料金なし
+edge pub1 -> igw: 0.0.0.0/0
+edge pub2 -> igw: 0.0.0.0/0
+edge priv1 -> gwep: route table に route
+edge priv2 -> gwep
+group vpc: VPC AihNetwork 10.20.0.0/16 = pub1, pub2, priv1, priv2, nat, iface, igw, gwep
+group opt: 頼まなければ作られない (時間で課金) = nat, iface
 ```
 
 言葉を 3 つだけ。

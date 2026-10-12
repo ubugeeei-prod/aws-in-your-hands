@@ -1,9 +1,9 @@
 ---
-title: "19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics"
+title: "19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics"
 sourceRevision: 1
 ---
 
-# 19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics
+# 19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics
 
 Since chapter 04, the API has written one JSON line per request and put an `x-request-id` on every response. But nothing happens unless somebody goes and reads those logs.
 
@@ -17,25 +17,40 @@ The prerequisite is [chapter 04](/en/chapters/04-http-api.md). The code is in `e
 
 <!-- section: 19.overview -->
 
-```text
-Browser / curl
-  |  HTTPS  (traceparent header, optional)
-  v
-API Gateway HTTP API  --metrics-->  CloudWatch Metrics: Count, 4xx, 5xx, Latency
-  |                                        |
-  v                                        v
-Lambda (Node.js 24, active tracing)     Alarms: 5xx rate, p95 latency
-  |  Hono app from chapter 05              |  ALARM / OK
-  |  + span per request                    v
-  |  + span per table call               SNS topic --> email
-  |  + traceId on every log line
-  |
-  +--logs---> CloudWatch Logs (JSON events, kept 7 days)
-  |             |-- Logs Insights queries (by requestId, by traceId, errors, slow)
-  |             `-- metric filter: status = 409 --> NoteConflicts metric
-  +--traces-> X-Ray (sampled: first request each second + 5%)
-  v
-DynamoDB table  --metrics-->  dashboard (causes: throttles, server errors)
+```figure
+caption: Metrics come off the path a request takes, and an alarm tells you by email through SNS
+node client: Browser / curl
+node api: API Gateway HTTP API
+node fn: Lambda | Hono app from chapter 05
+node metrics: CloudWatch Metrics | Count, 4xx, 5xx, Latency
+node table: DynamoDB table
+node alarms: Alarms | 5xx rate, p95 latency
+node dashboard: dashboard | causes: throttles, server errors
+node sns: SNS topic
+node email: email
+edge client -> api: HTTPS (traceparent header, optional)
+edge api -> fn
+edge api --> metrics: metrics
+edge fn -> table
+edge metrics -> alarms
+edge table --> dashboard: metrics
+edge alarms -> sns: ALARM / OK
+edge sns -> email
+```
+
+```figure
+caption: Lambda sends logs to CloudWatch Logs and traces to X-Ray
+node fn: Lambda | Node.js 24, active tracing
+node logs: CloudWatch Logs | JSON events, kept 7 days
+node xray: X-Ray | sampled: first request each second + 5%
+node insights: Logs Insights queries | by requestId, by traceId, errors, slow
+node filter: metric filter | status = 409
+node conflicts: NoteConflicts metric
+edge fn --> logs: logs: traceId on every log line
+edge fn --> xray: traces: span per request, span per table call
+edge logs -> insights
+edge logs -> filter
+edge filter -> conflicts
 ```
 
 There are three kinds of tool, and each answers a different question.
@@ -332,17 +347,24 @@ Only the tests and `obs:smoke` use this chapter's own parsing of `traceparent`. 
 
 <<< @/examples/19-observability/src/telemetry.ts{propagation}
 
-```text
-Browser                    API (Lambda)                 Queue              Worker (Lambda)
-  | traceparent:             |                            |                   |
-  |  00-<trace>-<a>-01       |                            |                   |
-  |------------------------->| span b, parent a           |                   |
-  |                          | log: traceId=<trace>       |                   |
-  |                          |-- message + trace header ->|                   |
-  |                          |   (traceparent / AWSTraceHeader)               |
-  |                          |                            |-- deliver ------->| span c, parent b
-  |                          |                            |-- deliver again ->| span c', parent b
-  |                          |                            |                   | log: traceId=<trace>
+```figure
+caption: The trace is carried from the browser to the worker, and a message delivered twice makes two spans with the same parent
+type: sequence
+actor browser: Browser
+actor api: API | Lambda
+actor queue: Queue
+actor worker: Worker | Lambda
+note browser: traceparent
+step browser -> api: 00-<trace>-<a>-01
+note api: span b, parent a
+note api: log: traceId=<trace>
+step api -> queue: message + trace header
+note queue: traceparent / AWSTraceHeader
+step queue -> worker: deliver
+note worker: span c, parent b
+step queue -> worker: deliver again
+note worker: span c', parent b
+note worker: log: traceId=<trace>
 ```
 
 When the browser calls with a `traceparent`, the API continues that trace. When the API puts a message on a queue, it puts the same information on the message. The worker picks up from there. Everyone's log has the same `traceId`, so one query returns all the lines.

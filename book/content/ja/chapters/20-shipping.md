@@ -1,9 +1,9 @@
 ---
-title: "20 変更を届ける: CI/CD、OIDC、環境、preview、rollback、drift"
+title: "20 CI/CD: OIDC、環境、preview、rollback、drift"
 revision: 1
 ---
 
-# 20 変更を届ける: CI/CD、OIDC、環境、preview、rollback、drift
+# 20 CI/CD: OIDC、環境、preview、rollback、drift
 
 ここまでの章は、あなたの端末から、あなたの認証情報で、cdkd を使ってデプロイしてきました。学ぶには速くて良いやり方です。でも、「本番向けの経路は 20章で」「人の認証情報でデプロイしない話は 20章で」と、何度も先送りにしてきましたよね。
 
@@ -17,19 +17,54 @@ revision: 1
 
 <!-- section: 20.architecture -->
 
-```text
-developer laptop                 GitHub Actions                      AWS account (ap-northeast-1)
+```figure
+caption: 手元と GitHub Actions は同じ flake.lock、同じ pnpm-lock.yaml、同じ vp run タスクを使い、AWS には access key を置かずに、job ごとに OIDC token を 1 時間の認証情報と交換する
+direction: right
+node laptop: Developer laptop | check:all, ship:cfn:synth
+node gha: GitHub Actions | pr, deploy, drift, preview
+node aws: AWS account | ap-northeast-1
+edge laptop -> gha: git push
+edge gha -> aws: OIDC token
+edge aws --> gha: 1 時間の認証情報
+```
 
-vp run check:all                 pr.yml      check: check:all        (no AWS)
-vp run ship:cfn:synth                        plan:  ship:cfn:diff --> PlanRole    -> cdk lookup role (read only)
-git push ----------------------> deploy.yml  check:all, status,
-                                             ship:cfn:deploy     --> DeployRole  -> cdk deploy role -> CloudFormation
-                                             ship:smoke                             cfn-exec role creates AihShipApiProd
-                                 drift.yml   ship:cfn:drift      --> DriftRole   -> DetectStackDrift (read only)
-                                 preview.yml deploy / destroy    --> PreviewRole -> AihShipApiPr<number>
+```figure
+caption: AWS に触る 4 つの workflow は、それぞれ別の IAM role を使う
+direction: right
+node pr: pr.yml | check: check:all (AWS なし)
+node deploy: deploy.yml | check:all, status, ship:smoke
+node drift: drift.yml
+node preview: preview.yml
+node plan: PlanRole
+node deployrole: DeployRole
+node driftrole: DriftRole
+node previewrole: PreviewRole
+edge pr -> plan: plan: ship:cfn:diff
+edge deploy -> deployrole: ship:cfn:deploy
+edge drift -> driftrole: ship:cfn:drift
+edge preview -> previewrole: deploy / destroy
+group gha: GitHub Actions = pr, deploy, drift, preview
+group aws: AWS account (ap-northeast-1) = plan, deployrole, driftrole, previewrole
+```
 
-same flake.lock, same pnpm-lock.yaml, same `vp run` tasks on both sides
-no AWS access key is stored anywhere: each job trades a GitHub OIDC token for one-hour credentials
+```figure
+caption: 4 つの role は、届く先がそれぞれ違い、stack を作れるのは DeployRole と PreviewRole だけ
+direction: right
+node plan: PlanRole | pr.yml
+node deployrole: DeployRole | deploy.yml
+node driftrole: DriftRole | drift.yml
+node previewrole: PreviewRole | preview.yml
+node lookup: cdk lookup role | 読むだけ
+node cdkdeploy: cdk deploy role | CloudFormation へ
+node detect: DetectStackDrift | 読むだけ
+node prstack: AihShipApiPr<number> | preview stack
+node cfn: CloudFormation | cfn-exec role が AihShipApiProd を作る
+edge plan -> lookup
+edge deployrole -> cdkdeploy
+edge driftrole -> detect
+edge previewrole -> prstack
+edge cdkdeploy -> cfn
+group aws: AWS account (ap-northeast-1) = plan, deployrole, driftrole, previewrole, lookup, cdkdeploy, detect, prstack, cfn
 ```
 
 左から右へ、3 つの場所があります。
@@ -156,16 +191,23 @@ CI から AWS に入る、いちばん素朴な方法は、IAM user のアクセ
 
 OIDC（OpenID Connect）を使うと、鍵を置かずに済みます。
 
-```text
-GitHub Actions job             GitHub OIDC issuer            AWS STS                 IAM role (trust policy)
-  | permissions: id-token: write     |                          |                           |
-  |--- request a token (aud=sts) --->|                          |                           |
-  |<-- signed JWT: iss, aud, sub ----|                          |                           |
-  |--- AssumeRoleWithWebIdentity(role ARN, JWT) --------------->|                           |
-  |                                  |                          |--- signature valid?       |
-  |                                  |                          |--- aud == sts.amazonaws.com?
-  |                                  |                          |--- sub == exactly this? ->|
-  |<-- access key, secret key, session token (valid for 1 hour) |                           |
+```figure
+caption: job は GitHub が署名した token を STS に見せ、1 時間だけ使える認証情報を受け取る
+type: sequence
+actor job: GitHub Actions job | id-token: write
+actor issuer: GitHub OIDC issuer
+actor sts: AWS STS
+actor role: IAM role | trust policy
+step job -> issuer: token を要求 (aud=sts)
+step issuer --> job: 署名つき JWT: iss, aud, sub
+step job -> sts: AssumeRoleWithWebIdentity
+note job: role ARN と JWT を渡す
+step sts -> sts: 署名は正しいか
+step sts -> sts: aud == sts.amazonaws.com?
+step sts -> role: sub はこの値と同じか
+step sts --> job: 1 時間有効な認証情報
+note job: access key, secret key
+note job: session token
 ```
 
 job は GitHub に「自分が誰か」を書いた署名つきの token を発行してもらい、それを AWS の STS に見せます。STS は署名を確かめ、role の trust policy と照らして、合っていれば 1 時間だけ使える認証情報を返します。GitHub に保存するものは、role の ARN とアカウント ID だけ。どちらも秘密ではありません。
@@ -336,14 +378,23 @@ alias は、2 つの version に重みを付けて振り分けることもでき
 
 デプロイを 1 つの出来事のように話してきましたが、実際は、何十回もの API 呼び出しの列です。その途中の、どこででも止まります。
 
-```text
-time  CloudFormation stack status              what a caller of the API gets
-t1    UPDATE_IN_PROGRESS                       old code (alias `live` -> version 7)
-t2    (new AWS::Lambda::Version 8 created)     old code
-t3    (alias `live` moved to version 8)        new code
-t4    (another resource fails to update)       new code
-t5    UPDATE_ROLLBACK_IN_PROGRESS              new code, then old code once the alias is put back
-t6    UPDATE_ROLLBACK_COMPLETE                 old code; whatever was written during t3..t5 stays written
+```figure
+caption: stack が rollback を終えるまでのあいだに、API を呼ぶ側には新しいコードが応えている時間がある
+type: sequence
+actor cfn: CloudFormation stack
+actor caller: API を呼ぶ側
+note cfn: t1: UPDATE_IN_PROGRESS
+note caller: 古いコード (alias live -> version 7)
+step cfn -> cfn: t2: AWS::Lambda::Version 8 を作る
+note caller: 古いコード
+step cfn -> cfn: t3: alias live を version 8 に移す
+note caller: 新しいコード
+step cfn -x cfn: t4: 別の resource の更新が失敗
+note caller: 新しいコード
+note cfn: t5: UPDATE_ROLLBACK_IN_PROGRESS
+note caller: 新しいコード、alias が戻ると古いコード
+note cfn: t6: UPDATE_ROLLBACK_COMPLETE
+note caller: 古いコード、t3..t5 に書かれたものは残る
 ```
 
 これは一例です（どのリソースがどの順で更新されるかは、template の依存関係で決まります）。大事なのは t3 から t5 の間。この時間、新しいコードが本番のリクエストに応えています。そのあと stack は「元に戻りました」と言いますが、その間に書かれたデータは、戻っていません。

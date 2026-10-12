@@ -1,9 +1,9 @@
 ---
-title: "14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定"
+title: "14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定"
 revision: 1
 ---
 
-# 14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定
+# 14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定
 
 Cloudflare で KV を使ってきた人が AWS に来ると、まずこう聞きます。「AWS の KV はどれ？」
 
@@ -88,14 +88,19 @@ Workers KV に慣れた人が「KV」と聞いて思い浮かべるのは、「�
 
 固定窓には、知られた弱点があります。
 
-```text
-limit = 5 per minute
-            window 1                    window 2
-|--------------------------------|--------------------------------|
-                           xxxxx  xxxxx
-                           ^ 5 requests at 0:59, 5 more at 1:01
-fixed window:   all 10 pass (each window saw only 5)
-sliding window: the second 5 are refused (the last 60 s already hold 5)
+```figure
+caption: 上限が 1 分に 5 件のとき、境目をはさんだ 10 件を固定窓はすべて通し、滑る窓は後ろの 5 件を断る
+type: sequence
+actor fixed: 固定窓
+actor req: リクエスト
+actor sliding: 滑る窓
+step req -> fixed: 0:59 に 5 件 (window 1)
+step req -> sliding: 0:59 に 5 件
+step req -> fixed: 1:01 にもう 5 件 (window 2)
+note fixed: 10 件すべて通る
+note fixed: どの window も 5 件しか見ていない
+step req -x sliding: 1:01 にもう 5 件: 断る
+note sliding: 直前の 60 秒にもう 5 件ある
 ```
 
 区間の境目をはさむと、2 秒のあいだに上限の 2 倍が通ります。テストにもそのまま書いてあります（「lets 2 x limit through in two seconds around a boundary」）。バグではなく、固定窓というのはそういうものです。
@@ -112,14 +117,21 @@ rate limit を素直に書くと、こうなります。「いまの回数を読
 
 これは、同時に 2 件来ると壊れます。
 
-```text
-limit = 1
-time  request A                 request B                 stored count
-t1    read count -> 0                                     0
-t2                              read count -> 0           0
-t3    0 < 1, write 1                                      1
-t4                              0 < 1, write 1            1
-      allowed                   allowed                   (one increment lost)
+```figure
+caption: 上限が 1 のとき、2 件が同時に「読んでから書く」と、どちらも通り、増やした 1 回ぶんが消える
+type: sequence
+actor a: request A
+actor store: 保存された回数
+actor b: request B
+note store: 0
+step a -> store: t1 回数を読む: 0
+step b -> store: t2 回数を読む: 0
+step a -> store: t3 0 < 1 なので 1 を書く
+note store: 1
+step b -> store: t4 0 < 1 なので 1 を書く
+note store: 1 (1 回ぶんが消えた)
+note a: allowed
+note b: allowed
 ```
 
 2 件とも「まだ 0 回」と読んで、2 件とも通ります。しかも保存された回数は 1 のまま。上限を破ったうえに、破った記録も残りません。
@@ -296,13 +308,25 @@ cache を持つと、元データと食い違う時間が必ず生まれます�
 
 3 つ目が面白いところです。**消しても、古い値が残ることがあります。**
 
-```text
-time  reader                          writer                       cache    source
-t1    miss; asks the source                                        (empty)  v1
-t2                                    updates the source           (empty)  v2
-t3                                    invalidates (nothing there)  (empty)  v2
-t4    receives "v1", stores it                                     v1       v2
-t5    every reader gets "v1" from the cache until the TTL passes
+```figure
+caption: 読む側が元データに聞いている最中に、書く側が更新と削除を済ませると、古い値が cache に入り、TTL が切れるまでどの reader にも返る
+type: sequence
+actor reader: reader
+actor cache: cache
+actor source: source
+actor writer: writer
+note cache: (empty)
+note source: v1
+step reader -> cache: t1 miss
+step reader -> source: t1 source に聞く
+step writer -> source: t2 source を更新する
+note source: v2
+step writer -> cache: t3 invalidate
+note cache: (empty): 消すものが無い
+step source --> reader: t4 "v1" を受け取る
+step reader -> cache: t4 "v1" を保存する
+note cache: v1 (source は v2)
+note cache: t5 TTL まで "v1" を返す
 ```
 
 読む側が元データに聞いている最中に、書く側が更新と削除を済ませてしまう。そのあとで、読む側が持っていた古い答えが cache に入ります。もう誰も消しに来ません。

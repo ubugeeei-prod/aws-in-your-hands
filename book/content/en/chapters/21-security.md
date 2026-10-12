@@ -1,9 +1,9 @@
 ---
-title: "21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations"
+title: "21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations"
 sourceRevision: 1
 ---
 
-# 21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations
+# 21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations
 
 We've been saying "that's for chapter 21" for a while now. Narrowing chapter 01's `AdministratorAccess`. Chapter 03's WAF. Chapter 04's "secrets don't go in environment variables". This chapter takes all of them on.
 
@@ -68,21 +68,23 @@ GuardDuty being off does not fail the task. That is a choice. A root user withou
 
 The subject is a small token API. `/token` issues a signed token and `/verify` checks one. The key it signs with is this chapter's "secret".
 
-```text
-viewer
-  | HTTPS, GET and HEAD only
-  v
-CloudFront distribution  <---- web ACL (AihSecurityWaf, us-east-1)   only with -c webAclArn=...
-  | origin access control signs each origin request (SigV4)
-  v
-Lambda function URL, AuthType AWS_IAM      unsigned requests get 403 before the function runs
-  v
-Lambda function (HandlerRole)
-  | secretsmanager:GetSecretValue on one secret, about once per 5 minutes per execution environment
-  v
-Secrets Manager secret  <---- encrypted with aws/secretsmanager, or a customer managed key with -c cmk=on
-
-CloudTrail event history records the management calls above (CreateRole, PutSecretValue, ...) for 90 days
+```figure
+caption: On the path from the viewer to the secret sit the WAF, the function's role, and the key that encrypts the secret, and CloudTrail records the management calls made on them
+node viewer: Viewer | HTTPS, GET and HEAD only
+node waf: Web ACL | AihSecurityWaf (us-east-1), only with -c webAclArn=...
+node cf: CloudFront | distribution
+node url: Lambda function URL | AuthType AWS_IAM, unsigned gets 403
+node fn: Lambda function | HandlerRole
+node secret: Secrets Manager secret
+node key: KMS key | aws/secretsmanager, or customer managed with -c cmk=on
+node trail: CloudTrail event history | CreateRole, PutSecretValue, ... for 90 days
+edge viewer -> cf
+edge waf -> cf
+edge cf -> url: OAC signs with SigV4
+edge url -> fn
+edge fn -> secret: GetSecretValue, about every 5 min per environment
+edge secret -> key: encrypted with
+edge secret --> trail: management calls recorded
 ```
 
 From top to bottom, that is this chapter's table of contents. WAF at the entrance. The function's role. The secret and the key that encrypts it. And CloudTrail, recording what is done to all of them.
@@ -255,20 +257,28 @@ The official caching components are for Java, Python, .NET, Go, and Rust, though
 
 Caching creates one distributed-systems problem. Each Lambda execution environment holds its own cache, loaded at its own time. Now replace the secret. What happens?
 
-```text
-time   Secrets Manager          environment A              environment B
-t0     v1 = AWSCURRENT          caches v1                  caches v1
-t1     rotate:
-       v2 = AWSCURRENT
-       v1 = AWSPREVIOUS         still signs with v1        still signs with v1
-t2                              cache expires, reloads
-                                signs with v2
-t3                                                         gets a token signed with v2
-                                                           v2 is not in its cache -> reload -> accepts
-t4                              gets a token signed by B
-                                with v1 = AWSPREVIOUS
-                                -> accepts
-t5                                                         cache expires, reloads, signs with v2
+```figure
+caption: After a rotation, two execution environments that loaded their caches at different times sign with different keys for a while
+type: sequence
+actor sm: Secrets Manager
+actor a: Environment A
+actor b: Environment B
+note sm: t0: v1 = AWSCURRENT
+note a: caches v1
+note b: caches v1
+step sm -> sm: t1: rotate, v2 = AWSCURRENT
+note sm: v1 = AWSPREVIOUS
+note a: still signs with v1
+note b: still signs with v1
+step a -> sm: t2: cache expires, reloads
+note a: signs with v2
+step a -> b: t3: token signed with v2
+step b -> sm: v2 not in cache, reloads
+note b: accepts
+step b -> a: t4: token signed with v1
+note a: v1 = AWSPREVIOUS, accepts
+step b -> sm: t5: cache expires, reloads
+note b: signs with v2
 ```
 
 Between t1 and t5, two keys are in use at once. A token signed with either must verify in either environment. Here is what we want to hold, in one sentence.

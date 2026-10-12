@@ -1,9 +1,9 @@
 ---
-title: "05 Persist Notes: DynamoDB"
+title: "05 NoSQL: DynamoDB"
 sourceRevision: 2
 ---
 
-# 05 Persist Notes: DynamoDB
+# 05 NoSQL: DynamoDB
 
 The chapter 04 API kept its notes in memory. A different execution environment gave a different answer, and after a while the notes were gone. In this chapter, let's save them properly.
 
@@ -19,19 +19,16 @@ If your data is something you want to query with SQL, you can skip this chapter 
 
 <!-- section: 05.architecture -->
 
-```text
-Client
-  |  HTTPS
-  v
-API Gateway HTTP API
-  |  routes: GET /health, GET|POST /notes, GET|PUT|DELETE /notes/{id}
-  v
-Lambda function (any number of execution environments; they hold no notes)
-  |  execution role: GetItem, PutItem, UpdateItem, DeleteItem, Query on one table
-  |  AWS SDK for JavaScript v3
-  v
-DynamoDB table (ap-northeast-1, on-demand)
-  pk = OWNER#<owner>    sk = NOTE#<note id>    version, title, body, ...
+```figure
+caption: A request passes through API Gateway and Lambda, and the notes are stored in a DynamoDB table.
+node client: Client
+node api: API Gateway HTTP API
+node fn: Lambda function (AWS SDK for JavaScript v3) | any number of execution environments; they hold no notes
+node table: DynamoDB table (ap-northeast-1, on-demand) | pk = OWNER#<owner>, sk = NOTE#<note id>, version, title, body, ...
+edge client -> api: HTTPS
+edge api -> fn: GET /health, GET|POST /notes, GET|PUT|DELETE /notes/{id}
+edge fn -> table: execution role: GetItem, PutItem, UpdateItem, DeleteItem, Query
+mark table
 ```
 
 What changed from chapter 04 is the bottom layer. The owner of the state used to be each individual execution environment; now it's the table. However many execution environments there are, and whenever one disappears, it no longer hurts.
@@ -115,12 +112,24 @@ On Cloudflare Workers, D1 and KV appear on `env` as bindings. On AWS, you connec
 
 You open the same note in two tabs, edit it in both, and save from both. What happens?
 
-```text
-time  tab A                          tab B                          stored
-t1    GET  -> version 1              GET  -> version 1              v1 "draft"
-t2    PUT expectedVersion=1 -> 200                                  v2 "from A"
-t3                                   PUT expectedVersion=1 -> 409   v2 "from A"
-t4                                   shows A's text next to its own
+```figure
+caption: When two tabs save from the same version, the first save goes through and the second gets a 409.
+type: sequence
+actor a: tab A
+actor store: stored note
+actor b: tab B
+note store: v1 "draft"
+step a -> store: t1 GET
+step store --> a: version 1
+step b -> store: t1 GET
+step store --> b: version 1
+step a -> store: t2 PUT expectedVersion=1
+step store --> a: 200
+note store: v2 "from A"
+step b -> store: t3 PUT expectedVersion=1
+step store --x b: 409
+note store: v2 "from A"
+note b: t4 shows A's text next to its own
 ```
 
 If B's save were let through at t3, A's change would disappear without anyone knowing. What prevents this is optimistic locking. Rather than taking a lock in advance, you check at the moment of writing whether the stored version is still the one you were looking at.
@@ -199,13 +208,20 @@ The official documentation warns about this too: the presence of `LastEvaluatedK
 
 A write over a network has a third outcome besides success and failure: "unknown".
 
-```text
-time  client                               server                 stored
-t1    PUT expectedVersion=1  ----------->  applies the update     v2 "final"
-t2    (response is lost; timeout)  <--x--  200 OK
-t3    was it saved? unknown. retry:
-      PUT expectedVersion=1  ----------->  version is 2, not 1    v2 "final"
-t4    409 conflict, current = v2 "final"
+```figure
+caption: Retrying a save whose response was lost returns a 409 caused by the client's own first write.
+type: sequence
+actor client: client
+actor server: server
+step client -> server: t1 PUT expectedVersion=1
+step server -> server: applies the update
+note server: v2 "final"
+step server --x client: t2 200 OK (response is lost; timeout)
+step client -> client: t3 was it saved? unknown. retry
+step client -> server: t3 PUT expectedVersion=1
+step server -> server: version is 2, not 1
+note server: v2 "final"
+step server --> client: t4 409 conflict, current = v2 "final"
 ```
 
 At t2, the caller doesn't know whether the save went through. If it doesn't retry, the change is lost in the case where it wasn't saved. So it retries, and at t4 a 409 comes back. The cause is not someone else's write but **its own first write**.

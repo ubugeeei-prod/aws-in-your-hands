@@ -1,9 +1,9 @@
 ---
-title: "14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration"
+title: "14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration"
 sourceRevision: 1
 ---
 
-# 14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration
+# 14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration
 
 People who have used KV on Cloudflare arrive at AWS with one question: "Which one is the AWS KV?"
 
@@ -88,14 +88,19 @@ The tests in `test/rate-limit.test.ts` pin boundaries like these:
 
 The fixed window has a well-known weakness.
 
-```text
-limit = 5 per minute
-            window 1                    window 2
-|--------------------------------|--------------------------------|
-                           xxxxx  xxxxx
-                           ^ 5 requests at 0:59, 5 more at 1:01
-fixed window:   all 10 pass (each window saw only 5)
-sliding window: the second 5 are refused (the last 60 s already hold 5)
+```figure
+caption: With a limit of 5 per minute, the fixed window lets all 10 requests around a boundary through, and the sliding window refuses the second 5
+type: sequence
+actor fixed: fixed window
+actor req: requests
+actor sliding: sliding window
+step req -> fixed: 5 requests at 0:59 (window 1)
+step req -> sliding: 5 requests at 0:59
+step req -> fixed: 5 more at 1:01 (window 2)
+note fixed: all 10 pass
+note fixed: each window saw only 5
+step req -x sliding: 5 more at 1:01: refused
+note sliding: the last 60 s already hold 5
 ```
 
 Across a boundary, twice the limit passes within two seconds. There is a test that says exactly that ("lets 2 x limit through in two seconds around a boundary"). It isn't a bug; it is what a fixed window is.
@@ -112,14 +117,21 @@ Written the obvious way, a rate limit goes: "Read the count. If it is below the 
 
 That breaks when two requests arrive together.
 
-```text
-limit = 1
-time  request A                 request B                 stored count
-t1    read count -> 0                                     0
-t2                              read count -> 0           0
-t3    0 < 1, write 1                                      1
-t4                              0 < 1, write 1            1
-      allowed                   allowed                   (one increment lost)
+```figure
+caption: With a limit of 1, two requests that read and then write at the same time both pass, and one increment is lost
+type: sequence
+actor a: request A
+actor store: stored count
+actor b: request B
+note store: 0
+step a -> store: t1 read count: 0
+step b -> store: t2 read count: 0
+step a -> store: t3 0 < 1, write 1
+note store: 1
+step b -> store: t4 0 < 1, write 1
+note store: 1 (one increment lost)
+note a: allowed
+note b: allowed
 ```
 
 Both read "zero so far", and both pass. The stored count is still 1. The limit was broken, and no record of it remains.
@@ -296,13 +308,25 @@ The second shows that when the writer deletes the cached entry, the next read is
 
 The third is the interesting one. **Even with invalidation, an old value can stay.**
 
-```text
-time  reader                          writer                       cache    source
-t1    miss; asks the source                                        (empty)  v1
-t2                                    updates the source           (empty)  v2
-t3                                    invalidates (nothing there)  (empty)  v2
-t4    receives "v1", stores it                                     v1       v2
-t5    every reader gets "v1" from the cache until the TTL passes
+```figure
+caption: When the writer updates and invalidates while the reader is still asking the source, the old value goes into the cache and every reader gets it until the TTL passes
+type: sequence
+actor reader: reader
+actor cache: cache
+actor source: source
+actor writer: writer
+note cache: (empty)
+note source: v1
+step reader -> cache: t1 miss
+step reader -> source: t1 asks the source
+step writer -> source: t2 updates the source
+note source: v2
+step writer -> cache: t3 invalidates
+note cache: (empty): nothing there
+step source --> reader: t4 receives "v1"
+step reader -> cache: t4 stores "v1"
+note cache: v1 (source is v2)
+note cache: t5 "v1" until the TTL
 ```
 
 While the reader is still waiting for the source, the writer updates and invalidates. Then the reader's old answer lands in the cache, and nobody comes to delete it again.

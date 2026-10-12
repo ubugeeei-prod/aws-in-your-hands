@@ -1,9 +1,9 @@
 ---
-title: "22 データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup"
+title: "22 Backup: PITR、snapshot、S3 versioning、AWS Backup"
 revision: 1
 ---
 
-# 22 データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup
+# 22 Backup: PITR、snapshot、S3 versioning、AWS Backup
 
 [05章](/ja/chapters/05-dynamodb.md)は「うっかり消したデータを戻す手順は 22章」と書いて、先に進みました。[07章](/ja/chapters/07-uploads.md)も、画像の bucket について同じ宿題を残しています。この章で、それをやります。
 
@@ -19,26 +19,38 @@ revision: 1
 
 <!-- section: 22.overview -->
 
-```text
-vp run recovery:*   (your laptop, your credentials)
-  |  seed, accident      write and delete the way the app does (owner "drill")
-  |  restore:table       RestoreTableToPointInTime --> a NEW table, outside the stack
-  |  restore:objects     delete markers removed, old versions copied on top
-  |  verify, repair      Scan + ListObjectsV2, then the fixes
-  v
-DynamoDB table "Notes"                          S3 bucket "Uploads"
-  point-in-time recovery: on                      versioning: on
-  NOTE#...  ATTACHMENT#...  INSPECTION#...        u/<owner>/<note>/<attachment>
-  any second of the last 35 days                  old versions kept 30 days
-        |                                               |
-        +---- as of T1 ----  must agree  ---- as of T2 --+
+```figure
+caption: recovery のタスクは、手元から table と bucket に書き、事故を起こし、別々に戻してから、突き合わせて直す
+type: sequence
+actor cli: vp run recovery:* | 手元, 自分の credentials
+actor table: DynamoDB table Notes
+actor bucket: S3 bucket Uploads
+step cli -> table: seed, accident
+step cli -> bucket: seed, accident
+note cli: app と同じ書き方 (owner "drill")
+step cli -> table: restore:table
+note table: RestoreTableToPointInTime
+note table: 新しい table, stack の外
+step cli -> bucket: restore:objects
+note bucket: delete marker を外す
+note bucket: 古い version を上に copy
+step table --> bucket: T1 と T2 は合っていること
+step cli -> table: verify: Scan
+step cli -> bucket: verify: ListObjectsV2
+note cli: repair: 見つけたものを直す
+```
 
-Lambda function "Audit" (read-only)
-  Scan + ListObjectsV2, counts what does not line up
-  TABLE_NAME = the stack's table, or a restored one after `-c table=<name>`
-
-only with -c backup=on    AWS Backup vault + one snapshot a day, kept 7 days
-only with -c replica=on   second bucket + S3 Replication (delete markers not replicated)
+```figure
+caption: stack が作るのは table、bucket、検査する関数で、いちばん下の 2 つは指定したときだけ足される
+node audit: Lambda function Audit | 読むだけ, 合わないものを数える
+node table: DynamoDB table Notes | point-in-time recovery, 過去 35 日のどの秒にも
+node bucket: S3 bucket Uploads | versioning, 古い version を 30 日
+node vault: AWS Backup vault | 1 日 1 回の snapshot, 7 日保持
+node replica: 2 つ目の bucket | S3 Replication, delete marker は複製しない
+edge audit -> table: Scan (TABLE_NAME: -c table=<name> のあとは復元した table)
+edge audit -> bucket: ListObjectsV2
+edge table -> vault: -c backup=on のときだけ
+edge bucket -> replica: -c replica=on のときだけ
 ```
 
 stack が作るのは、table が 1 つ、bucket が 1 つ、関数が 1 つです。table の中身は 05章・07章・08章と同じ形で、ノート、添付の記録、検査の記録が 1 つの table に入っています。bucket は 07章の画像置き場と同じ key の形です。
@@ -164,20 +176,34 @@ S3 から version の一覧を読むところには、1 つ癖があります。
 
 さて、ここからが本題です。
 
-```text
-time ------------------------------------------------------------------->
-          T0                 T1                 T2               now
-          |                  |                  |                 |
-table     record A written   (restore point)    record A deleted
-bucket    object A written                      delete marker on A
+```figure
+caption: table だけを T1 に戻して bucket を「いま」のままにすると、何も指していない record が残る
+type: sequence
+actor table: table
+actor bucket: bucket
+note table: T0: record A を書く
+note bucket: T0: object A を書く
+note table: T1: 戻す先の時刻
+note table: T2: record A を消す
+note bucket: T2: A に delete marker
+step table -> table: いま: table を T1 に戻す
+note bucket: いま: そのまま
+note table: 「A には画像がある」
+note bucket: 「A は消された」
+step table -x bucket: 何も指していない record
+```
 
-restore the table to T1, leave the bucket at "now":
-  table says   "A has an image"
-  bucket says  "A was deleted"          --> a record that points at nothing
-
-restore the table to T1, where an upload finished at T2 instead:
-  table says   nothing about it
-  bucket says  "here are the bytes"     --> an object nobody points at
+```figure
+caption: T2 に upload が終わっていた場合に table を T1 に戻すと、誰も指していない object が残る
+type: sequence
+actor table: table
+actor bucket: bucket
+note table: T1: 戻す先の時刻
+note bucket: T2: upload が終わる
+step table -> table: いま: table を T1 に戻す
+note table: それについて何も言わない
+note bucket: 「bytes はここにある」
+step bucket -x table: 誰も指していない object
 ```
 
 table は 1 秒単位で、好きな時刻に戻せます。bucket は、key ごとに version を選び直すことで戻します。2 つを「同じ瞬間」に揃える仕組みは、AWS にはありません。揃えるのは、あなたの仕事です。そして、たいていは少しずれます。table だけ戻して bucket を忘れることも、よくあります。

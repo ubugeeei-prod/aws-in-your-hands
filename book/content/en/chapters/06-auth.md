@@ -1,9 +1,9 @@
 ---
-title: "06 Add Login: Cognito and Authorization"
+title: "06 Auth: Cognito and Authorization"
 sourceRevision: 2
 ---
 
-# 06 Add Login: Cognito and Authorization
+# 06 Auth: Cognito and Authorization
 
 The SPA is live, and notes now stay in a table. What's missing is whose notes they are.
 
@@ -17,23 +17,29 @@ This chapter builds on [chapter 03](/en/chapters/03-spa.md) and [chapter 05](/en
 
 <!-- section: 06.architecture -->
 
-```text
-Browser (SPA from CloudFront + S3)
-  |  1. redirect to sign in                      2. password typed here, not in the SPA
-  +-------------------------------------------> Cognito managed login (user pool domain)
-  |  3. redirect back with ?code=...&state=...
-  |  4. POST /oauth2/token  (code + PKCE code_verifier)  ->  access token
-  |
-  |  5. GET /notes   Authorization: Bearer <access token>
-  v
-API Gateway HTTP API
-  |  JWT authorizer: signature, issuer, expiry, client, scope
-  |  fails -> 401/403 here; Lambda is not invoked
-  v
-Lambda function
-  |  reads the verified claims from the event; owner = claims.sub
-  v
-DynamoDB table   pk = OWNER#<sub>   sk = NOTE#<note id>
+```figure
+caption: The SPA signs in at Cognito managed login and exchanges the code for an access token.
+type: sequence
+actor browser: Browser | SPA from CloudFront + S3
+actor cognito: Cognito managed login | user pool domain
+step browser -> cognito: 1. redirect to sign in
+note cognito: 2. password typed here, not in the SPA
+step cognito --> browser: 3. redirect back with ?code=...&state=...
+step browser -> cognito: 4. POST /oauth2/token (code + PKCE code_verifier)
+step cognito --> browser: access token
+```
+
+```figure
+caption: The JWT authorizer in API Gateway verifies the access token, and only requests that pass reach Lambda and the table.
+node browser: Browser | SPA from CloudFront + S3
+node api: API Gateway HTTP API | JWT authorizer: signature, issuer, expiry, client, scope
+node fn: Lambda function | owner = claims.sub
+node table: DynamoDB table | pk = OWNER#<sub>, sk = NOTE#<note id>
+edge browser -> api: 5. GET /notes + access token
+edge api -> fn: verified claims in the event
+edge fn -> table
+edge api -x browser: fails: 401/403, Lambda is not invoked
+mark api
 ```
 
 There are three new players.
@@ -321,12 +327,22 @@ After an access token has been issued, it can be verified without asking anyone.
 
 So what happens when you disable a user?
 
-```text
-time   event                                            access token (exp = t0 + 1h)
-t0     Alice signs in                                   issued
-t0+10m admin disables Alice / revokes her tokens        Cognito's own APIs now refuse it
-t0+11m Alice's browser calls GET /notes                 API Gateway: signature ok, not expired -> 200
-t0+1h  token expires                                    API Gateway -> 401
+```figure
+caption: After a user is disabled, an access token that was already issued still passes API Gateway until it expires.
+type: sequence
+actor cognito: Cognito
+actor alice: Alice's browser
+actor api: API Gateway | JWT authorizer
+step alice -> cognito: t0 sign in
+step cognito --> alice: access token (exp = t0 + 1h)
+note cognito: t0+10m admin disables Alice /
+note cognito: revokes her tokens
+note cognito: Cognito's own APIs now refuse it
+step alice -> api: t0+11m GET /notes
+step api --> alice: 200 (signature ok, not expired)
+note alice: t0+1h token expires
+step alice -> api: GET /notes
+step api --x alice: 401
 ```
 
 Look at t0+11m. The call goes through.

@@ -1,9 +1,9 @@
 ---
-title: "24 Advanced Lab: Self-Hosting celld on AWS"
+title: "24 Self-hosting: celld on AWS"
 sourceRevision: 1
 ---
 
-# 24 Advanced Lab: Self-Hosting celld on AWS
+# 24 Self-hosting: celld on AWS
 
 In [chapter 23](/en/chapters/23-ec2.md) you took on one machine, operating system and all. In this last chapter you run a distributed system on machines like that one, a system AWS does not look after for you.
 
@@ -66,17 +66,35 @@ A matching digest only says "the same thing that is on GitHub". Whether that thi
 
 <!-- section: 24.architecture -->
 
-```text
-your machine                          AWS (ap-northeast-1)
-  vp run celld:*  -- Run Command -->  VPC from chapter 11, private subnets, no inbound from outside
-  celld deploy    -- S3 API ------+
-                                  |    node a (AZ 1)      node b (AZ 2)      node c (AZ 1)
-                                  |    celld :8081  <-->  celld :8081  <-->  celld :8081   peers: plain HTTP
-                                  |    Worker 127.0.0.1:8080 on each node (loopback only)
-                                  |    data volume        data volume        data volume    retained
-                                  |         |                  |                  |
-                                  +--> fleet bucket  s3://<bucket>/fleet/      (S3 gateway endpoint)  retained
-                                       backup bucket s3://<bucket>/backups/    (nodes have no access)  retained
+```figure
+caption: The nodes sit in private subnets with no inbound from outside, celld talks plain HTTP to its peers on :8081, and the Worker listens only on 127.0.0.1:8080 of each node
+node cli: vp run celld:* | your machine
+node a: node a (AZ 1) | celld :8081, Worker :8080
+node b: node b (AZ 2) | celld :8081, Worker :8080
+node c: node c (AZ 1) | celld :8081, Worker :8080
+node va: data volume | retained
+node vb: data volume | retained
+node vc: data volume | retained
+edge cli -> a: Run Command
+edge cli -> b
+edge cli -> c
+edge b -> a: HTTP
+edge c -> b: HTTP
+edge a -> va
+edge b -> vb
+edge c -> vc
+group vpc: VPC (chapter 11), private subnets, ap-northeast-1 = a, b, c, va, vb, vc
+```
+
+```figure
+caption: The nodes can read and write only the fleet bucket, and have no access to the backup bucket
+node nodes: node a, b, c | through the S3 gateway endpoint
+node backup: backup bucket | s3://<bucket>/backups/, retained
+node fleet: fleet bucket | s3://<bucket>/fleet/, retained
+node deploy: celld deploy | S3 API from your machine
+edge nodes -x backup: no access
+edge nodes -> fleet
+edge deploy -> fleet
 ```
 
 CDK stops here: the buckets, the role, the security group, and as many instances and volumes as you asked for. Installing celld, starting it, upgrading it: all of that lives outside CDK. The reason is the same as in chapter 23, where you did not want every template change to rebuild the instance. With celld there is one more: which node stops when is part of being correct. You do not want CloudFormation or cdkd to pick that order for its own reasons.
@@ -348,12 +366,23 @@ The tricky part is a request that got no answer: a timeout, a 503, a broken body
 
 The check goes like this.
 
-```text
-time ->
-witness node:  probe: one request per cell, round after round .......... DONE
-victim node:                      stop-instances --skip-os-shutdown
-every survivor:                                                          sweep: read each cell back
-judge:         acked values never go back; no step without a request; an ack after the fault for every cell
+```figure
+caption: The victim is stopped while the witness keeps writing, and after the probe is done every survivor reads the cells back for the judge
+type: sequence
+actor witness: witness node
+actor victim: victim node
+actor survivors: every survivor
+actor judge: judge
+step witness -> witness: probe: 1 request per cell
+note witness: round after round
+note victim: stop-instances
+note victim: --skip-os-shutdown
+note witness: probe DONE
+step survivors -> survivors: sweep: reread every cell
+note judge: no acked value goes back
+note judge: no step without a request
+note judge: after the fault, an ack
+note judge: for every cell
 ```
 
 On a node that stays (the witness), a script plays the client. After it has written for a while, another node (the victim) is stopped with `aws ec2 stop-instances --skip-os-shutdown`. Skipping the OS shutdown means celld gets no SIGTERM and cannot hand anything off. Of what a script can cause, it is the closest to losing a machine. The instance and the volume are not deleted, so you can bring it back.

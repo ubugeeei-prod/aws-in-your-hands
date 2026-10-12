@@ -1,9 +1,9 @@
 ---
-title: "24 発展ラボ: celld を AWS でセルフホストする"
+title: "24 Self-hosting: celld を AWS で動かす"
 revision: 1
 ---
 
-# 24 発展ラボ: celld を AWS でセルフホストする
+# 24 Self-hosting: celld を AWS で動かす
 
 [23章](/ja/chapters/23-ec2.md)で、machine を 1 台、OS ごと自分で持ちました。最後の章では、その machine の上で、AWS が面倒を見てくれない分散システムを動かしてみます。
 
@@ -66,17 +66,35 @@ digest が合うことは「GitHub に置いてあるものと同じ」ことま
 
 <!-- section: 24.architecture -->
 
-```text
-your machine                          AWS (ap-northeast-1)
-  vp run celld:*  -- Run Command -->  VPC from chapter 11, private subnets, no inbound from outside
-  celld deploy    -- S3 API ------+
-                                  |    node a (AZ 1)      node b (AZ 2)      node c (AZ 1)
-                                  |    celld :8081  <-->  celld :8081  <-->  celld :8081   peers: plain HTTP
-                                  |    Worker 127.0.0.1:8080 on each node (loopback only)
-                                  |    data volume        data volume        data volume    retained
-                                  |         |                  |                  |
-                                  +--> fleet bucket  s3://<bucket>/fleet/      (S3 gateway endpoint)  retained
-                                       backup bucket s3://<bucket>/backups/    (nodes have no access)  retained
+```figure
+caption: node は外から inbound のない private subnet に並び、celld は :8081 で peer と平文の HTTP を話し、Worker は各 node の 127.0.0.1:8080 だけで待つ
+node cli: vp run celld:* | your machine
+node a: node a (AZ 1) | celld :8081, Worker :8080
+node b: node b (AZ 2) | celld :8081, Worker :8080
+node c: node c (AZ 1) | celld :8081, Worker :8080
+node va: data volume | retained
+node vb: data volume | retained
+node vc: data volume | retained
+edge cli -> a: Run Command
+edge cli -> b
+edge cli -> c
+edge b -> a: HTTP
+edge c -> b: HTTP
+edge a -> va
+edge b -> vb
+edge c -> vc
+group vpc: VPC (11章), private subnets, ap-northeast-1 = a, b, c, va, vb, vc
+```
+
+```figure
+caption: node が読み書きできるのは fleet の bucket だけで、backup の bucket には触れない
+node nodes: node a, b, c | S3 gateway endpoint から
+node backup: backup bucket | s3://<bucket>/backups/, retained
+node fleet: fleet bucket | s3://<bucket>/fleet/, retained
+node deploy: celld deploy | your machine から S3 API
+edge nodes -x backup: access なし
+edge nodes -> fleet
+edge deploy -> fleet
 ```
 
 CDK が作るのはここまでです。bucket、role、security group、そして指定した数の instance と volume。celld を入れる、起動する、更新する、といった作業は CDK の外に置きました。理由は 23章と同じで、template を変えるたびに instance が作り直されるのは困るからです。それに celld の場合は、「どの node をいつ止めるか」が正しさに関わります。CloudFormation や cdkd の都合で順番が決まってしまうのは避けたいんです。
@@ -348,12 +366,23 @@ celld の約束を、client から見える形に直してみます。counter �
 
 検査の流れはこうです。
 
-```text
-time ->
-witness node:  probe: one request per cell, round after round .......... DONE
-victim node:                      stop-instances --skip-os-shutdown
-every survivor:                                                          sweep: read each cell back
-judge:         acked values never go back; no step without a request; an ack after the fault for every cell
+```figure
+caption: witness が書き込みを続けるあいだに victim を止め、probe が終わってから、残った全部の node で読み直して判定する
+type: sequence
+actor witness: witness node
+actor victim: victim node
+actor survivors: 残った node すべて
+actor judge: judge
+step witness -> witness: probe: 各 cell に 1 request
+note witness: 何周も繰り返す
+note victim: stop-instances
+note victim: --skip-os-shutdown
+note witness: probe DONE
+step survivors -> survivors: sweep: 各 cell を読み直す
+note judge: 応答済みの値は戻らない
+note judge: request のない step はない
+note judge: 障害の後に
+note judge: 全部の cell で応答
 ```
 
 残す側の node（witness）で、client 役の script を動かします。少し書き込ませてから、別の node（victim）を `aws ec2 stop-instances --skip-os-shutdown` で止めます。OS の shutdown を飛ばすので、celld は SIGTERM を受け取れず、引き渡しもできません。script で起こせる範囲では、machine の喪失にいちばん近い止め方です。instance も volume も消えないので、後で起こせます。

@@ -1,9 +1,9 @@
 ---
-title: "18 A Live-Streaming Recipe: IVS"
+title: "18 Live Streaming: IVS"
 sourceRevision: 1
 ---
 
-# 18 A Live-Streaming Recipe: IVS
+# 18 Live Streaming: IVS
 
 This chapter is a stand-alone recipe. You send video from streaming software and watch it on a web page a few seconds later. We'll build that with the smallest setup that works.
 
@@ -17,20 +17,26 @@ The prerequisite is [chapter 04](/en/chapters/04-http-api.md), because Lambda an
 
 <!-- section: 18.overview -->
 
-```text
-Encoder (OBS, FFmpeg)                          Viewer's browser
-  |  RTMPS :443, presents the stream key          |  player page (Vue + IVS player SDK)
-  v                                               |  reads /config.json -> playbackUrl
-IVS ingest endpoint (global)                      v
-  |                                          IVS playback URL (HTTPS, delivered globally)
-  v                                               ^
-IVS channel "aih-live" (ap-northeast-1) ----------+
-  |  type BASIC, latency mode LOW, at most one stream key
-  |  emits events: stream state, stream health, limit breach (best effort)
-  v
-EventBridge rule (this channel only) -> Lambda (validate, log one line) -> CloudWatch Logs (7 days)
-
-Your terminal: stream:status -> GetStream  (the answer to "is it live right now?")
+```figure
+caption: The channel takes one broadcast, delivers it to viewers, and reports changes of state as events
+node encoder: Encoder | OBS, FFmpeg, presents the stream key
+node terminal: Your terminal | stream:status
+node viewer: Viewer's browser | player page (Vue + IVS player SDK)
+node ingest: IVS ingest endpoint | global
+node channel: IVS channel "aih-live" | ap-northeast-1, type BASIC, latency mode LOW, at most one stream key
+node rule: EventBridge rule | this channel only: stream state, stream health, limit breach
+node playback: IVS playback URL | HTTPS, delivered globally
+node fn: Lambda | validate, log one line
+node logs: CloudWatch Logs | 7 days
+edge encoder -> ingest: RTMPS :443
+edge ingest -> channel
+edge terminal -> channel: GetStream: "is it live right now?"
+edge channel --> rule: emits events (best effort)
+edge channel -> playback
+edge viewer -> playback: reads /config.json -> playbackUrl
+edge rule -> fn
+edge fn -> logs
+mark channel
 ```
 
 In the middle sits the **channel**: the unit that takes one broadcast and delivers it to viewers. A channel has two addresses. The ingest endpoint is where streaming software sends to, and the playback URL is where viewers watch from.
@@ -387,14 +393,18 @@ Here's the design rule to take away. An event is a signal that "something seems 
 
 Live streaming has an interesting property as a distributed system. **Everyone watches the same video, and nobody watches the same moment.**
 
-```text
-wall clock  what happens                                   viewer A (desktop)   viewer B (browser on iOS)
-12:00:00    a goal is scored in front of the camera
-12:00:00    chat (a separate path) delivers "GOAL!"        reads "GOAL!"        reads "GOAL!"
-12:00:03    video of the goal reaches viewer A             sees the goal
-12:00:08    video of the goal reaches viewer B                                  sees the goal
-
-The numbers are made up for illustration. They are not measurements.
+```figure
+caption: The news arrives over chat for both viewers at once, and the video of the goal arrives with a different delay for each (the numbers are made up for illustration, not measured)
+type: sequence
+actor cam: camera
+actor chat: chat | a separate path
+actor a: viewer A | desktop
+actor b: viewer B | browser on iOS
+step cam -> cam: 12:00:00 a goal is scored
+step chat -> a: 12:00:00 "GOAL!"
+step chat -> b: 12:00:00 "GOAL!"
+step cam -> a: 12:00:03 video of the goal
+step cam -> b: 12:00:08 video of the goal
 ```
 
 A and B having different delays is nothing unusual. According to the documentation, latency varies with where the broadcaster and the viewers are, their networks, and the components in between. On top of that, browsers on iOS don't support low-latency playback and get normal latency. Open the same stream in the same room on a PC and an iPhone, and you should hear them out of step.

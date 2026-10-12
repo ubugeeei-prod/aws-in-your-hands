@@ -1,9 +1,9 @@
 ---
-title: "12 Run Containers: ECR, ECS/Fargate, and ALB"
+title: "12 Containers: ECR, ECS/Fargate, and ALB"
 sourceRevision: 1
 ---
 
-# 12 Run Containers: ECR, ECS/Fargate, and ALB
+# 12 Containers: ECR, ECS/Fargate, and ALB
 
 Chapter 11 gave you a network. In this chapter, something that runs all the time moves in for the first time.
 
@@ -34,25 +34,38 @@ What you give up is just as clear: the zero while idle. And you now decide how m
 
 <!-- section: 12.architecture -->
 
-```text
-Client (curl, later the SPA)
-  |  HTTP :80           no certificate: this chapter has no domain name
-  v
-Application Load Balancer     in Public1 + Public2; one node and one public IPv4 address per zone
-  |  listener :80 -> target group (target type: ip)
-  |  health check: GET /health every 10 s
-  |  HTTP :8080         security group: load balancer -> tasks, and nothing else
-  v
-ECS service on Fargate        desired count 2; auto scaling 2..4 on 60 % CPU
-  |  task (zone 1a)           task (zone 1c)
-  |  0.25 vCPU, 0.5 GB, arm64; one network interface each; in Public1 / Public2 by default
-  |  container "api": node server.mjs -> Hono app -> NoteService -> Map (one per task)
-  |  execution role: pull the image, write the log stream      task role: nothing
-  |
-  +--> ECR repository         HTTPS :443 out; image tags are immutable
-  +--> CloudWatch Logs        HTTPS :443 out; kept 7 days
+```figure
+caption: The Application Load Balancer spreads requests over tasks in two zones. The security group lets through only that traffic, and the VPC, subnets, and route tables are read from chapter 11's stack AihNetwork through Fn::ImportValue
+node client: Client | curl, later the SPA
+node alb: Application Load Balancer | Public1 + Public2, one node and one public IPv4 per zone
+node tg: target group | target type: ip, GET /health every 10 s
+node t1: task | zone 1a, in Public1 by default
+node t2: task | zone 1c, in Public2 by default
+node ecr: ECR repository | image tags are immutable
+node logs: CloudWatch Logs | kept 7 days
+edge client -> alb: HTTP :80, no certificate (no domain name)
+edge alb -> tg: listener :80
+edge tg -> t1: HTTP :8080
+edge tg -> t2
+edge t1 -> ecr: HTTPS :443
+edge t2 -> ecr
+edge t1 -> logs
+edge t2 -> logs: HTTPS :443
+group svc: ECS service on Fargate: desired count 2, auto scaling 2..4 (CPU 60 %) = t1, t2
+```
 
-VPC, subnets, route tables: chapter 11 (stack AihNetwork), read through Fn::ImportValue
+```figure
+caption: Inside one task, the container keeps the notes in a Map, and the execution role is what pulls the image and writes the logs
+node srv: container "api" | node server.mjs
+node exec: execution role | pulls the image, writes the log stream
+node role: task role | nothing
+node app: Hono app
+node svc: NoteService
+node map: Map | one per task
+edge srv -> app
+edge app -> svc
+edge svc -> map
+group t: task: 0.25 vCPU, 0.5 GB, arm64, one network interface = srv, exec, role, app, svc, map
 ```
 
 A few words to settle.
@@ -347,19 +360,38 @@ Types don't protect these relations. `serverKeepAlive: 5` is a `number` too. The
 
 Deploy with `-c imageTag=v2`, and the task definition is new and the service begins replacing tasks. This is a rolling update.
 
-```text
-desired count 2, minimumHealthyPercent 100, maximumPercent 200
+```figure
+caption: In a rolling update with desired count 2, minimumHealthyPercent 100, and maximumPercent 200, the old tasks stop only after the new tasks pass their health check
+type: sequence
+actor old: old tasks (v1)
+actor new: new tasks (v2)
+actor req: requests | who answers
+note old: 1: 2 running
+step req -> old: 1: v1 v1
+note new: 2: up to 2 starting (pull, boot)
+step req -> old: 2: v1 v1
+note new: 3: running, first health check ok
+step req -> old: 3: v1 v1
+step req -> new: 3: v2 v2 (both versions answer)
+note old: 4: 2 draining
+note old: v1 finishes what is in flight
+note new: 4: 2 running
+step req -> new: 4: v2 v2
+note old: 5: stopped
+note new: 5: 2 running
+step req -> new: 5: v2 v2
+```
 
-step  old tasks (v1)   new tasks (v2)                    who answers
-1     2 running        -                                 v1 v1
-2     2 running        up to 2 starting (pull, boot)     v1 v1
-3     2 running        running, first health check ok    v1 v1 v2 v2    <- both versions answer
-4     2 draining       2 running                         v2 v2          (v1 finishes what is in flight)
-5     stopped          2 running                         v2 v2
-
-if the new tasks never get past step 3:
-3'    2 running        fail to start or to pass the health check, 3 times
-4'    2 running        circuit breaker: deployment FAILED, rolled back to the last COMPLETED one
+```figure
+caption: When the new tasks never get past step 3, the circuit breaker marks the deployment as failed and rolls back to the last COMPLETED one
+type: sequence
+actor old: old tasks (v1)
+actor new: new tasks (v2)
+note old: 3': 2 running
+step new -x new: 3': start or health check fails, 3 times
+note old: 4': 2 running
+note new: 4': circuit breaker: deployment FAILED
+step new --> old: 4': rolled back to the last COMPLETED
 ```
 
 `minimumHealthyPercent: 100` says: never fewer than two healthy tasks. `maximumPercent: 200` says: up to four may run while replacing. Together they fix the order: start new tasks before stopping old ones. With 50 and 100 it would be the other way round, stop one and then start one, which needs no extra task but halves the capacity on the way.
@@ -374,18 +406,25 @@ Please remember one thing it can't do. The circuit breaker looks at whether task
 
 Here is what "draining" in step 4 consists of.
 
-```text
-time     ECS and the load balancer                           the server in the task
-t0       ECS decides to stop the task
-         task: DEACTIVATING    target: draining
-         no new requests go to this target                   still answers what is in flight
-t0+?     the target has no connections left, or 30 s passed  (deregistrationDelay = 30)
-t1       task: STOPPING    ECS sends SIGTERM  -------------> logs "draining"; stops listening
-                                                             closes idle keep-alive connections
-                                                             finishes what is still in flight
-                                                             logs "stopped"; exits with 0
-t1+25                                                        deadline: cuts the rest; exits with 1
-t1+30    ECS sends SIGKILL if the process is still there     (stopTimeout = 30)
+```figure
+caption: To stop a task, ECS first takes it out of the load balancer, then sends SIGTERM, and sends SIGKILL if the process is still there
+type: sequence
+actor ecs: ECS and the load balancer
+actor srv: the server in the task
+step ecs -> ecs: t0: ECS decides to stop the task
+note ecs: task: DEACTIVATING, target: draining
+note ecs: no new requests go to this target
+note srv: still answers what is in flight
+step ecs -> ecs: t0+?: connections gone, or 30 s passed
+note ecs: deregistrationDelay = 30
+step ecs -> srv: t1: task: STOPPING, SIGTERM
+step srv -> srv: logs "draining"; stops listening
+step srv -> srv: closes idle keep-alive connections
+step srv -> srv: finishes what is still in flight
+step srv -> srv: logs "stopped"; exits with 0
+step srv -> srv: t1+25: deadline: cuts the rest; exit 1
+step ecs -> srv: t1+30: SIGKILL if still there
+note ecs: stopTimeout = 30
 ```
 
 First out of the load balancer, then SIGTERM. Thanks to that order, new requests should already have stopped coming by the time SIGTERM arrives.
@@ -430,13 +469,22 @@ Then two real HTTP servers are started at the same time.
 
 <<< @/examples/12-containers/test/versions.test.ts{rollout}
 
-```text
-records (outlive every task)       task running v1                 task running v2
-t1  POST /notes -> v1              writes {id,title,body,createdAt}
-t2  POST /notes -> v2                                              writes {..., pinned:false}
-t3  GET  /notes -> v1              reads both; drops "pinned"
-t4  GET  /notes -> v2                                              reads both; fills pinned=false
-t5  rollback: v2 stops             still reads what v2 wrote
+```figure
+caption: The records outlive every task, so v1 and v2 end up reading the records each other wrote
+type: sequence
+actor v1: task running v1
+actor rec: records | outlive every task
+actor v2: task running v2
+step v1 -> rec: t1 POST /notes
+note rec: {id,title,body,createdAt}
+step v2 -> rec: t2 POST /notes
+note rec: {..., pinned:false}
+step rec --> v1: t3 GET /notes: reads both
+note v1: drops "pinned"
+step rec --> v2: t4 GET /notes: reads both
+note v2: fills pinned=false
+note v2: t5 rollback: v2 stops
+step rec --> v1: t5 still reads what v2 wrote
 ```
 
 The two that break, break like this.

@@ -1,9 +1,9 @@
 ---
-title: "08 リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler"
+title: "08 Queue: SQS、DLQ、冪等性、Scheduler"
 revision: 1
 ---
 
-# 08 リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler
+# 08 Queue: SQS、DLQ、冪等性、Scheduler
 
 ノートに画像を付けられるようになりました。ただ、[07章](/ja/chapters/07-uploads.md)は宿題を 3 つ残しています。アップロードされたファイルの中身を、誰も見ていないこと。孤立した object の掃除が、手で実行するタスクのままなこと。そして、完了した後に同じ form をもう一度送ると、添付した画像が 1 日後に消えてしまうこと。
 
@@ -17,33 +17,45 @@ revision: 1
 
 <!-- section: 08.architecture -->
 
-```text
-Browser
-  |  POST form to S3 (chapter 07)            DELETE /notes/{id}/attachments/{attachmentId} (chapter 07)
-  v                                                   |
-S3 bucket "Uploads"  <--------------------------------+
-  |  event notification for keys under u/:
-  |    ObjectCreated:*, ObjectRemoved:Delete, LifecycleExpiration:Delete
-  |  at least once, in no guaranteed order, usually within seconds
-  v
-SQS queue "UploadEvents" (standard, visibility timeout 180 s, kept 4 days)
-  |      \
-  |       received 5 times and never deleted --> SQS queue "DeadLetters" (kept 14 days)
-  v
-Lambda event source mapping (up to 10 messages a batch, at most 2 batches at once)
-  v
-Lambda function "Worker" (timeout 30 s)
-     1. GetObject, If-Match <eTag of the event>        -> S3
-     2. look at the first bytes: type, width, height
-     3. PutItem INSPECTION#..., only if newer          -> DynamoDB table (the notes table)
-     4. DeleteObjectTagging, if ATTACHMENT#... exists  -> S3
+```figure
+caption: S3 のイベントは queue に入り、event source mapping が batch にして Worker に渡す
+node browser: Browser
+node s3: S3 bucket "Uploads"
+node notif: event notification | ObjectCreated:*, ObjectRemoved:Delete, LifecycleExpiration:Delete
+node q: SQS queue "UploadEvents" | standard, visibility timeout 180 s, 4 日保持
+node esm: Lambda event source mapping | 1 batch は最大 10 件、同時に最大 2 batch
+node dlq: SQS queue "DeadLetters" | 14 日保持
+node worker: Lambda function "Worker" | timeout 30 s
+edge browser -> s3: POST form, DELETE .../attachments/{attachmentId} (07章)
+edge s3 -> notif: u/ の下の key
+edge notif -> q: 少なくとも 1 回、順序の保証なし、ふつうは数秒以内
+edge q -> esm
+edge q --> dlq: 5 回受信されて削除されない
+edge esm -> worker
+mark q
+```
 
-EventBridge Scheduler "aih-async-housekeeping": rate(1 hour)
-  |  assumes "ScheduleRole", invokes asynchronously
-  v
-Lambda function "Housekeeping" (timeout 15 min)
-     lists the bucket, reads the table, and deletes what nothing points at
-     or what failed the inspection; takes the pending tag off attached images
+```figure
+caption: Worker が 1 つのイベントについて S3 と table に対して行う 4 つの手順
+type: sequence
+actor worker: Worker | Lambda function
+actor s3: S3 bucket "Uploads"
+actor table: DynamoDB table | ノートの table
+step worker -> s3: 1. GetObject, If-Match <event の eTag>
+step worker -> worker: 2. 先頭の bytes: type, width, height
+step worker -> table: 3. PutItem INSPECTION#... (新しければ)
+step worker -> s3: 4. DeleteObjectTagging (ATTACHMENT#... あり)
+```
+
+```figure
+caption: 1 時間ごとに Scheduler が Housekeeping を呼び、bucket と table を見比べて、どこからも指されていない object と検査に落ちた object を消し、添付済みの画像から pending の tag を外す
+node sched: EventBridge Scheduler | "aih-async-housekeeping": rate(1 hour)
+node hk: Lambda function "Housekeeping" | timeout 15 min
+node s3: S3 bucket
+node table: DynamoDB table
+edge sched -> hk: "ScheduleRole" を assume し、非同期に invoke
+edge hk -> s3: list, delete, tag を外す
+edge hk -> table: read
 ```
 
 新しく出てくるのは、queue が 2 つ、関数が 2 つ、schedule が 1 つです。bucket と table は 07章のものを使います。
@@ -120,15 +132,22 @@ JPEG だけ、少し手間がかかります。大きさが書いてある場所
 
 SQS のメッセージは、受け取っただけでは queue から消えません。隠されるだけです。
 
-```text
-time    queue "UploadEvents"                      worker A               worker B
-t0      message M is visible
-t1      M is received: hidden for 180 s           starts on M
-t2                                                still running, or gone
-t1+180  M is visible again
-t3      M is received again (receive count 2)                            starts on M
-        ...
-        received 5 times and never deleted: the next receive moves M to "DeadLetters"
+```figure
+caption: 受け取られたメッセージは隠されるだけで、削除されなければまた見えるようになり、別の worker に渡る
+type: sequence
+actor a: worker A
+actor q: queue "UploadEvents"
+actor b: worker B
+note q: t0 メッセージ M が見えている
+step q -> a: t1 M を受信: 180 秒隠される
+note a: M の処理を始める
+note a: t2 まだ動いている、または消えた
+note q: t1+180 M がまた見える
+step q -> b: t3 再び受信 (receive count 2)
+note b: M の処理を始める
+note q: ...
+note q: 5 回受信されて削除されない:
+note q: 次の受信で M は "DeadLetters" へ移る
 ```
 
 隠されている時間が visibility timeout です。その間に「終わりました」（削除）が届かなければ、メッセージはまた見えるようになって、次の誰かに渡されます。worker が落ちても、メッセージは失われません。

@@ -1,9 +1,9 @@
 ---
-title: "15 メールを送る: SES"
+title: "15 Email: SES"
 revision: 1
 ---
 
-# 15 メールを送る: SES
+# 15 Email: SES
 
 04章で API を作りました。この章では、その隣に「ノートを共有しました」という通知メールを 1 通送る API を足します。送るのは Amazon SES です。
 
@@ -21,21 +21,25 @@ revision: 1
 
 <!-- section: 15.architecture -->
 
-```text
-Caller (another backend, or `vp run mail:send`)
-  |  HTTPS, signed with SigV4 (IAM authorization on every route)
-  v
-API Gateway HTTP API (ap-northeast-1)
-  |  POST /share-notifications, GET /share-notifications/{id}, GET /health
-  v
-Lambda "ApiHandler"  -- 1. claim (conditional write) --> DynamoDB table "Mail"
-  |                  -- 3. mark sent ---------------->   NOTIFICATION#<id>, SUPPRESSION#<address>
-  |  2. SendEmail (one recipient, configuration set, tag notification_id)
-  v
-SES (identity: your address or domain)  ----->  recipient's mail server
-  |  later: Delivery / Bounce / Complaint events, through the configuration set
-  v
-SNS topic "MailEvents"  -->  Lambda "EventsHandler"  -- suppress, advance state --> DynamoDB table "Mail"
+```figure
+caption: 送る流れは API から SES へ下り、結果は SNS を通って同じ table に戻る
+node caller: Caller | 別の backend、または vp run mail:send
+node api: API Gateway HTTP API | ap-northeast-1、どの route も IAM 認可
+node fn: Lambda "ApiHandler"
+node ses: SES | identity: 自分の address か domain
+node table: DynamoDB table "Mail" | NOTIFICATION#<id>, SUPPRESSION#<address>
+node sns: SNS topic "MailEvents" | Delivery / Bounce / Complaint
+node recipient: 相手のメールサーバー
+node events: Lambda "EventsHandler"
+edge caller -> api: HTTPS、SigV4 で署名
+edge api -> fn: POST, GET /share-notifications; GET /health
+edge fn -> ses: 2. SendEmail（宛先 1 件、tag notification_id）
+edge fn -> table: 1. claim（条件付き書き込み）、3. sent にする
+edge ses -> recipient
+edge ses --> sns: あとから、configuration set を通って
+edge sns -> events
+edge events -> table: suppress、状態を進める
+mark ses
 ```
 
 上半分が送る流れ、下半分が結果を受け取る流れです。
@@ -142,20 +146,57 @@ SES の `SendEmail` には、「同じ依頼なら 2 回目は無視して」と
 
 応答を失った呼び出し側は、ふつう再試行します。そのとき何が起きるかは、記録と送信のどちらを先にやるかで決まります。
 
-```text
-send first, record after                 record first, send after (this chapter)
-t1  SendEmail  -> SES accepts            t1  claim share-1 -> written
-t2  response is lost (timeout)           t2  SendEmail -> SES accepts
-t3  no record was written                t3  response is lost (timeout)
-t4  caller retries share-1               t4  caller retries share-1
-t5  no record -> SendEmail again         t5  claim exists -> nothing is sent
-    two mails arrive                         one mail arrives
+```figure
+caption: 送信を先に、記録を後にすると、応答を失ったあとの再試行で 2 通届く
+type: sequence
+actor caller: Caller
+actor fn: Lambda
+actor table: DynamoDB | 記録
+actor ses: SES
+step caller -> fn: share-1 を依頼
+step fn -> ses: t1 SendEmail
+note ses: SES が受け取る
+step ses --x fn: t2 応答が失われる（timeout）
+note table: t3 記録は書かれていない
+step caller -> fn: t4 share-1 を再試行
+step fn -> ses: t5 記録なし、また SendEmail
+note ses: 2 通届く
+```
 
-the price of recording first:
-t1  claim share-1 -> written
-t2  the function dies before SendEmail
-t3  caller retries share-1
-t4  claim exists -> nothing is sent      no mail arrives
+```figure
+caption: 記録を先に、送信を後にすると（この章）、再試行では何も送られず、届くのは 1 通
+type: sequence
+actor caller: Caller
+actor fn: Lambda
+actor table: DynamoDB | 記録
+actor ses: SES
+step caller -> fn: share-1 を依頼
+step fn -> table: t1 share-1 を claim
+note table: 書かれた
+step fn -> ses: t2 SendEmail
+note ses: SES が受け取る
+step ses --x fn: t3 応答が失われる（timeout）
+step caller -> fn: t4 share-1 を再試行
+step fn -x table: t5 claim はすでにある
+note fn: 何も送らない
+note ses: 1 通届く
+```
+
+```figure
+caption: 記録を先にする代償として、SendEmail の前に関数が止まると 1 通も届かない
+type: sequence
+actor caller: Caller
+actor fn: Lambda
+actor table: DynamoDB | 記録
+actor ses: SES
+step caller -> fn: share-1 を依頼
+step fn -> table: t1 share-1 を claim
+note table: 書かれた
+note fn: t2 SendEmail の前に止まる
+step caller -> fn: t3 share-1 を再試行
+step fn -x table: t4 claim はすでにある
+note fn: 何も送らない
+note ses: 1 通も届かない
 ```
 
 送信を先にすると、失敗したときに 2 通届くことがあります。記録を先にすると、失敗したときに 1 通も届かないことがあります。両方を同時に防ぐ方法はありません。記録と送信は別々のサービスへの別々の呼び出しで、その間で処理が止まることを、誰も防げないからです。
@@ -184,14 +225,33 @@ DynamoDB には、書き込みに条件を付ける機能があります。条�
 
 記録は、状態を 1 つ持ちます。
 
-```text
-(none) --claim--> claimed --SES accepted--> sent --Delivery--> delivered
-                     |                        |                   |
-                     +--SES refused--> rejected                   +--Complaint--> complained
-                     |                    |
-                     |                    +--same request again--> claimed
-                     +--no answer: stays claimed (nobody retries automatically)
-any of claimed/rejected/sent/delivered --Bounce--> bounced
+```figure
+caption: 通知の状態は claim で始まり、SES の答えと、あとから届く event で進む
+node none: (none)
+node claimed: claimed | 応答なし: claimed のまま（自動の再試行はない）
+node sent: sent
+node rejected: rejected
+node delivered: delivered
+node complained: complained
+edge none -> claimed: claim
+edge claimed -> sent: SES が受け取る
+edge claimed -> rejected: SES が断る
+edge rejected -> claimed: 同じ依頼がもう一度
+edge sent -> delivered: Delivery
+edge delivered -> complained: Complaint
+```
+
+```figure
+caption: Bounce は、4 つのどの状態にある通知も bounced にする
+node claimed: claimed
+node rejected: rejected
+node sent: sent
+node delivered: delivered
+node bounced: bounced
+edge claimed -> bounced: Bounce
+edge rejected -> bounced
+edge sent -> bounced
+edge delivered -> bounced
 ```
 
 `mailer` の 3 通りの結果が、ここで分かれます。

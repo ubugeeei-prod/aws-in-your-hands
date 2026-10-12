@@ -1,9 +1,9 @@
 ---
-title: "10 Understand the Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge"
+title: "10 Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge"
 sourceRevision: 1
 ---
 
-# 10 Understand the Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge
+# 10 Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge
 
 Back in [chapter 03](/en/chapters/03-spa.md), you attached a dozen-line function to CloudFront. The one that rewrites a path to `index.html` when it has no `.` in it. In this chapter, that "small code running at the edge" gets a bit more to do.
 
@@ -17,29 +17,34 @@ The prerequisite is chapter 03. The code is in `examples/10-edge/`.
 
 <!-- section: 10.architecture -->
 
-```text
-Reader
-  |  HTTPS
-  v
-CloudFront edge location
-  |  viewer-request: CloudFront Function "edge-router" (runtime 2.0)
-  |     reads KeyValueStore: flag:maintenance, redirect:<path>, flag:new-home
-  |     -> 503 (maintenance) or 301/302 (redirect): answered here, nothing below runs
-  |     -> otherwise: rewrites the URI and passes the request on
-  v
-CloudFront cache --(hit)--> response
-  |  miss
-  |  origin-request: Lambda@Edge "body-digest" (optional, only on /digest)
-  v
-S3 bucket (private, ap-northeast-1)
+```figure
+caption: A reader's request passes through the CloudFront Function before the cache, and the function reads KeyValueStore to decide whether to answer on the spot or pass the request on
+node reader: Reader
+node fn: CloudFront Function "edge-router" | viewer-request, runtime 2.0
+node cache: CloudFront cache
+node kvs: KeyValueStore
+node digest: Lambda@Edge "body-digest" | origin-request, optional, only on /digest
+node resp: response
+node s3: S3 bucket | private, ap-northeast-1
+edge reader -> fn: HTTPS
+edge fn --> reader: 503 or 301/302 here; nothing below runs
+edge fn -> cache: otherwise: rewrites the URI, passes it on
+edge fn -> kvs: reads only
+edge cache -> digest: miss
+edge cache --> resp: hit
+edge digest -> s3
+group edge: CloudFront edge location = fn, cache, kvs
+mark fn
+```
 
-Operator
-  |  edge-data.json -> vp run edge:kvs:sync
-  v
-KeyValueStore API (global endpoint, SigV4A, If-Match: ETag)
-  |  propagation to edge locations: not immediate
-  v
-CloudFront KeyValueStore (read-only from the function)
+```figure
+caption: The path that changes the values lies outside the function, and a written value takes time to reach the edge locations
+node op: Operator | edge-data.json
+node api: KeyValueStore API | global endpoint, SigV4A, If-Match: ETag
+node kvs: CloudFront KeyValueStore | flag:maintenance, redirect:<path>, flag:new-home
+edge op -> api: vp run edge:kvs:sync
+edge api --> kvs: propagation to edge locations: not immediate
+mark kvs
 ```
 
 The top half is the path a reader's request takes. When CloudFront receives a request, it calls the function before it looks in the cache. That moment is called the viewer request. The function reads KeyValueStore (KVS from here on) and decides whether to answer on the spot or rewrite the URL and let the request continue.
@@ -215,11 +220,21 @@ Next, who can write. The function only reads. "Write on every request" uses, suc
 
 And the most important point: a value you just wrote can't be read right away.
 
-```text
-time  operator                    edge location A      edge location B
-t0    UpdateKeys succeeds         maintenance = off    maintenance = off
-t1                                maintenance = on     maintenance = off   <- two readers, two answers
-t2                                maintenance = on     maintenance = on
+```figure
+caption: After UpdateKeys succeeds, the value reaches each edge location at a different time, and at t1 two readers get two different answers
+type: sequence
+actor op: Operator
+actor a: edge location A
+actor b: edge location B
+step op -> op: t0 UpdateKeys succeeds
+note a: t0 maintenance = off
+note b: t0 maintenance = off
+step op --> a: t1 arrives
+note a: t1 maintenance = on
+note b: t1 maintenance = off
+step op --> b: t2 arrives
+note a: t2 maintenance = on
+note b: t2 maintenance = on
 ```
 
 At t0, when the update API reports success, every edge may still be reading the old value. At t1, a reader in Tokyo can get a 503 while a reader somewhere else gets the normal page. Only at t2 do they agree.

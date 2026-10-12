@@ -1,9 +1,9 @@
 ---
-title: "07 Upload Images: Presigned URLs and S3"
+title: "07 File Upload: Presigned URLs and S3"
 sourceRevision: 1
 ---
 
-# 07 Upload Images: Presigned URLs and S3
+# 07 File Upload: Presigned URLs and S3
 
 You can sign in, and you can read and write your own notes and nobody else's. Next, let's attach images to a note.
 
@@ -15,29 +15,29 @@ You'll need [chapter 06](/en/chapters/06-auth.md). The code is in `examples/07-u
 
 <!-- section: 07.architecture -->
 
-```text
-Browser (SPA)
-  |  1. POST /notes/{id}/attachments   Authorization: Bearer <access token>
-  |       body: { contentType }           -> 201 { attachmentId, upload: { url, fields }, ... }
-  v
-API Gateway HTTP API -> Lambda function
-  |     note is looked up under the caller's sub; key = u/<sub>/<note id>/<attachment id>
-  |     signs a POST policy with the execution role's credentials (no request to S3)
-  |
-Browser
-  |  2. POST https://<bucket>.s3.ap-northeast-1.amazonaws.com/   (multipart/form-data, no access token)
-  |       fields..., file                 -> 204, or 4xx when the policy is not met
-  v
-S3 bucket (Block Public Access on)        object tagged upload-state=pending
-  ^
-  |  3. PUT /notes/{id}/attachments/{attachmentId}   Authorization: Bearer <access token>
-  |       Lambda: HeadObject -> DeleteObjectTagging -> DynamoDB PutItem (ATTACHMENT#...)
-  |
-  |  4. GET /notes/{id}/attachments       -> [{ id, size, url (presigned GET, 5 min) }]
-Browser
-  |  5. <img src="presigned GET URL">     (no access token)
-  v
-S3 bucket
+```figure
+caption: The browser gets permission from the API, sends the image straight to S3, and reads it straight from S3.
+type: sequence
+actor browser: Browser | SPA
+actor api: API Gateway + Lambda | Authorization: Bearer <access token>
+actor s3: S3 bucket | Block Public Access on
+note browser: body: { contentType }
+step browser -> api: 1. POST /notes/{id}/attachments
+step api -> api: looks up the note under caller's sub
+step api -> api: key = u/<sub>/<note id>/<attachment id>
+step api -> api: signs a POST policy, role credentials
+step api --> browser: 201 attachmentId, upload: url, fields
+step browser -> s3: 2. POST fields, file (no token)
+step s3 --> browser: 204, or 4xx if the policy is not met
+note s3: tag: upload-state=pending
+step browser -> api: 3. PUT .../attachments/{attachmentId}
+step api -> s3: HeadObject
+step api -> s3: DeleteObjectTagging
+step api -> api: DynamoDB PutItem (ATTACHMENT#...)
+step browser -> api: 4. GET /notes/{id}/attachments
+step api --> browser: id, size, url (presigned GET, 5 min)
+step browser -> s3: 5. img src = presigned GET (no token)
+mark s3
 ```
 
 Two things are new: one bucket for uploads, and an "attachment record" that joins the notes in chapter 06's table.

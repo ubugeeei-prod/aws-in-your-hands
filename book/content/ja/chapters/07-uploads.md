@@ -1,9 +1,9 @@
 ---
-title: "07 画像をアップロードする: presigned URL と S3"
+title: "07 File Upload: presigned URL と S3"
 revision: 1
 ---
 
-# 07 画像をアップロードする: presigned URL と S3
+# 07 File Upload: presigned URL と S3
 
 サインインできて、自分のノートだけを読み書きできるようになりました。次は、ノートに画像を付けます。
 
@@ -15,29 +15,29 @@ revision: 1
 
 <!-- section: 07.architecture -->
 
-```text
-Browser (SPA)
-  |  1. POST /notes/{id}/attachments   Authorization: Bearer <access token>
-  |       body: { contentType }           -> 201 { attachmentId, upload: { url, fields }, ... }
-  v
-API Gateway HTTP API -> Lambda function
-  |     note is looked up under the caller's sub; key = u/<sub>/<note id>/<attachment id>
-  |     signs a POST policy with the execution role's credentials (no request to S3)
-  |
-Browser
-  |  2. POST https://<bucket>.s3.ap-northeast-1.amazonaws.com/   (multipart/form-data, no access token)
-  |       fields..., file                 -> 204, or 4xx when the policy is not met
-  v
-S3 bucket (Block Public Access on)        object tagged upload-state=pending
-  ^
-  |  3. PUT /notes/{id}/attachments/{attachmentId}   Authorization: Bearer <access token>
-  |       Lambda: HeadObject -> DeleteObjectTagging -> DynamoDB PutItem (ATTACHMENT#...)
-  |
-  |  4. GET /notes/{id}/attachments       -> [{ id, size, url (presigned GET, 5 min) }]
-Browser
-  |  5. <img src="presigned GET URL">     (no access token)
-  v
-S3 bucket
+```figure
+caption: ブラウザは API から許可をもらい、画像は S3 に直接送り、S3 から直接読む
+type: sequence
+actor browser: Browser | SPA
+actor api: API Gateway + Lambda | Authorization: Bearer <access token>
+actor s3: S3 bucket | Block Public Access on
+note browser: body: { contentType }
+step browser -> api: 1. POST /notes/{id}/attachments
+step api -> api: 呼び出し元の sub の下でノートを探す
+step api -> api: key = u/<sub>/<note id>/<attachment id>
+step api -> api: role の認証情報で POST policy に署名
+step api --> browser: 201 attachmentId, upload: url, fields
+step browser -> s3: 2. POST fields, file (token なし)
+step s3 --> browser: 204。policy を満たさなければ 4xx
+note s3: tag: upload-state=pending
+step browser -> api: 3. PUT .../attachments/{attachmentId}
+step api -> s3: HeadObject
+step api -> s3: DeleteObjectTagging
+step api -> api: DynamoDB PutItem (ATTACHMENT#...)
+step browser -> api: 4. GET /notes/{id}/attachments
+step api --> browser: id, size, url (presigned GET, 5 min)
+step browser -> s3: 5. img src = presigned GET (token なし)
+mark s3
 ```
 
 新しく出てくるのは、アップロード用の bucket が 1 つ。それと、06章の table に増える「添付の記録」です。

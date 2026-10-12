@@ -1,9 +1,9 @@
 ---
-title: "15 Send Email: SES"
+title: "15 Email: SES"
 sourceRevision: 1
 ---
 
-# 15 Send Email: SES
+# 15 Email: SES
 
 In chapter 04 you built an API. In this chapter you'll put another one next to it: an API that sends a single "someone shared a note with you" notification email. The sending is done by Amazon SES.
 
@@ -21,21 +21,25 @@ The code is in `examples/15-email/`.
 
 <!-- section: 15.architecture -->
 
-```text
-Caller (another backend, or `vp run mail:send`)
-  |  HTTPS, signed with SigV4 (IAM authorization on every route)
-  v
-API Gateway HTTP API (ap-northeast-1)
-  |  POST /share-notifications, GET /share-notifications/{id}, GET /health
-  v
-Lambda "ApiHandler"  -- 1. claim (conditional write) --> DynamoDB table "Mail"
-  |                  -- 3. mark sent ---------------->   NOTIFICATION#<id>, SUPPRESSION#<address>
-  |  2. SendEmail (one recipient, configuration set, tag notification_id)
-  v
-SES (identity: your address or domain)  ----->  recipient's mail server
-  |  later: Delivery / Bounce / Complaint events, through the configuration set
-  v
-SNS topic "MailEvents"  -->  Lambda "EventsHandler"  -- suppress, advance state --> DynamoDB table "Mail"
+```figure
+caption: The sending path runs down from the API to SES, and the outcome comes back through SNS to the same table
+node caller: Caller | another backend, or vp run mail:send
+node api: API Gateway HTTP API | ap-northeast-1, IAM authorization on every route
+node fn: Lambda "ApiHandler"
+node ses: SES | identity: your address or domain
+node table: DynamoDB table "Mail" | NOTIFICATION#<id>, SUPPRESSION#<address>
+node sns: SNS topic "MailEvents" | Delivery / Bounce / Complaint
+node recipient: recipient's mail server
+node events: Lambda "EventsHandler"
+edge caller -> api: HTTPS, signed with SigV4
+edge api -> fn: POST, GET /share-notifications; GET /health
+edge fn -> ses: 2. SendEmail (one recipient, tag notification_id)
+edge fn -> table: 1. claim (conditional write), 3. mark sent
+edge ses -> recipient
+edge ses --> sns: later, through the configuration set
+edge sns -> events
+edge events -> table: suppress, advance state
+mark ses
 ```
 
 The top half is the sending path. The bottom half is how the outcome comes back.
@@ -142,20 +146,57 @@ And the send API returning success is a different event from the email arriving.
 
 A caller that lost the response will normally retry. What happens then depends on which you do first: record, or send.
 
-```text
-send first, record after                 record first, send after (this chapter)
-t1  SendEmail  -> SES accepts            t1  claim share-1 -> written
-t2  response is lost (timeout)           t2  SendEmail -> SES accepts
-t3  no record was written                t3  response is lost (timeout)
-t4  caller retries share-1               t4  caller retries share-1
-t5  no record -> SendEmail again         t5  claim exists -> nothing is sent
-    two mails arrive                         one mail arrives
+```figure
+caption: Send first and record after, and a retry after a lost response delivers two mails
+type: sequence
+actor caller: Caller
+actor fn: Lambda
+actor table: DynamoDB | record
+actor ses: SES
+step caller -> fn: asks for share-1
+step fn -> ses: t1 SendEmail
+note ses: SES accepts
+step ses --x fn: t2 response lost (timeout)
+note table: t3 no record was written
+step caller -> fn: t4 retries share-1
+step fn -> ses: t5 no record: sends again
+note ses: two mails arrive
+```
 
-the price of recording first:
-t1  claim share-1 -> written
-t2  the function dies before SendEmail
-t3  caller retries share-1
-t4  claim exists -> nothing is sent      no mail arrives
+```figure
+caption: Record first and send after (this chapter), and the retry sends nothing, so one mail arrives
+type: sequence
+actor caller: Caller
+actor fn: Lambda
+actor table: DynamoDB | record
+actor ses: SES
+step caller -> fn: asks for share-1
+step fn -> table: t1 claim share-1
+note table: written
+step fn -> ses: t2 SendEmail
+note ses: SES accepts
+step ses --x fn: t3 response lost (timeout)
+step caller -> fn: t4 retries share-1
+step fn -x table: t5 claim exists
+note fn: nothing is sent
+note ses: one mail arrives
+```
+
+```figure
+caption: The price of recording first is that no mail arrives when the function dies before SendEmail
+type: sequence
+actor caller: Caller
+actor fn: Lambda
+actor table: DynamoDB | record
+actor ses: SES
+step caller -> fn: asks for share-1
+step fn -> table: t1 claim share-1
+note table: written
+note fn: t2 dies before SendEmail
+step caller -> fn: t3 retries share-1
+step fn -x table: t4 claim exists
+note fn: nothing is sent
+note ses: no mail arrives
 ```
 
 Send first, and a failure can deliver two emails. Record first, and a failure can deliver none. There's no way to rule out both. Recording and sending are separate calls to separate services, and nobody can prevent the process from stopping in between.
@@ -184,14 +225,33 @@ The condition is "there is no record yet", or "the last attempt was refused, and
 
 Each record holds one state.
 
-```text
-(none) --claim--> claimed --SES accepted--> sent --Delivery--> delivered
-                     |                        |                   |
-                     +--SES refused--> rejected                   +--Complaint--> complained
-                     |                    |
-                     |                    +--same request again--> claimed
-                     +--no answer: stays claimed (nobody retries automatically)
-any of claimed/rejected/sent/delivered --Bounce--> bounced
+```figure
+caption: A notification starts with a claim and moves on with what SES answers and the events that arrive later
+node none: (none)
+node claimed: claimed | no answer: stays claimed (nobody retries automatically)
+node sent: sent
+node rejected: rejected
+node delivered: delivered
+node complained: complained
+edge none -> claimed: claim
+edge claimed -> sent: SES accepted
+edge claimed -> rejected: SES refused
+edge rejected -> claimed: same request again
+edge sent -> delivered: Delivery
+edge delivered -> complained: Complaint
+```
+
+```figure
+caption: A Bounce moves a notification in any of four states to bounced
+node claimed: claimed
+node rejected: rejected
+node sent: sent
+node delivered: delivered
+node bounced: bounced
+edge claimed -> bounced: Bounce
+edge rejected -> bounced
+edge sent -> bounced
+edge delivered -> bounced
 ```
 
 This is where the three outcomes of `mailer` part ways.

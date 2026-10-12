@@ -1,9 +1,9 @@
 ---
-title: 02 再現できる TypeScript 開発: Nix、vp、CDK、cdkd、drift
+title: 02 Toolchain: Nix、vp、CDK、cdkd、drift
 revision: 3
 ---
 
-# 02 再現できる TypeScript 開発: Nix、vp、CDK、cdkd、drift
+# 02 Toolchain: Nix、vp、CDK、cdkd、drift
 
 アカウントの準備ができました。次は道具をそろえます。
 
@@ -13,15 +13,23 @@ revision: 3
 
 ## 全体像
 
-```text
-your machine                                  AWS account (ap-northeast-1)
-+----------------------------------+          +---------------------------------+
-| nix develop                      |          | cdkd-state-<account>  (S3)      |
-|   node, pnpm, aws, vp            |  cdkd    |   state.json per stack          |
-| vp run <task>                    | -------> | cdkd-assets-<account>-<region>  |
-|   CDK app (TypeScript) -> synth  |  SDK /   | AihHello stack                  |
-|   cdk.out/ (template)            |  CC API  |   Notes bucket (S3)             |
-+----------------------------------+          +---------------------------------+
+```figure
+caption: CDK app は手元で動き、cdkd がその template から AWS アカウントに bucket と stack を作ります。
+node nix: nix develop | node, pnpm, aws, vp
+node task: vp run <task>
+node app: CDK app | TypeScript
+node out: cdk.out/ | template
+node state: cdkd-state-<account> | S3、stack ごとに state.json
+node assets: cdkd-assets-<account>-<region>
+node stack: AihHello stack | Notes bucket (S3)
+edge nix -> task
+edge task -> app
+edge app -> out: synth
+edge out -> state: cdkd: SDK / CC API
+edge out -> assets
+edge out -> stack
+group machine: 手元のマシン = nix, task, app, out
+group aws: AWS アカウント (ap-northeast-1) = state, assets, stack
 ```
 
 コードが動くのは手元だけです。この章で AWS 側に作るのは、bucket と、cdkd が使う保存場所。それだけです。

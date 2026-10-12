@@ -1,9 +1,9 @@
 ---
-title: "09 SSR and a BFF: Nuxt on Regional Lambda"
+title: "09 SSR: A BFF, and Nuxt on Regional Lambda"
 sourceRevision: 1
 ---
 
-# 09 SSR and a BFF: Nuxt on Regional Lambda
+# 09 SSR: A BFF, and Nuxt on Regional Lambda
 
 In chapter 03 you put finished HTML and JavaScript in S3 and served them. In chapter 04 you put a function on Lambda that runs for each request. This chapter joins the two. A Nuxt app runs on Lambda and builds the HTML for every request. That's server-side rendering (SSR).
 
@@ -15,21 +15,28 @@ You need [chapter 03](/en/chapters/03-spa.md) and [chapter 04](/en/chapters/04-h
 
 <!-- section: 09.architecture -->
 
-```text
-Browser
-  |  HTTPS
-  v
-CloudFront distribution (edge locations)
-  |- /_nuxt/*        -> S3 bucket (private, OAC)      hashed JS and CSS
-  |- /me, /me/*      -> Lambda function URL (OAC)     never cached, cookies forwarded
-  `- everything else -> Lambda function URL (OAC)     cached only if the response allows it, cookies dropped
-                          |
-                          v
-                 Lambda function (ap-northeast-1, Node.js 24, arm64, 512 MB, timeout 10 s)
-                   Nitro handler: Nuxt renders pages, server routes answer /api/* and /me/*
-                          |
-                          v
-                 CloudWatch Logs (kept 7 days)
+```figure
+caption: CloudFront splits requests three ways by path: S3 answers /_nuxt/*, and Lambda answers everything else.
+node browser: Browser
+node cf: CloudFront distribution | edge locations
+node nuxt: /_nuxt/*
+node me: /me, /me/* | never cached, cookies forwarded
+node other: everything else | cached if the response allows, cookies dropped
+node s3: S3 bucket | private, OAC
+node furl: Lambda function URL | OAC
+node nitro: Nitro handler | Nuxt renders pages, server routes answer /api/* and /me/*
+node logs: CloudWatch Logs | kept 7 days
+edge browser -> cf: HTTPS
+edge cf -> nuxt
+edge cf -> me
+edge cf -> other
+edge nuxt -> s3: hashed JS and CSS
+edge me -> furl
+edge other -> furl
+edge furl -> nitro
+edge nitro -> logs
+group fn: Lambda function (ap-northeast-1, Node.js 24, arm64, 512 MB, timeout 10 s) = furl, nitro
+mark nitro
 ```
 
 There is one way in: a CloudFront distribution. It looks at the path and sends the request to one of three places.
@@ -273,15 +280,18 @@ The SPA in chapter 06 kept the access token in the browser's memory. The table u
 
 If the server builds the HTML, the server is what calls the API. Then the server may as well hold the token. The browser gets a session ID that means nothing by itself. A server that exists for one front end and holds the token on the browser's behalf is called a backend for frontend (BFF).
 
-```text
-Browser                     BFF (the Nuxt server)                  API behind it
-   |  Cookie: session id         |                                      |
-   |---------------------------->|  session id -> access token          |
-   |                             |------------------------------------->|
-   |                             |  Authorization: Bearer <token>       |
-   |                             |<-------------------------------------|
-   |<----------------------------|  profile                             |
-   |  HTML or JSON, no token     |                                      |
+```figure
+caption: The browser holds only a session ID, and the BFF holds the access token and calls the API.
+type: sequence
+actor browser: Browser
+actor bff: BFF | the Nuxt server
+actor api: API behind it
+step browser -> bff: Cookie: session id
+step bff -> bff: session id -> access token
+step bff -> api: Authorization: Bearer <token>
+step api --> bff: profile
+step bff --> browser: HTML or JSON, no token
+mark bff
 ```
 
 To be upfront: the BFF in this chapter works only on your machine. The reasons come together below. Code first.
@@ -506,15 +516,24 @@ This chapter's answer:
 
 The number 60 lives in one place (`SHARED_SECONDS`), and both the app's header and CloudFront's `maxTtl` are built from it.
 
-```text
-time   event                               reader in Tokyo         reader in London
-t0     note "A" is published (deploy)
-t0+5   Tokyo reader opens /                Lambda renders; cached
-t0+20  London reader opens /                                       Lambda renders; cached at another edge
-t0+30  note "B" is published (deploy)
-t0+40  both reload                         still without B         still without B
-t0+65  Tokyo reader reloads                Lambda renders; has B
-t0+80  London reader reloads                                       Lambda renders; has B
+```figure
+caption: Each edge location has its own cache, so the moment a new note becomes visible differs from reader to reader.
+type: sequence
+actor tokyo: reader in Tokyo
+actor lambda: Lambda
+actor london: reader in London
+note lambda: t0 note "A" is published (deploy)
+step tokyo -> lambda: t0+5 opens /
+step lambda --> tokyo: renders; cached
+step london -> lambda: t0+20 opens /
+step lambda --> london: renders; cached at another edge
+note lambda: t0+30 note "B" is published (deploy)
+note tokyo: t0+40 reload: still without B
+note london: t0+40 reload: still without B
+step tokyo -> lambda: t0+65 reloads
+step lambda --> tokyo: renders; has B
+step london -> lambda: t0+80 reloads
+step lambda --> london: renders; has B
 ```
 
 Each edge location has its own cache. At the same instant, a reader in Tokyo may see the new list while a reader in London sees the old one. You can't say everyone switches over together. What you can say stops at "no reader sees anything more than 60 seconds old."

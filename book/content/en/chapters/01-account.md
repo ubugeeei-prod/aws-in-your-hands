@@ -1,9 +1,9 @@
 ---
-title: 01 Accounts, Temporary Credentials, Regions, Budgets, and Cleanup
+title: 01 Account: Temporary Credentials, Regions, Budgets, and Cleanup
 sourceRevision: 2
 ---
 
-# 01 Accounts, Temporary Credentials, Regions, Budgets, and Cleanup
+# 01 Account: Temporary Credentials, Regions, Budgets, and Cleanup
 
 Before you build an app, let's get AWS into a state you can touch without worrying.
 

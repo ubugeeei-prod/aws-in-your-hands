@@ -1,9 +1,9 @@
 ---
-title: 00 ようこそ: 何を作り、どう読むか
+title: 00 Introduction: 何を作り、どう読むか
 revision: 2
 ---
 
-# 00 ようこそ: 何を作り、どう読むか
+# 00 Introduction: 何を作り、どう読むか
 
 ようこそ。この章では、まだ手を動かしません。
 
@@ -15,13 +15,34 @@ revision: 2
 
 題材は、画像を添付できる小さなノートアプリです。最初は静的な SPA を公開するだけ。そこへ機能を 1 つずつ足していきます。
 
-```text
-03  Browser -> CloudFront -> S3 (SPA)
-04  Browser -> API Gateway HTTP API -> Lambda
-05                                      Lambda -> DynamoDB
-06  Browser -> Cognito (login)          API checks whose note it is
-07  Browser -> S3 (presigned upload)
-08  S3 event -> SQS -> Lambda (image check)
+```figure
+caption: 矢印の数字は、その部分をノートアプリに足す章の番号です。
+node browser: Browser
+node api: API Gateway HTTP API
+node cf: CloudFront
+node cognito: Cognito
+node lambda: Lambda
+node s3: S3 | SPA
+node ddb: DynamoDB
+edge browser -> cf: 03
+edge cf -> s3: 03
+edge browser -> api: 04
+edge api -> lambda: 04
+edge lambda -> ddb: 05
+edge browser -> cognito: 06 ログイン
+group app: 06 API が誰のノートか確かめる = api, lambda
+```
+
+```figure
+caption: 07章でブラウザが S3 に画像をアップロードし、08章で S3 のイベントから Lambda が画像を確かめます。
+direction: right
+node browser: Browser
+node s3: S3
+node sqs: SQS
+node lambda: Lambda | 画像の確認
+edge browser -> s3: 07 presigned アップロード
+edge s3 -> sqs: 08 S3 イベント
+edge sqs -> lambda: 08
 ```
 
 00章から 24章まで、すべての章を書き終えています。

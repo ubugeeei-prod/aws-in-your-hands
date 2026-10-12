@@ -1,9 +1,9 @@
 ---
-title: "11 The Network You Actually Need: VPC, Subnets, NAT, and Endpoints"
+title: "11 Network: VPC, Subnets, NAT, and Endpoints"
 sourceRevision: 1
 ---
 
-# 11 The Network You Actually Need: VPC, Subnets, NAT, and Endpoints
+# 11 Network: VPC, Subnets, NAT, and Endpoints
 
 So far you haven't designed a single line of network. This is the chapter where you build your own.
 
@@ -36,21 +36,23 @@ A VPC itself has no charge. Some of the parts you put inside it do. Most of the 
 
 <!-- section: 11.architecture -->
 
-```text
-Region ap-northeast-1
-└─ VPC AihNetwork  10.20.0.0/16
-   ├─ internet gateway                                    (no charge)
-   ├─ zone ap-northeast-1a
-   │   ├─ Public1   10.20.0.0/20    route table: 0.0.0.0/0 -> internet gateway
-   │   └─ Private1  10.20.128.0/20  route table: no route out of the VPC
-   ├─ zone ap-northeast-1c
-   │   ├─ Public2   10.20.16.0/20   route table: 0.0.0.0/0 -> internet gateway
-   │   └─ Private2  10.20.144.0/20  route table: no route out of the VPC
-   ├─ gateway endpoints: S3, DynamoDB                     (no charge)
-   │     a route in the two private route tables
-   └─ not created unless asked for                        (billed by the hour)
-         NAT gateway + Elastic IP     -c egress=nat | nat-per-az
-         interface endpoints          -c interfaceEndpoints=ecr.api,ecr.dkr,logs
+```figure
+caption: The VPC AihNetwork in ap-northeast-1 has one public and one private subnet in each of two zones, ap-northeast-1a and ap-northeast-1c
+direction: right
+node pub1: Public1 | zone 1a, 10.20.0.0/20
+node pub2: Public2 | zone 1c, 10.20.16.0/20
+node priv1: Private1 | zone 1a, 10.20.128.0/20, no route out
+node priv2: Private2 | zone 1c, 10.20.144.0/20, no route out
+node nat: NAT gateway + Elastic IP | -c egress=nat or nat-per-az
+node iface: interface endpoints | -c interfaceEndpoints=ecr.api,ecr.dkr,logs
+node igw: internet gateway | no charge
+node gwep: gateway endpoints | S3, DynamoDB, no charge
+edge pub1 -> igw: 0.0.0.0/0
+edge pub2 -> igw: 0.0.0.0/0
+edge priv1 -> gwep: a route in the route table
+edge priv2 -> gwep
+group vpc: VPC AihNetwork 10.20.0.0/16 = pub1, pub2, priv1, priv2, nat, iface, igw, gwep
+group opt: not created unless asked for (billed by the hour) = nat, iface
 ```
 
 Just three terms.

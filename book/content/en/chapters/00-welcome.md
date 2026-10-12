@@ -1,9 +1,9 @@
 ---
-title: "00 Welcome: What You Will Build and How to Read"
+title: "00 Introduction: What You Will Build and How to Read"
 sourceRevision: 2
 ---
 
-# 00 Welcome: What You Will Build and How to Read
+# 00 Introduction: What You Will Build and How to Read
 
 Welcome. There is nothing to run in this chapter yet.
 
@@ -15,13 +15,34 @@ What does the book build? What order should you read it in? What rules does ever
 
 The subject is a small notes app that accepts image attachments. It starts out as nothing more than a published static SPA, and you add one feature at a time.
 
-```text
-03  Browser -> CloudFront -> S3 (SPA)
-04  Browser -> API Gateway HTTP API -> Lambda
-05                                      Lambda -> DynamoDB
-06  Browser -> Cognito (login)          API checks whose note it is
-07  Browser -> S3 (presigned upload)
-08  S3 event -> SQS -> Lambda (image check)
+```figure
+caption: The number on each arrow is the chapter that adds that part to the notes app.
+node browser: Browser
+node api: API Gateway HTTP API
+node cf: CloudFront
+node cognito: Cognito
+node lambda: Lambda
+node s3: S3 | SPA
+node ddb: DynamoDB
+edge browser -> cf: 03
+edge cf -> s3: 03
+edge browser -> api: 04
+edge api -> lambda: 04
+edge lambda -> ddb: 05
+edge browser -> cognito: 06 login
+group app: 06 API checks whose note it is = api, lambda
+```
+
+```figure
+caption: In chapter 07 the browser uploads an image to S3, and in chapter 08 an S3 event leads to a Lambda function that checks the image.
+direction: right
+node browser: Browser
+node s3: S3
+node sqs: SQS
+node lambda: Lambda | image check
+edge browser -> s3: 07 presigned upload
+edge s3 -> sqs: 08 S3 event
+edge sqs -> lambda: 08
 ```
 
 All chapters, 00 through 24, are written.

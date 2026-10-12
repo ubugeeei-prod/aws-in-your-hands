@@ -1,9 +1,9 @@
 ---
-title: "16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch"
+title: "16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch"
 revision: 1
 ---
 
-# 16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch
+# 16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch
 
 [08章](/ja/chapters/08-async.md)の掃除の関数は、timeout を 15 分にしていました。Lambda の上限です。画像が増えたら、いつかそこに当たります。あの章は「枚数に比例させない」と書いて、先送りにしました。
 
@@ -17,34 +17,47 @@ revision: 1
 
 <!-- section: 16.architecture -->
 
-```text
-EventBridge Scheduler "aih-long-jobs-export": rate(1 day)
-  |  assumes "ScheduleRole", calls states:StartExecution
-  |  input {"exportId": "<aws.scheduler.scheduled-time>"}     at least once
-  v
-Step Functions state machine "ExportWorkflow" (Standard, at most 6 hours)
-  |
-  |  ExportPages --(done: false)--> ExportPages ...           Retry: 3 times, any error
-  |       |
-  |   (done: true)
-  |       v
-  |    Finish --------> Exported (Succeed)                    Retry: 3 times, except ExportCorrupt
-  |       |
-  |   ExportCorrupt
-  |       v
-  |    Discard -------> Discarded (Fail)                      Retry: 3 times, any error
-  |
-  +-- Lambda "ExportPages" (timeout 300 s)   Scan, 100 notes a page                 -> DynamoDB table "Notes"
-  |                                          PutObject, If-None-Match: *
-  |                                            exports/<id>/parts/00001.ndjson ...  -> S3 bucket "Exports"
-  +-- Lambda "Finish" (timeout 60 s)         ListObjectsV2, then PutObject, If-None-Match: *
-  |                                            exports/<id>/manifest.json           -> S3 bucket "Exports"
-  +-- Lambda "Discard" (timeout 300 s)       ListObjectsV2, DeleteObject            -> S3 bucket "Exports"
+```figure
+caption: Scheduler が 1 日 1 回、state machine "ExportWorkflow"（Standard、最長 6 時間）を起動し、state machine が step を順に進める
+node scheduler: EventBridge Scheduler "aih-long-jobs-export" | rate(1 day), "ScheduleRole" を assume
+node pages: ExportPages | Retry: 3 回、どの error でも
+node more: MorePages | Choice
+node finish: Finish | Retry: 3 回、ExportCorrupt を除く
+node exported: Exported | Succeed
+node discard: Discard | Retry: 3 回、どの error でも
+node discarded: Discarded | Fail
+edge scheduler -> pages: StartExecution {exportId: 予定の時刻}、少なくとも 1 回
+edge pages -> more
+edge more -> finish: done: true
+edge more -> pages: done: false
+edge finish -> exported
+edge finish -> discard: ExportCorrupt
+edge discard -> discarded
+group workflow: Step Functions = pages, more, finish, exported, discard, discarded
+```
 
-S3 lifecycle rule: everything under exports/ expires after 7 days
+```figure
+caption: 3 つの関数は、table から読んだノートを part に書き、manifest を書き、取り消すときは part を消す
+node table: DynamoDB table "Notes"
+node pages: Lambda "ExportPages" | timeout 300 s
+node parts: exports/<id>/parts/00001.ndjson … | S3 bucket "Exports"、exports/ 以下は 7 日で期限切れ
+node finish: Lambda "Finish" | timeout 60 s
+node discard: Lambda "Discard" | timeout 300 s
+node manifest: exports/<id>/manifest.json | S3 bucket "Exports"、exports/ 以下は 7 日で期限切れ
+edge table -> pages: Scan、1 ページ 100 件
+edge pages -> parts: PutObject, If-None-Match: *
+edge parts -> finish: ListObjectsV2
+edge parts -> discard: ListObjectsV2
+edge discard -> parts: DeleteObject
+edge finish -> manifest: PutObject, If-None-Match: *
+```
 
-only with -c durable=true:
-  Lambda durable function "aih-long-jobs-durable-export", alias "live": the same three steps in one function
+```figure
+caption: -c durable=true を付けたときだけ、同じ 3 つの step を 1 つの関数にまとめた durable function も作られる
+node pages: ExportPages
+node finish: Finish
+node discard: Discard
+group durable: Lambda durable function "aih-long-jobs-durable-export", alias "live" = pages, finish, discard
 ```
 
 新しく出てくるのは、state machine が 1 つ、関数が 3 つ、bucket が 1 つ、schedule が 1 つです。table は [05章](/ja/chapters/05-dynamodb.md)と同じ形のものを、この stack の中にもう 1 つ作ります。
@@ -132,16 +145,29 @@ never, in any order of retries and late workers:
 
 十分ではありません。1 回目と 2 回目の間に、table が変わっているかもしれないからです。1 回目のページに入っていたノートが 1 件消されていたら、2 回目のページは 1 件ぶん先まで読みます。上書きされた part N は、さっきより 1 件先で終わります。ここまでは、まだ辻褄が合っています。問題は、1 回目の worker が実は生きていた場合です。
 
-```text
-time   workflow                              worker A                        worker B
-t0     ExportPages starts (part 3)           scans a page, starts PutObject
-t1     ... no answer ...                     stalled
-t2     gives up on A, retries the step                                       scans a page (one note was deleted)
-t3                                                                           PutObject parts/3: written
-t4     continues from where B's part ends                                    returns
-t5                                           PutObject parts/3 arrives late
-         plain PutObject:   B's part is replaced by A's; the note after A's last one is in no part
-         If-None-Match: *:  412; A reads B's metadata and reports B's position
+```figure
+caption: 止まっていた worker A の PutObject が、worker B が part 3 を書いたあとに届く
+type: sequence
+actor wf: workflow
+actor a: worker A
+actor b: worker B
+actor s3: S3 | parts/3
+step wf -> a: t0 ExportPages（part 3）
+step a -> a: 読んで PutObject を始める
+note a: t1 止まる（応答なし）
+step wf -> b: t2 A を諦めて再試行
+step b -> b: ページを読む（1 件消えていた）
+step b -> s3: t3 PutObject: 書けた
+step b --> wf: t4 戻る
+step wf -> wf: t4 B の part の続きから進む
+note s3: ふつうの PutObject なら
+step a -> s3: t5 遅れた PutObject が届く
+note s3: A の part に置き換わる
+note wf: 1 件がどの part にも入らない
+note s3: If-None-Match: * なら
+step a -x s3: t5 遅れた PutObject: 412
+step a -> s3: B の metadata を読む
+step a --> wf: B の位置を報告する
 ```
 
 t5 で A の書き込みが通ると、part 3 は A のページに戻ります。でも workflow は、B のページの続きから part 4 を書いています。A のページは 1 件手前で終わっているので、その間の 1 件が、どの part にも入りません。黙って 1 件欠けた export ができます。
@@ -454,14 +480,25 @@ Lambda durable functions は、それをやる機能です。公式ドキュメ�
 
 読んで最初に引っかかるのは、「15 分で止められる関数の中の `while` が、なぜ続きから再開できるのか」でしょう。
 
-```text
-invocation 1   the handler starts
-               pages-from-1 runs; its result is checkpointed
-               pages-from-21 runs; the sandbox dies before the checkpoint
-invocation 2   the handler starts again from its first line
-               pages-from-1 does not run; the stored result is returned
-               pages-from-21 runs again; its parts are already in S3, so nothing is written twice
-               pages-from-41 ... finish run; each result is checkpointed
+```figure
+caption: 2 回目の呼び出しは最初の行から走り直し、checkpoint のある step は実行されずに結果だけが返る
+type: sequence
+actor lambda: Lambda | checkpoint
+actor handler: handler
+actor s3: S3
+note lambda: invocation 1
+step lambda -> handler: handler が始まる
+step handler -> handler: pages-from-1 が走る
+step handler -> lambda: その結果を checkpoint
+step handler -> handler: pages-from-21 が走る
+step handler -x lambda: checkpoint の前に sandbox が死ぬ
+note lambda: invocation 2
+step lambda -> handler: 最初の行からもう一度始まる
+step lambda --> handler: pages-from-1 は走らず、保存した結果が返る
+step handler -> handler: pages-from-21 がもう一度走る
+step handler -x s3: part はもう S3 にあり、2 回は書かれない
+step handler -> handler: pages-from-41 … finish が走る
+step handler -> lambda: それぞれの結果を checkpoint
 ```
 
 答えは、続きから再開していない、です。関数は、最初の行からもう一度実行されます。ただし、`context.step` に包んだ処理は、結果が保存されていれば実行されず、保存された結果が返ります。これが replay です。コードは最初から走り、済んだ step だけが早送りされます。

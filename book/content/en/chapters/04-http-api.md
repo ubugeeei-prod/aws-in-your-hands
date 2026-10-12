@@ -1,9 +1,9 @@
 ---
-title: "04 Add an HTTP API: Lambda and API Gateway HTTP API"
+title: "04 HTTP API: Lambda and API Gateway HTTP API"
 sourceRevision: 3
 ---
 
-# 04 Add an HTTP API: Lambda and API Gateway HTTP API
+# 04 HTTP API: Lambda and API Gateway HTTP API
 
 The SPA is live. Next up: an API.
 
@@ -17,19 +17,35 @@ The only prerequisite is [chapter 02](/en/chapters/02-toolchain.md). The code is
 
 <!-- section: 04.architecture -->
 
-```text
-Client (curl, typed client, later the SPA)
-  |  HTTPS
-  v
-API Gateway HTTP API (ap-northeast-1)
-  |  routes: GET /health, GET|POST /notes, GET|DELETE /notes/{id}
-  |  anything else: 404 from API Gateway, Lambda is not invoked
-  v
-Lambda function (Node.js 24, arm64, 256 MB, timeout 10 s)
-  |  execution role: may write to its own log group, nothing else
-  |  Hono app -> NoteService -> InMemoryNoteRepository (per execution environment)
-  v
-CloudWatch Logs (one JSON line per request, kept 7 days)
+```figure
+caption: API Gateway passes only the requests that match a route to the Lambda function, and the function writes to CloudWatch Logs.
+node client: Client | curl, typed client, later the SPA
+node health: /health | GET
+node notes: /notes | GET, POST
+node note: /notes/{id} | GET, DELETE
+node other: anything else | 404, Lambda is not invoked
+node fn: Lambda function | Node.js 24, arm64, 256 MB, timeout 10 s
+node logs: CloudWatch Logs | one JSON line per request, kept 7 days
+edge client -> health: HTTPS
+edge client -> notes
+edge client -> note
+edge client -> other
+edge health -> fn
+edge notes -> fn
+edge note -> fn
+edge fn -> logs: execution role: own log group only
+group api: API Gateway HTTP API (ap-northeast-1) = health, notes, note, other
+```
+
+```figure
+caption: Inside the Lambda function, the Hono app calls NoteService, and NoteService keeps the notes in a repository held in memory.
+direction: right
+node hono: Hono app
+node service: NoteService
+node repo: InMemoryNoteRepository | per execution environment
+edge hono -> service
+edge service -> repo
+group fn: Lambda function = hono, service, repo
 ```
 
 There are three players.
@@ -208,12 +224,22 @@ Lambda runs your function inside an isolated box called an execution environment
 
 So what happens?
 
-```text
-time  request            execution environment A      execution environment B
-t1    POST /notes  -->   created; Map = {n1}
-t2    GET /notes   -->   reused;  returns [n1]
-t3    GET /notes   --->  (busy with another request)  created; Map = {}; returns []
-t4    (idle for a while) discarded; n1 is gone
+```figure
+type: sequence
+caption: Each execution environment has its own Map, so the same GET /notes gets different answers at t2 and t3.
+actor client: Client
+actor a: execution environment A
+actor b: execution environment B
+step client -> a: t1 POST /notes
+note a: created; Map = {n1}
+step client -> a: t2 GET /notes
+step a --> client: reused; returns [n1]
+step client -> b: t3 GET /notes
+note a: busy with another request
+note b: created; Map = {}
+step b --> client: returns []
+note a: t4 idle for a while
+note a: discarded; n1 is gone
 ```
 
 Look at t3. When the next request arrives while A is in the middle of handling another one, Lambda creates a second box, B. B's `Map` is empty. You called the same URL as at t2, and the answer is different.

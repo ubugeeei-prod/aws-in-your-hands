@@ -1,9 +1,9 @@
 ---
-title: "08 Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler"
+title: "08 Queue: SQS, DLQs, Idempotency, and Scheduler"
 sourceRevision: 1
 ---
 
-# 08 Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler
+# 08 Queue: SQS, DLQs, Idempotency, and Scheduler
 
 Notes can carry images now. But [chapter 07](/en/chapters/07-uploads.md) left three pieces of homework. Nobody looks inside an uploaded file. Cleaning up orphaned objects is still a task you run by hand. And if the same form is sent again after an upload is finished, the attached image disappears a day later.
 
@@ -17,33 +17,45 @@ You need chapter 07. The code is in `examples/08-async/`. The upload API and the
 
 <!-- section: 08.architecture -->
 
-```text
-Browser
-  |  POST form to S3 (chapter 07)            DELETE /notes/{id}/attachments/{attachmentId} (chapter 07)
-  v                                                   |
-S3 bucket "Uploads"  <--------------------------------+
-  |  event notification for keys under u/:
-  |    ObjectCreated:*, ObjectRemoved:Delete, LifecycleExpiration:Delete
-  |  at least once, in no guaranteed order, usually within seconds
-  v
-SQS queue "UploadEvents" (standard, visibility timeout 180 s, kept 4 days)
-  |      \
-  |       received 5 times and never deleted --> SQS queue "DeadLetters" (kept 14 days)
-  v
-Lambda event source mapping (up to 10 messages a batch, at most 2 batches at once)
-  v
-Lambda function "Worker" (timeout 30 s)
-     1. GetObject, If-Match <eTag of the event>        -> S3
-     2. look at the first bytes: type, width, height
-     3. PutItem INSPECTION#..., only if newer          -> DynamoDB table (the notes table)
-     4. DeleteObjectTagging, if ATTACHMENT#... exists  -> S3
+```figure
+caption: S3 events go into a queue, and the event source mapping hands them to the Worker in batches.
+node browser: Browser
+node s3: S3 bucket "Uploads"
+node notif: event notification | ObjectCreated:*, ObjectRemoved:Delete, LifecycleExpiration:Delete
+node q: SQS queue "UploadEvents" | standard, visibility timeout 180 s, kept 4 days
+node esm: Lambda event source mapping | batches of up to 10, at most 2 at once
+node dlq: SQS queue "DeadLetters" | kept 14 days
+node worker: Lambda function "Worker" | timeout 30 s
+edge browser -> s3: POST form, DELETE .../attachments/{attachmentId} (chapter 07)
+edge s3 -> notif: keys under u/
+edge notif -> q: at least once, in no guaranteed order, usually within seconds
+edge q -> esm
+edge q --> dlq: received 5 times, never deleted
+edge esm -> worker
+mark q
+```
 
-EventBridge Scheduler "aih-async-housekeeping": rate(1 hour)
-  |  assumes "ScheduleRole", invokes asynchronously
-  v
-Lambda function "Housekeeping" (timeout 15 min)
-     lists the bucket, reads the table, and deletes what nothing points at
-     or what failed the inspection; takes the pending tag off attached images
+```figure
+caption: The four steps the Worker takes against S3 and the table for one event.
+type: sequence
+actor worker: Worker | Lambda function
+actor s3: S3 bucket "Uploads"
+actor table: DynamoDB table | the notes table
+step worker -> s3: 1. GetObject, If-Match <event's eTag>
+step worker -> worker: 2. first bytes: type, width, height
+step worker -> table: 3. PutItem INSPECTION#..., only if newer
+step worker -> s3: 4. DeleteObjectTagging (if ATTACHMENT#...)
+```
+
+```figure
+caption: Every hour the Scheduler invokes Housekeeping, which compares the bucket with the table, deletes objects that nothing points at or that failed the inspection, and takes the pending tag off attached images.
+node sched: EventBridge Scheduler | "aih-async-housekeeping": rate(1 hour)
+node hk: Lambda function "Housekeeping" | timeout 15 min
+node s3: S3 bucket
+node table: DynamoDB table
+edge sched -> hk: assumes "ScheduleRole", invokes asynchronously
+edge hk -> s3: list, delete, untag
+edge hk -> table: read
 ```
 
 What is new: two queues, two functions, and one schedule. The bucket and the table are chapter 07's.
@@ -120,15 +132,22 @@ SQS does have another kind of queue, the FIFO queue, which has a mechanism for r
 
 Receiving a message from SQS does not take it off the queue. It only hides it.
 
-```text
-time    queue "UploadEvents"                      worker A               worker B
-t0      message M is visible
-t1      M is received: hidden for 180 s           starts on M
-t2                                                still running, or gone
-t1+180  M is visible again
-t3      M is received again (receive count 2)                            starts on M
-        ...
-        received 5 times and never deleted: the next receive moves M to "DeadLetters"
+```figure
+caption: A received message is only hidden, and if it is not deleted it becomes visible again and goes to another worker.
+type: sequence
+actor a: worker A
+actor q: queue "UploadEvents"
+actor b: worker B
+note q: t0 message M is visible
+step q -> a: t1 M is received: hidden for 180 s
+note a: starts on M
+note a: t2 still running, or gone
+note q: t1+180 M is visible again
+step q -> b: t3 received again (receive count 2)
+note b: starts on M
+note q: ...
+note q: received 5 times and never deleted:
+note q: next receive moves M to "DeadLetters"
 ```
 
 The time it stays hidden is the visibility timeout. If "done" (a delete) does not arrive within it, the message becomes visible again and is handed to whoever comes next. A worker that dies does not lose the message.

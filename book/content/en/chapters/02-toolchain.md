@@ -1,9 +1,9 @@
 ---
-title: 02 Reproducible TypeScript Development: Nix, vp, CDK, cdkd, and Drift
+title: 02 Toolchain: Nix, vp, CDK, cdkd, and Drift
 sourceRevision: 3
 ---
 
-# 02 Reproducible TypeScript Development: Nix, vp, CDK, cdkd, and Drift
+# 02 Toolchain: Nix, vp, CDK, cdkd, and Drift
 
 Your account is ready. Next come the tools.
 
@@ -13,15 +13,23 @@ This chapter builds on [Chapter 01](/en/chapters/01-account.md). The code is in 
 
 ## The big picture
 
-```text
-your machine                                  AWS account (ap-northeast-1)
-+----------------------------------+          +---------------------------------+
-| nix develop                      |          | cdkd-state-<account>  (S3)      |
-|   node, pnpm, aws, vp            |  cdkd    |   state.json per stack          |
-| vp run <task>                    | -------> | cdkd-assets-<account>-<region>  |
-|   CDK app (TypeScript) -> synth  |  SDK /   | AihHello stack                  |
-|   cdk.out/ (template)            |  CC API  |   Notes bucket (S3)             |
-+----------------------------------+          +---------------------------------+
+```figure
+caption: The CDK app runs on your machine, and cdkd creates the buckets and the stack in the AWS account from the template.
+node nix: nix develop | node, pnpm, aws, vp
+node task: vp run <task>
+node app: CDK app | TypeScript
+node out: cdk.out/ | template
+node state: cdkd-state-<account> | S3, state.json per stack
+node assets: cdkd-assets-<account>-<region>
+node stack: AihHello stack | Notes bucket (S3)
+edge nix -> task
+edge task -> app
+edge app -> out: synth
+edge out -> state: cdkd: SDK / CC API
+edge out -> assets
+edge out -> stack
+group machine: your machine = nix, task, app, out
+group aws: AWS account (ap-northeast-1) = state, assets, stack
 ```
 
 Code runs only on your machine. What this chapter creates in AWS is a bucket and the storage that cdkd uses. That's all.

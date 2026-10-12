@@ -1,9 +1,9 @@
 ---
-title: "16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch"
+title: "16 Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch"
 sourceRevision: 1
 ---
 
-# 16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch
+# 16 Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch
 
 The housekeeping function in [chapter 08](/en/chapters/08-async.md) had its timeout set to 15 minutes. That is Lambda's maximum. With enough images, it will hit it one day. That chapter wrote "don't let it grow with the number of images" and moved on.
 
@@ -17,34 +17,47 @@ You need chapter 08 (idempotency, Scheduler) and [chapter 12](/en/chapters/12-co
 
 <!-- section: 16.architecture -->
 
-```text
-EventBridge Scheduler "aih-long-jobs-export": rate(1 day)
-  |  assumes "ScheduleRole", calls states:StartExecution
-  |  input {"exportId": "<aws.scheduler.scheduled-time>"}     at least once
-  v
-Step Functions state machine "ExportWorkflow" (Standard, at most 6 hours)
-  |
-  |  ExportPages --(done: false)--> ExportPages ...           Retry: 3 times, any error
-  |       |
-  |   (done: true)
-  |       v
-  |    Finish --------> Exported (Succeed)                    Retry: 3 times, except ExportCorrupt
-  |       |
-  |   ExportCorrupt
-  |       v
-  |    Discard -------> Discarded (Fail)                      Retry: 3 times, any error
-  |
-  +-- Lambda "ExportPages" (timeout 300 s)   Scan, 100 notes a page                 -> DynamoDB table "Notes"
-  |                                          PutObject, If-None-Match: *
-  |                                            exports/<id>/parts/00001.ndjson ...  -> S3 bucket "Exports"
-  +-- Lambda "Finish" (timeout 60 s)         ListObjectsV2, then PutObject, If-None-Match: *
-  |                                            exports/<id>/manifest.json           -> S3 bucket "Exports"
-  +-- Lambda "Discard" (timeout 300 s)       ListObjectsV2, DeleteObject            -> S3 bucket "Exports"
+```figure
+caption: Scheduler starts the state machine "ExportWorkflow" (Standard, at most 6 hours) once a day, and the state machine moves through the steps in order
+node scheduler: EventBridge Scheduler "aih-long-jobs-export" | rate(1 day), assumes "ScheduleRole"
+node pages: ExportPages | Retry: 3 times, any error
+node more: MorePages | Choice
+node finish: Finish | Retry: 3 times, except ExportCorrupt
+node exported: Exported | Succeed
+node discard: Discard | Retry: 3 times, any error
+node discarded: Discarded | Fail
+edge scheduler -> pages: StartExecution {exportId: scheduled time}, at least once
+edge pages -> more
+edge more -> finish: done: true
+edge more -> pages: done: false
+edge finish -> exported
+edge finish -> discard: ExportCorrupt
+edge discard -> discarded
+group workflow: Step Functions = pages, more, finish, exported, discard, discarded
+```
 
-S3 lifecycle rule: everything under exports/ expires after 7 days
+```figure
+caption: The three functions write notes read from the table into parts, write the manifest, and delete the parts when the export is discarded
+node table: DynamoDB table "Notes"
+node pages: Lambda "ExportPages" | timeout 300 s
+node parts: exports/<id>/parts/00001.ndjson … | S3 bucket "Exports", exports/ expires after 7 days
+node finish: Lambda "Finish" | timeout 60 s
+node discard: Lambda "Discard" | timeout 300 s
+node manifest: exports/<id>/manifest.json | S3 bucket "Exports", exports/ expires after 7 days
+edge table -> pages: Scan, 100 notes a page
+edge pages -> parts: PutObject, If-None-Match: *
+edge parts -> finish: ListObjectsV2
+edge parts -> discard: ListObjectsV2
+edge discard -> parts: DeleteObject
+edge finish -> manifest: PutObject, If-None-Match: *
+```
 
-only with -c durable=true:
-  Lambda durable function "aih-long-jobs-durable-export", alias "live": the same three steps in one function
+```figure
+caption: Only with -c durable=true, the stack also creates a durable function that holds the same three steps in one function
+node pages: ExportPages
+node finish: Finish
+node discard: Discard
+group durable: Lambda durable function "aih-long-jobs-durable-export", alias "live" = pages, finish, discard
 ```
 
 What is new: one state machine, three functions, one bucket, one schedule. The table has the same shape as [chapter 05](/en/chapters/05-dynamodb.md)'s, and this stack creates one of its own.
@@ -132,16 +145,29 @@ What if the step simply did a `PutObject`? The key is the same, so it overwrites
 
 It is not, because the table may have changed between the first attempt and the second. If one note from the first attempt's page has been deleted, the second attempt's page reaches one note further. The overwritten part N ends one note later than before. So far it still adds up. The trouble comes when the first worker was in fact alive.
 
-```text
-time   workflow                              worker A                        worker B
-t0     ExportPages starts (part 3)           scans a page, starts PutObject
-t1     ... no answer ...                     stalled
-t2     gives up on A, retries the step                                       scans a page (one note was deleted)
-t3                                                                           PutObject parts/3: written
-t4     continues from where B's part ends                                    returns
-t5                                           PutObject parts/3 arrives late
-         plain PutObject:   B's part is replaced by A's; the note after A's last one is in no part
-         If-None-Match: *:  412; A reads B's metadata and reports B's position
+```figure
+caption: The PutObject of the stalled worker A arrives after worker B has written part 3
+type: sequence
+actor wf: workflow
+actor a: worker A
+actor b: worker B
+actor s3: S3 | parts/3
+step wf -> a: t0 ExportPages (part 3)
+step a -> a: scans, starts PutObject
+note a: t1 stalled (no answer)
+step wf -> b: t2 gives up on A, retries
+step b -> b: scans (one note deleted)
+step b -> s3: t3 PutObject: written
+step b --> wf: t4 returns
+step wf -> wf: t4 goes on from B's part
+note s3: with a plain PutObject
+step a -> s3: t5 late PutObject arrives
+note s3: replaced by A's part
+note wf: one note is in no part
+note s3: with If-None-Match: *
+step a -x s3: t5 late PutObject: 412
+step a -> s3: reads B's metadata
+step a --> wf: reports B's position
 ```
 
 If A's write goes through at t5, part 3 is A's page again. But the workflow is writing part 4 from where B's page ended. A's page ends one note earlier, so the note in between is in no part at all. The export is quietly one note short.
@@ -454,14 +480,25 @@ The `while` is the loop, and the `try` and `catch` are the compensation. The ste
 
 The first thing that catches the eye is this: how can a `while` inside a function that is stopped after 15 minutes resume where it left off?
 
-```text
-invocation 1   the handler starts
-               pages-from-1 runs; its result is checkpointed
-               pages-from-21 runs; the sandbox dies before the checkpoint
-invocation 2   the handler starts again from its first line
-               pages-from-1 does not run; the stored result is returned
-               pages-from-21 runs again; its parts are already in S3, so nothing is written twice
-               pages-from-41 ... finish run; each result is checkpointed
+```figure
+caption: The second invocation runs from the first line again, and a step that has a checkpoint is not run but returns its stored result
+type: sequence
+actor lambda: Lambda | checkpoint
+actor handler: handler
+actor s3: S3
+note lambda: invocation 1
+step lambda -> handler: the handler starts
+step handler -> handler: pages-from-1 runs
+step handler -> lambda: its result is checkpointed
+step handler -> handler: pages-from-21 runs
+step handler -x lambda: the sandbox dies before the checkpoint
+note lambda: invocation 2
+step lambda -> handler: starts again from its first line
+step lambda --> handler: pages-from-1 does not run: stored result
+step handler -> handler: pages-from-21 runs again
+step handler -x s3: parts already in S3, nothing written twice
+step handler -> handler: pages-from-41 … finish run
+step handler -> lambda: each result is checkpointed
 ```
 
 The answer is that it does not. The function runs again from its first line. But work wrapped in `context.step` is not run if its result has been saved; the saved result is returned. This is replay: the code runs from the top, and only the finished steps are fast-forwarded.

@@ -1,9 +1,9 @@
 ---
-title: "13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
+title: "13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
 sourceRevision: 1
 ---
 
-# 13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2
+# 13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2
 
 You write `CREATE TABLE` for D1, run `wrangler d1 migrations apply`, and send SQL from a Worker. This chapter is about what that loop looks like on AWS.
 
@@ -17,27 +17,43 @@ The only prerequisite is chapter 04. You don't need to have read [chapter 05](/e
 
 <!-- section: 13.architecture -->
 
-```text
-Client (curl, later the SPA)
-  |  HTTPS
-  v
-API Gateway HTTP API (ap-northeast-1)
-  |  routes: GET /health, GET|POST /notes, GET|PUT|DELETE /notes/{id}
-  v
-Lambda function (Node.js 24, arm64, not in a VPC)
-  |  execution role: dsql:DbConnect on this one cluster, and its own log group
-  |  Hono app -> NoteService -> SqlNoteRepository -> transaction runner (retries on SQLSTATE 40001)
-  |
-  |  PostgreSQL wire protocol over TLS, port 5432
-  |  user: notes_api (a database role)   password: an IAM-signed token, made in the function
-  v
-Aurora DSQL cluster (single-Region, ap-northeast-1)
-     database: postgres (the only one)
-     schema app: owners, notes          schema public: aih_migrations
+```figure
+caption: A request passes through API Gateway and the Lambda function, and reaches the Aurora DSQL cluster over a PostgreSQL connection
+node client: Client | curl, later the SPA
+node api: API Gateway HTTP API | ap-northeast-1
+node fn: Lambda function | Node.js 24, arm64, not in a VPC
+node db: Aurora DSQL cluster | single-Region, ap-northeast-1
+edge client -> api: HTTPS
+edge api -> fn: GET /health, GET|POST /notes, GET|PUT|DELETE /notes/{id}
+edge fn -> db: PostgreSQL wire protocol over TLS, port 5432
+mark db
+```
 
-Your laptop
-  vp run dev:sql                -> the same app on PGlite (PostgreSQL inside the Node process)
-  vp run sql:db:migrate         -> connects to the cluster as admin, with your own IAM credentials
+```figure
+caption: The Lambda function opens the connection to the cluster itself, as the database role notes_api, with an IAM-signed token made in the function as the password
+node role: execution role | dsql:DbConnect on this one cluster, its own log group
+node app: Hono app
+node svc: NoteService
+node repo: SqlNoteRepository
+node tx: transaction runner | retries on SQLSTATE 40001
+node db: database postgres | app: owners, notes / public: aih_migrations
+edge app -> svc
+edge svc -> repo
+edge repo -> tx
+edge tx -> db: user notes_api, password is a token
+group fn: Lambda function = role, app, svc, repo, tx
+group cl: Aurora DSQL cluster: the only database = db
+```
+
+```figure
+caption: From your laptop, you either run the same app on PGlite or connect to the cluster as admin to run the migrations
+node dev: vp run dev:sql | runs the same app
+node mig: vp run sql:db:migrate
+node pglite: PGlite | PostgreSQL inside the Node process
+node db: Aurora DSQL cluster
+edge dev -> pglite
+edge mig -> db: admin, your own IAM credentials
+group laptop: Your laptop = dev, mig
 ```
 
 Compared with chapter 04, there is one more box: a database under the Lambda function. The notes no longer belong to the function's memory. They belong to the cluster, and every execution environment sees the same ones.
@@ -199,19 +215,26 @@ From here on is where this chapter differs most from D1.
 
 Creating a note first checks that the owner has not reached 100 notes. Written naively: count them, and `INSERT` if there is room. What happens when two of those run at once? Let's follow it with a cap of 2 and one note already there.
 
-```text
-quota = 2, the owner already has 1 note
-
-time  transaction A (POST /notes)            transaction B (POST /notes)
-t1    BEGIN  (sees note_count = 1)
-t2                                           BEGIN  (sees note_count = 1)
-t3    UPDATE owners SET note_count = 2
-t4    INSERT INTO notes ...                  UPDATE owners SET note_count = 2
-t5    COMMIT -> ok                           INSERT INTO notes ...
-t6                                           COMMIT -> SQLSTATE 40001 (OC000); nothing of B is applied
-t7                                           BEGIN again  (sees note_count = 2)
-t8                                           UPDATE ... WHERE note_count < 2 -> 0 rows
-t9                                           COMMIT; the API answers quota_exceeded
+```figure
+caption: With a quota of 2 and an owner who already has 1 note, of two transactions that run at once, B loses at commit, retries, and hits the quota
+type: sequence
+actor a: transaction A | POST /notes
+actor db: Aurora DSQL
+actor b: transaction B | POST /notes
+step a -> db: t1 BEGIN (sees note_count = 1)
+step b -> db: t2 BEGIN (sees note_count = 1)
+step a -> db: t3 UPDATE owners SET note_count = 2
+step a -> db: t4 INSERT INTO notes ...
+step b -> db: t4 UPDATE owners SET note_count = 2
+step a -> db: t5 COMMIT: ok
+step b -> db: t5 INSERT INTO notes ...
+step b -x db: t6 COMMIT: SQLSTATE 40001 (OC000)
+note b: nothing of B is applied
+step b -> db: t7 BEGIN again (sees note_count = 2)
+step b -> db: t8 UPDATE ... WHERE note_count < 2
+note b: t8 0 rows
+step b -> db: t9 COMMIT
+note b: the API answers quota_exceeded
 ```
 
 An Aurora DSQL transaction keeps reading the data as it was when the transaction began (snapshot isolation). B sees `note_count = 1` as of t2, so its `UPDATE` at t4 goes through without complaint. B does not know that A has already written.

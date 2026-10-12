@@ -1,9 +1,9 @@
 ---
-title: "18 ライブ配信のレシピ: IVS"
+title: "18 Live Streaming: IVS"
 revision: 1
 ---
 
-# 18 ライブ配信のレシピ: IVS
+# 18 Live Streaming: IVS
 
 この章は独立したレシピです。配信ソフトから映像を送って、Web のページで数秒遅れで見る。そこまでを、いちばん小さい構成で作ります。
 
@@ -17,20 +17,26 @@ revision: 1
 
 <!-- section: 18.overview -->
 
-```text
-Encoder (OBS, FFmpeg)                          Viewer's browser
-  |  RTMPS :443, presents the stream key          |  player page (Vue + IVS player SDK)
-  v                                               |  reads /config.json -> playbackUrl
-IVS ingest endpoint (global)                      v
-  |                                          IVS playback URL (HTTPS, delivered globally)
-  v                                               ^
-IVS channel "aih-live" (ap-northeast-1) ----------+
-  |  type BASIC, latency mode LOW, at most one stream key
-  |  emits events: stream state, stream health, limit breach (best effort)
-  v
-EventBridge rule (this channel only) -> Lambda (validate, log one line) -> CloudWatch Logs (7 days)
-
-Your terminal: stream:status -> GetStream  (the answer to "is it live right now?")
+```figure
+caption: channel が配信を 1 本受けて視聴者へ届け、状態の変化を event で知らせる
+node encoder: Encoder | OBS, FFmpeg、stream key を提示する
+node terminal: 自分の terminal | stream:status
+node viewer: 視聴者の browser | player page（Vue + IVS player SDK）
+node ingest: IVS ingest endpoint | global
+node channel: IVS channel "aih-live" | ap-northeast-1, type BASIC, latency mode LOW, stream key は 1 つまで
+node rule: EventBridge rule | この channel だけ: stream state, stream health, limit breach
+node playback: IVS playback URL | HTTPS、global に配信
+node fn: Lambda | 検証して、1 行 log に書く
+node logs: CloudWatch Logs | 7 日
+edge encoder -> ingest: RTMPS :443
+edge ingest -> channel
+edge terminal -> channel: GetStream:「いま配信中か」の答え
+edge channel --> rule: event（best effort）
+edge channel -> playback
+edge viewer -> playback: /config.json から playbackUrl を読む
+edge rule -> fn
+edge fn -> logs
+mark channel
 ```
 
 真ん中にいるのが **channel** です。配信を 1 本受けて、視聴者に届ける単位ですね。channel は 2 つの住所を持っています。配信ソフトが送る先の ingest endpoint と、視聴者が見にいく playback URL です。
@@ -387,14 +393,18 @@ vp run stream:status --events
 
 ライブ配信には、分散システムとしておもしろい性質があります。**全員が同じ映像を見ているのに、同じ瞬間を見ていない**んです。
 
-```text
-wall clock  what happens                                   viewer A (desktop)   viewer B (browser on iOS)
-12:00:00    a goal is scored in front of the camera
-12:00:00    chat (a separate path) delivers "GOAL!"        reads "GOAL!"        reads "GOAL!"
-12:00:03    video of the goal reaches viewer A             sees the goal
-12:00:08    video of the goal reaches viewer B                                  sees the goal
-
-The numbers are made up for illustration. They are not measurements.
+```figure
+caption: 知らせは chat で 2 人に同時に届き、ゴールの映像は視聴者ごとに違う遅れで届く（時刻は説明のための作り物で、測った値ではない）
+type: sequence
+actor cam: カメラ
+actor chat: chat | 別の経路
+actor a: 視聴者 A | desktop
+actor b: 視聴者 B | iOS の browser
+step cam -> cam: 12:00:00 ゴールが決まる
+step chat -> a: 12:00:00 "GOAL!"
+step chat -> b: 12:00:00 "GOAL!"
+step cam -> a: 12:00:03 ゴールの映像
+step cam -> b: 12:00:08 ゴールの映像
 ```
 
 A さんと B さんで遅延が違うのは、珍しいことではありません。ドキュメントによれば、遅延は配信者と視聴者の場所、回線、途中の部品で変わります。それに、iOS のブラウザは低遅延の再生に対応していなくて、通常の遅延になります。同じ配信を、同じ部屋で、PC と iPhone で開くと、ずれて聞こえるはずです。

@@ -1,9 +1,9 @@
 ---
-title: "12 コンテナを動かす: ECR、ECS/Fargate、ALB"
+title: "12 Containers: ECR、ECS/Fargate、ALB"
 revision: 1
 ---
 
-# 12 コンテナを動かす: ECR、ECS/Fargate、ALB
+# 12 Containers: ECR、ECS/Fargate、ALB
 
 11章でネットワークができました。この章では、その上に初めて「ずっと動いているもの」を置きます。
 
@@ -34,25 +34,38 @@ revision: 1
 
 <!-- section: 12.architecture -->
 
-```text
-Client (curl, later the SPA)
-  |  HTTP :80           no certificate: this chapter has no domain name
-  v
-Application Load Balancer     in Public1 + Public2; one node and one public IPv4 address per zone
-  |  listener :80 -> target group (target type: ip)
-  |  health check: GET /health every 10 s
-  |  HTTP :8080         security group: load balancer -> tasks, and nothing else
-  v
-ECS service on Fargate        desired count 2; auto scaling 2..4 on 60 % CPU
-  |  task (zone 1a)           task (zone 1c)
-  |  0.25 vCPU, 0.5 GB, arm64; one network interface each; in Public1 / Public2 by default
-  |  container "api": node server.mjs -> Hono app -> NoteService -> Map (one per task)
-  |  execution role: pull the image, write the log stream      task role: nothing
-  |
-  +--> ECR repository         HTTPS :443 out; image tags are immutable
-  +--> CloudWatch Logs        HTTPS :443 out; kept 7 days
+```figure
+caption: Application Load Balancer が 2 つの zone の task へリクエストを配る。security group が通すのはその通信だけで、VPC、subnet、route table は 11章の stack AihNetwork から Fn::ImportValue で読む
+node client: Client | curl, あとで SPA
+node alb: Application Load Balancer | Public1 + Public2, zone ごとに node と public IPv4 が 1 つ
+node tg: target group | target type: ip, 10 秒ごとに GET /health
+node t1: task | zone 1a, 既定で Public1
+node t2: task | zone 1c, 既定で Public2
+node ecr: ECR repository | image tag は immutable
+node logs: CloudWatch Logs | 7 日保持
+edge client -> alb: HTTP :80, 証明書なし (ドメイン名が無い)
+edge alb -> tg: listener :80
+edge tg -> t1: HTTP :8080
+edge tg -> t2
+edge t1 -> ecr: HTTPS :443
+edge t2 -> ecr
+edge t1 -> logs
+edge t2 -> logs: HTTPS :443
+group svc: ECS service on Fargate: desired count 2, auto scaling 2..4 (CPU 60 %) = t1, t2
+```
 
-VPC, subnets, route tables: chapter 11 (stack AihNetwork), read through Fn::ImportValue
+```figure
+caption: task 1 つの中では、container が Map にノートを持ち、execution role が image の取得と log の書き込みを受け持つ
+node srv: container "api" | node server.mjs
+node exec: execution role | image を pull, log stream に書く
+node role: task role | 権限なし
+node app: Hono app
+node svc: NoteService
+node map: Map | task ごとに 1 つ
+edge srv -> app
+edge app -> svc
+edge svc -> map
+group t: task: 0.25 vCPU, 0.5 GB, arm64, network interface 1 つ = srv, exec, role, app, svc, map
 ```
 
 言葉がいくつか出てきます。
@@ -347,19 +360,38 @@ ALB は、target group に登録された task に、決まった間隔で `GET 
 
 `-c imageTag=v2` を付けて deploy すると、task definition が新しくなり、service が task を入れ替え始めます。これが rolling update です。
 
-```text
-desired count 2, minimumHealthyPercent 100, maximumPercent 200
+```figure
+caption: desired count 2、minimumHealthyPercent 100、maximumPercent 200 の rolling update では、新しい task が health check に通ってから古い task が止まる
+type: sequence
+actor old: 古い task (v1)
+actor new: 新しい task (v2)
+actor req: リクエスト | 誰が答えるか
+note old: 1: 2 つ running
+step req -> old: 1: v1 v1
+note new: 2: 最大 2 つ起動中 (pull, boot)
+step req -> old: 2: v1 v1
+note new: 3: running, 最初の health check に合格
+step req -> old: 3: v1 v1
+step req -> new: 3: v2 v2 (両方の版が答える)
+note old: 4: 2 つ draining
+note old: v1 は進行中の分を終える
+note new: 4: 2 つ running
+step req -> new: 4: v2 v2
+note old: 5: stopped
+note new: 5: 2 つ running
+step req -> new: 5: v2 v2
+```
 
-step  old tasks (v1)   new tasks (v2)                    who answers
-1     2 running        -                                 v1 v1
-2     2 running        up to 2 starting (pull, boot)     v1 v1
-3     2 running        running, first health check ok    v1 v1 v2 v2    <- both versions answer
-4     2 draining       2 running                         v2 v2          (v1 finishes what is in flight)
-5     stopped          2 running                         v2 v2
-
-if the new tasks never get past step 3:
-3'    2 running        fail to start or to pass the health check, 3 times
-4'    2 running        circuit breaker: deployment FAILED, rolled back to the last COMPLETED one
+```figure
+caption: 新しい task が 3 を越えられないと、circuit breaker が deployment を失敗と判定して、最後に COMPLETED になった状態へ戻す
+type: sequence
+actor old: 古い task (v1)
+actor new: 新しい task (v2)
+note old: 3': 2 つ running
+step new -x new: 3': 起動か health check に 3 回失敗
+note old: 4': 2 つ running
+note new: 4': circuit breaker: deployment FAILED
+step new --> old: 4': 最後の COMPLETED へ rollback
 ```
 
 `minimumHealthyPercent: 100` は「健全な task を、2 つより減らさない」。`maximumPercent: 200` は「入れ替えの間、4 つまで動かしていい」。この 2 つで、古い task を止める前に新しい task を起動する、という順序が決まります。50 と 100 にすれば、先に 1 つ止めてから 1 つ起動する形になって、余分な task は要らないかわりに、途中の処理能力が半分になります。
@@ -374,18 +406,25 @@ if the new tasks never get past step 3:
 
 4 の「draining」の中身を、もう少し細かく見ます。
 
-```text
-time     ECS and the load balancer                           the server in the task
-t0       ECS decides to stop the task
-         task: DEACTIVATING    target: draining
-         no new requests go to this target                   still answers what is in flight
-t0+?     the target has no connections left, or 30 s passed  (deregistrationDelay = 30)
-t1       task: STOPPING    ECS sends SIGTERM  -------------> logs "draining"; stops listening
-                                                             closes idle keep-alive connections
-                                                             finishes what is still in flight
-                                                             logs "stopped"; exits with 0
-t1+25                                                        deadline: cuts the rest; exits with 1
-t1+30    ECS sends SIGKILL if the process is still there     (stopTimeout = 30)
+```figure
+caption: task を止めるとき、ECS は先に load balancer から外し、それから SIGTERM を送り、まだ残っていれば SIGKILL を送る
+type: sequence
+actor ecs: ECS と load balancer
+actor srv: task の中の server
+step ecs -> ecs: t0: ECS が task を止めると決める
+note ecs: task: DEACTIVATING, target: draining
+note ecs: 新しいリクエストはこの target に来ない
+note srv: 進行中の分にはまだ答える
+step ecs -> ecs: t0+?: 接続が無くなるか、30 秒経つ
+note ecs: deregistrationDelay = 30
+step ecs -> srv: t1: task: STOPPING, SIGTERM
+step srv -> srv: "draining" とログ、listen をやめる
+step srv -> srv: idle な keep-alive 接続を閉じる
+step srv -> srv: 進行中の分を終える
+step srv -> srv: "stopped" とログ、exit 0
+step srv -> srv: t1+25: deadline、残りを切って exit 1
+step ecs -> srv: t1+30: まだ居れば SIGKILL
+note ecs: stopTimeout = 30
 ```
 
 先に ALB から外して、それから SIGTERM。この順序のおかげで、SIGTERM が届く頃には、新しいリクエストはもう来ていないはずです。
@@ -430,13 +469,22 @@ task の外にデータがあるなら、それを両方の版が読み書きし
 
 <<< @/examples/12-containers/test/versions.test.ts{rollout}
 
-```text
-records (outlive every task)       task running v1                 task running v2
-t1  POST /notes -> v1              writes {id,title,body,createdAt}
-t2  POST /notes -> v2                                              writes {..., pinned:false}
-t3  GET  /notes -> v1              reads both; drops "pinned"
-t4  GET  /notes -> v2                                              reads both; fills pinned=false
-t5  rollback: v2 stops             still reads what v2 wrote
+```figure
+caption: record はどの task よりも長く残るので、v1 と v2 は互いが書いた record を読むことになる
+type: sequence
+actor v1: v1 の task
+actor rec: record | どの task よりも長く残る
+actor v2: v2 の task
+step v1 -> rec: t1 POST /notes
+note rec: {id,title,body,createdAt}
+step v2 -> rec: t2 POST /notes
+note rec: {..., pinned:false}
+step rec --> v1: t3 GET /notes: 両方読む
+note v1: "pinned" を捨てる
+step rec --> v2: t4 GET /notes: 両方読む
+note v2: pinned=false で埋める
+note v2: t5 rollback: v2 が止まる
+step rec --> v1: t5 v2 が書いたものもまだ読む
 ```
 
 壊れるほうの 2 つは、こう壊れます。

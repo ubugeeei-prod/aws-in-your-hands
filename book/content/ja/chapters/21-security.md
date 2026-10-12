@@ -1,9 +1,9 @@
 ---
-title: "21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations"
+title: "21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations"
 revision: 1
 ---
 
-# 21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations
+# 21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations
 
 ここまで、いくつも「それは 21章で」と先送りにしてきました。01章の `AdministratorAccess` を絞る話。03章の WAF。04章の「秘密は環境変数に置かない」。この章で、まとめて引き受けます。
 
@@ -68,21 +68,23 @@ GuardDuty が無効でも、タスクは落ちません。それは選択だか�
 
 題材は、小さな token API です。`/token` が署名つきの token を発行し、`/verify` がそれを検証します。署名に使う鍵が、この章の「secret」です。
 
-```text
-viewer
-  | HTTPS, GET and HEAD only
-  v
-CloudFront distribution  <---- web ACL (AihSecurityWaf, us-east-1)   only with -c webAclArn=...
-  | origin access control signs each origin request (SigV4)
-  v
-Lambda function URL, AuthType AWS_IAM      unsigned requests get 403 before the function runs
-  v
-Lambda function (HandlerRole)
-  | secretsmanager:GetSecretValue on one secret, about once per 5 minutes per execution environment
-  v
-Secrets Manager secret  <---- encrypted with aws/secretsmanager, or a customer managed key with -c cmk=on
-
-CloudTrail event history records the management calls above (CreateRole, PutSecretValue, ...) for 90 days
+```figure
+caption: viewer から secret までの経路に、WAF、関数の role、secret を暗号化する鍵が並び、CloudTrail がそれらへの管理操作を記録する
+node viewer: Viewer | HTTPS, GET と HEAD だけ
+node waf: Web ACL | AihSecurityWaf (us-east-1), -c webAclArn=... のときだけ
+node cf: CloudFront | distribution
+node url: Lambda function URL | AuthType AWS_IAM, 署名なしは 403
+node fn: Lambda function | HandlerRole
+node secret: Secrets Manager secret
+node key: KMS key | aws/secretsmanager, -c cmk=on なら customer managed key
+node trail: CloudTrail event history | CreateRole, PutSecretValue, ... を 90 日
+edge viewer -> cf
+edge waf -> cf
+edge cf -> url: OAC が SigV4 で署名
+edge url -> fn
+edge fn -> secret: GetSecretValue, 実行環境ごとに約 5 分に 1 回
+edge secret -> key: 暗号化に使う鍵
+edge secret --> trail: 管理操作を記録
 ```
 
 上から順に、この章の話題が並んでいます。入口に WAF。関数の role。secret と、それを暗号化する鍵。そして、それらへの操作を記録する CloudTrail。
@@ -255,20 +257,28 @@ vp run dev:sec
 
 cache すると、分散システムの問題が 1 つ生まれます。Lambda の実行環境は、それぞれ自分の cache を持っています。読み込んだ時刻もばらばらです。そこで secret を入れ替えると、どうなるでしょう。
 
-```text
-time   Secrets Manager          environment A              environment B
-t0     v1 = AWSCURRENT          caches v1                  caches v1
-t1     rotate:
-       v2 = AWSCURRENT
-       v1 = AWSPREVIOUS         still signs with v1        still signs with v1
-t2                              cache expires, reloads
-                                signs with v2
-t3                                                         gets a token signed with v2
-                                                           v2 is not in its cache -> reload -> accepts
-t4                              gets a token signed by B
-                                with v1 = AWSPREVIOUS
-                                -> accepts
-t5                                                         cache expires, reloads, signs with v2
+```figure
+caption: secret を入れ替えると、cache を読み込んだ時刻が違う 2 つの実行環境が、しばらく別々の鍵で署名する
+type: sequence
+actor sm: Secrets Manager
+actor a: 実行環境 A
+actor b: 実行環境 B
+note sm: t0: v1 = AWSCURRENT
+note a: v1 を cache
+note b: v1 を cache
+step sm -> sm: t1: rotate, v2 = AWSCURRENT
+note sm: v1 = AWSPREVIOUS
+note a: まだ v1 で署名
+note b: まだ v1 で署名
+step a -> sm: t2: cache が切れて読み直す
+note a: v2 で署名
+step a -> b: t3: v2 で署名した token
+step b -> sm: cache に v2 がないので読み直す
+note b: 受け入れる
+step b -> a: t4: v1 で署名した token
+note a: v1 = AWSPREVIOUS なので受け入れる
+step b -> sm: t5: cache が切れて読み直す
+note b: v2 で署名
 ```
 
 t1 から t5 のあいだ、2 つの鍵が同時に使われています。どちらで署名した token も、どちらの実行環境でも通らないといけません。守りたいことを 1 文にします。

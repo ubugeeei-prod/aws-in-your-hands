@@ -1,9 +1,9 @@
 ---
-title: 03 SPA を公開する: private S3 origin と CloudFront
+title: 03 Static Hosting: private S3 origin と CloudFront
 revision: 2
 ---
 
-# 03 SPA を公開する: private S3 origin と CloudFront
+# 03 Static Hosting: private S3 origin と CloudFront
 
 道具はそろいました。最初に公開するのは、ブラウザだけで動くノートアプリです。
 
@@ -15,21 +15,32 @@ revision: 2
 
 <!-- section: 03.architecture -->
 
-```text
-Browser
-  |  HTTPS
-  v
-CloudFront distribution (edge locations)
-  |  viewer-request: CloudFront Function "spa-fallback"
-  |    /notes/abc        -> /index.html
-  |    /assets/app-1a.js -> unchanged
-  |  cache
-  |  SigV4-signed request (origin access control)
-  v
-S3 bucket (ap-northeast-1, Block Public Access on)
-  index.html
-  assets/index-<hash>.js
-  assets/index-<hash>.css
+```figure
+caption: ブラウザが話す相手は CloudFront だけで、CloudFront が署名付きの要求で S3 bucket のファイルを読みます。
+node browser: Browser
+node fn: CloudFront Function | viewer-request, "spa-fallback"
+node cache: cache
+node index: index.html
+node js: assets/index-<hash>.js
+node css: assets/index-<hash>.css
+edge browser -> fn: HTTPS
+edge fn -> cache
+edge cache -> index: SigV4 (origin access control)
+edge cache -> js
+edge cache -> css
+group cf: CloudFront distribution (edge locations) = fn, cache
+group s3: S3 bucket (ap-northeast-1, Block Public Access on) = index, js, css
+```
+
+```figure
+caption: spa-fallback の関数は /notes/abc を /index.html に書き換え、/assets/app-1a.js はそのままにします。
+direction: right
+node screen: /notes/abc
+node file: /assets/app-1a.js
+node rewritten: /index.html
+node same: そのまま
+edge screen -> rewritten: spa-fallback
+edge file -> same: spa-fallback
 ```
 
 何がどこで動くのか、先に整理しておきましょう。

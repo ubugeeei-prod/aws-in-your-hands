@@ -1,9 +1,9 @@
 ---
-title: "22 Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup"
+title: "22 Backup: PITR, Snapshots, S3 Versioning, and AWS Backup"
 sourceRevision: 1
 ---
 
-# 22 Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup
+# 22 Backup: PITR, Snapshots, S3 Versioning, and AWS Backup
 
 [Chapter 05](/en/chapters/05-dynamodb.md) said "getting back data you deleted by mistake is chapter 22" and moved on. [Chapter 07](/en/chapters/07-uploads.md) left the same homework for the image bucket. This is where we do it.
 
@@ -19,26 +19,38 @@ You need chapters 05 and 07. The inspection records of [chapter 08](/en/chapters
 
 <!-- section: 22.overview -->
 
-```text
-vp run recovery:*   (your laptop, your credentials)
-  |  seed, accident      write and delete the way the app does (owner "drill")
-  |  restore:table       RestoreTableToPointInTime --> a NEW table, outside the stack
-  |  restore:objects     delete markers removed, old versions copied on top
-  |  verify, repair      Scan + ListObjectsV2, then the fixes
-  v
-DynamoDB table "Notes"                          S3 bucket "Uploads"
-  point-in-time recovery: on                      versioning: on
-  NOTE#...  ATTACHMENT#...  INSPECTION#...        u/<owner>/<note>/<attachment>
-  any second of the last 35 days                  old versions kept 30 days
-        |                                               |
-        +---- as of T1 ----  must agree  ---- as of T2 --+
+```figure
+caption: The recovery tasks write to the table and the bucket from your laptop, cause the accident, restore each one separately, then compare them and repair
+type: sequence
+actor cli: vp run recovery:* | your laptop, your credentials
+actor table: DynamoDB table Notes
+actor bucket: S3 bucket Uploads
+step cli -> table: seed, accident
+step cli -> bucket: seed, accident
+note cli: the way the app does (owner "drill")
+step cli -> table: restore:table
+note table: RestoreTableToPointInTime
+note table: a new table, outside the stack
+step cli -> bucket: restore:objects
+note bucket: delete markers removed
+note bucket: old versions copied on top
+step table --> bucket: T1 and T2 must agree
+step cli -> table: verify: Scan
+step cli -> bucket: verify: ListObjectsV2
+note cli: repair: then the fixes
+```
 
-Lambda function "Audit" (read-only)
-  Scan + ListObjectsV2, counts what does not line up
-  TABLE_NAME = the stack's table, or a restored one after `-c table=<name>`
-
-only with -c backup=on    AWS Backup vault + one snapshot a day, kept 7 days
-only with -c replica=on   second bucket + S3 Replication (delete markers not replicated)
+```figure
+caption: The stack creates the table, the bucket, and the function that checks them, and the two at the bottom are added only when asked for
+node audit: Lambda function Audit | read-only, counts what does not line up
+node table: DynamoDB table Notes | point-in-time recovery, any second of the last 35 days
+node bucket: S3 bucket Uploads | versioning, old versions kept 30 days
+node vault: AWS Backup vault | one snapshot a day, kept 7 days
+node replica: Second bucket | S3 Replication, delete markers not replicated
+edge audit -> table: Scan (TABLE_NAME: a restored table after -c table=<name>)
+edge audit -> bucket: ListObjectsV2
+edge table -> vault: only with -c backup=on
+edge bucket -> replica: only with -c replica=on
 ```
 
 The stack creates one table, one bucket, and one function. The table holds what chapters 05, 07, and 08 put there, in the same shapes: notes, attachment records, and inspection records, all in one table. The bucket uses the keys of chapter 07's image store.
@@ -164,20 +176,34 @@ Chapter 08's worker is affected too. In a bucket with versioning, an ordinary de
 
 Now for the main subject.
 
-```text
-time ------------------------------------------------------------------->
-          T0                 T1                 T2               now
-          |                  |                  |                 |
-table     record A written   (restore point)    record A deleted
-bucket    object A written                      delete marker on A
+```figure
+caption: Restoring only the table to T1 and leaving the bucket at "now" leaves a record that points at nothing
+type: sequence
+actor table: table
+actor bucket: bucket
+note table: T0: record A written
+note bucket: T0: object A written
+note table: T1: the restore point
+note table: T2: record A deleted
+note bucket: T2: delete marker on A
+step table -> table: now: restore the table to T1
+note bucket: now: left as it is
+note table: "A has an image"
+note bucket: "A was deleted"
+step table -x bucket: a record that points at nothing
+```
 
-restore the table to T1, leave the bucket at "now":
-  table says   "A has an image"
-  bucket says  "A was deleted"          --> a record that points at nothing
-
-restore the table to T1, where an upload finished at T2 instead:
-  table says   nothing about it
-  bucket says  "here are the bytes"     --> an object nobody points at
+```figure
+caption: If an upload finished at T2 instead, restoring the table to T1 leaves an object nobody points at
+type: sequence
+actor table: table
+actor bucket: bucket
+note table: T1: the restore point
+note bucket: T2: an upload finishes
+step table -> table: now: restore the table to T1
+note table: says nothing about it
+note bucket: "here are the bytes"
+step bucket -x table: an object nobody points at
 ```
 
 The table can go back to any second you like. The bucket goes back by choosing a version again for each key. AWS has no mechanism that lines the two up at "the same instant". Lining them up is your job, and it usually ends a little off. Restoring only the table and forgetting the bucket is common, too.

@@ -15,19 +15,37 @@ To be honest up front: what has been checked locally is the build, the link chec
 
 <!-- section: book.architecture -->
 
-```text
-book/content/{ja,en}/**/*.md  +  data/*.json  +  examples/** (snippets)
-  |  vp run build:book  (Ox Content, static site generation)
-  v
-book/dist/
-  index.html  404.html  search-index.json
-  ja/.../index.html  en/.../index.html
-  assets/<name>-<hash>.{css,js}
-  |  vp run book:publish  (S3 PutObject; does not touch infrastructure)
-  v
-S3 bucket (private)  <--  CloudFront distribution  <--  Reader
-                            viewer-request: url-rewrite function
-                            403/404 from S3 -> /404.html with status 404
+```figure
+caption: The pages, the data, and the example snippets are built into book/dist/, and publish puts that in S3
+node content: book/content/{ja,en}/**/*.md
+node data: data/*.json
+node examples: examples/** | snippets
+node build: vp run build:book | Ox Content, static site generation
+node pages: index.html, 404.html | {ja,en}/.../index.html
+node assets: search-index.json | assets/<name>-<hash>.{css,js}
+node publish: vp run book:publish | S3 PutObject, does not touch infrastructure
+node s3: S3 bucket | private
+edge content -> build
+edge data -> build
+edge examples -> build
+edge build -> pages
+edge build -> assets
+edge pages -> publish
+edge assets -> publish
+edge publish -> s3
+group dist: book/dist/ = pages, assets
+```
+
+```figure
+caption: A reader's request goes through CloudFront to the private S3 bucket, and a 403 or 404 from S3 comes back as /404.html
+direction: right
+node reader: Reader
+node cf: CloudFront distribution | viewer-request: url-rewrite function
+node s3: S3 bucket | private
+edge reader -> cf
+edge cf -> s3
+edge s3 --x cf: 403/404
+edge cf --> reader: /404.html, status 404
 ```
 
 The book site and the SPA from Chapter 03 are separate things, with separate stacks, separate buckets, and separate URLs.

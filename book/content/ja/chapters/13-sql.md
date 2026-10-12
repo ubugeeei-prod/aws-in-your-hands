@@ -1,9 +1,9 @@
 ---
-title: "13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2"
+title: "13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2"
 revision: 1
 ---
 
-# 13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2
+# 13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2
 
 D1 で `CREATE TABLE` を書いて、`wrangler d1 migrations apply` して、Worker から SQL を投げる。あの流れを AWS でやるとどうなるか、がこの章です。
 
@@ -17,27 +17,43 @@ D1 で `CREATE TABLE` を書いて、`wrangler d1 migrations apply` して、Wor
 
 <!-- section: 13.architecture -->
 
-```text
-Client (curl, later the SPA)
-  |  HTTPS
-  v
-API Gateway HTTP API (ap-northeast-1)
-  |  routes: GET /health, GET|POST /notes, GET|PUT|DELETE /notes/{id}
-  v
-Lambda function (Node.js 24, arm64, not in a VPC)
-  |  execution role: dsql:DbConnect on this one cluster, and its own log group
-  |  Hono app -> NoteService -> SqlNoteRepository -> transaction runner (retries on SQLSTATE 40001)
-  |
-  |  PostgreSQL wire protocol over TLS, port 5432
-  |  user: notes_api (a database role)   password: an IAM-signed token, made in the function
-  v
-Aurora DSQL cluster (single-Region, ap-northeast-1)
-     database: postgres (the only one)
-     schema app: owners, notes          schema public: aih_migrations
+```figure
+caption: リクエストは API Gateway と Lambda function を通って、PostgreSQL の接続で Aurora DSQL cluster に届く
+node client: Client | curl, あとで SPA
+node api: API Gateway HTTP API | ap-northeast-1
+node fn: Lambda function | Node.js 24, arm64, VPC の外
+node db: Aurora DSQL cluster | single-Region, ap-northeast-1
+edge client -> api: HTTPS
+edge api -> fn: GET /health, GET|POST /notes, GET|PUT|DELETE /notes/{id}
+edge fn -> db: PostgreSQL wire protocol over TLS, port 5432
+mark db
+```
 
-Your laptop
-  vp run dev:sql                -> the same app on PGlite (PostgreSQL inside the Node process)
-  vp run sql:db:migrate         -> connects to the cluster as admin, with your own IAM credentials
+```figure
+caption: Lambda function は自分で cluster に接続し、database role の notes_api として、関数の中で作った IAM 署名つきの token を password にする
+node role: execution role | この cluster への dsql:DbConnect, 自分の log group
+node app: Hono app
+node svc: NoteService
+node repo: SqlNoteRepository
+node tx: transaction runner | SQLSTATE 40001 で retry
+node db: database postgres | app: owners, notes / public: aih_migrations
+edge app -> svc
+edge svc -> repo
+edge repo -> tx
+edge tx -> db: user notes_api, password は token
+group fn: Lambda function = role, app, svc, repo, tx
+group cl: Aurora DSQL cluster: database はこれ 1 つだけ = db
+```
+
+```figure
+caption: 手元のマシンからは、同じ app を PGlite の上で動かすか、admin として cluster につないで migration を流す
+node dev: vp run dev:sql | 同じ app を動かす
+node mig: vp run sql:db:migrate
+node pglite: PGlite | Node プロセスの中の PostgreSQL
+node db: Aurora DSQL cluster
+edge dev -> pglite
+edge mig -> db: admin, 自分の IAM 認証情報
+group laptop: 手元のマシン = dev, mig
 ```
 
 04章との違いは、Lambda の下に DB が 1 つ増えただけです。ノートの持ち主は、もう Lambda のメモリではなく cluster。どの実行環境が応答しても、同じノートが見えます。
@@ -199,19 +215,26 @@ D1 でも同じ SQL が書けます。ここは SQL のいいところですね�
 
 ノートを作るとき、「この owner は、まだ 100 件に達していないか」を確かめてから書きます。素直に書くなら、件数を数えて、少なければ `INSERT`。でも、それを同時に 2 つ実行するとどうなるでしょう。上限を 2 件、いま 1 件、として追ってみます。
 
-```text
-quota = 2, the owner already has 1 note
-
-time  transaction A (POST /notes)            transaction B (POST /notes)
-t1    BEGIN  (sees note_count = 1)
-t2                                           BEGIN  (sees note_count = 1)
-t3    UPDATE owners SET note_count = 2
-t4    INSERT INTO notes ...                  UPDATE owners SET note_count = 2
-t5    COMMIT -> ok                           INSERT INTO notes ...
-t6                                           COMMIT -> SQLSTATE 40001 (OC000); nothing of B is applied
-t7                                           BEGIN again  (sees note_count = 2)
-t8                                           UPDATE ... WHERE note_count < 2 -> 0 rows
-t9                                           COMMIT; the API answers quota_exceeded
+```figure
+caption: 上限が 2 件で、owner がすでに 1 件持っているとき、同時に走った 2 つの transaction のうち B は commit で負け、やり直して上限に当たる
+type: sequence
+actor a: transaction A | POST /notes
+actor db: Aurora DSQL
+actor b: transaction B | POST /notes
+step a -> db: t1 BEGIN (note_count = 1 を見る)
+step b -> db: t2 BEGIN (note_count = 1 を見る)
+step a -> db: t3 UPDATE owners SET note_count = 2
+step a -> db: t4 INSERT INTO notes ...
+step b -> db: t4 UPDATE owners SET note_count = 2
+step a -> db: t5 COMMIT: ok
+step b -> db: t5 INSERT INTO notes ...
+step b -x db: t6 COMMIT: SQLSTATE 40001 (OC000)
+note b: B が書いたものは何も適用されない
+step b -> db: t7 再び BEGIN (note_count = 2 を見る)
+step b -> db: t8 UPDATE ... WHERE note_count < 2
+note b: t8 0 行
+step b -> db: t9 COMMIT
+note b: API は quota_exceeded を返す
 ```
 
 Aurora DSQL の transaction は、始まった時点のデータを最後まで読み続けます（snapshot isolation）。B は t2 の時点の `note_count = 1` を見ているので、t4 の `UPDATE` は何事もなく通ります。A がもう書いたことを、B は知りません。

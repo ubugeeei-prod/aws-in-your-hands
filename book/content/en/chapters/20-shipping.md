@@ -1,9 +1,9 @@
 ---
-title: "20 Ship Changes: CI/CD, OIDC, Environments, Previews, Rollback, and Drift"
+title: "20 CI/CD: OIDC, Environments, Previews, Rollback, and Drift"
 sourceRevision: 1
 ---
 
-# 20 Ship Changes: CI/CD, OIDC, Environments, Previews, Rollback, and Drift
+# 20 CI/CD: OIDC, Environments, Previews, Rollback, and Drift
 
 So far, every chapter has deployed from your machine, with your credentials, using cdkd. That is a fast way to learn. But we kept saying "the production path is in chapter 20" and "not deploying with a person's credentials is in chapter 20", didn't we?
 
@@ -17,19 +17,54 @@ You need [chapter 02](/en/chapters/02-toolchain.md) and [chapter 04](/en/chapter
 
 <!-- section: 20.architecture -->
 
-```text
-developer laptop                 GitHub Actions                      AWS account (ap-northeast-1)
+```figure
+caption: The laptop and GitHub Actions use the same flake.lock, the same pnpm-lock.yaml, and the same vp run tasks, and no AWS access key is stored anywhere because each job trades a GitHub OIDC token for one-hour credentials
+direction: right
+node laptop: Developer laptop | check:all, ship:cfn:synth
+node gha: GitHub Actions | pr, deploy, drift, preview
+node aws: AWS account | ap-northeast-1
+edge laptop -> gha: git push
+edge gha -> aws: OIDC token
+edge aws --> gha: one-hour credentials
+```
 
-vp run check:all                 pr.yml      check: check:all        (no AWS)
-vp run ship:cfn:synth                        plan:  ship:cfn:diff --> PlanRole    -> cdk lookup role (read only)
-git push ----------------------> deploy.yml  check:all, status,
-                                             ship:cfn:deploy     --> DeployRole  -> cdk deploy role -> CloudFormation
-                                             ship:smoke                             cfn-exec role creates AihShipApiProd
-                                 drift.yml   ship:cfn:drift      --> DriftRole   -> DetectStackDrift (read only)
-                                 preview.yml deploy / destroy    --> PreviewRole -> AihShipApiPr<number>
+```figure
+caption: Each of the four workflows that touch AWS uses its own IAM role
+direction: right
+node pr: pr.yml | check: check:all (no AWS)
+node deploy: deploy.yml | check:all, status, ship:smoke
+node drift: drift.yml
+node preview: preview.yml
+node plan: PlanRole
+node deployrole: DeployRole
+node driftrole: DriftRole
+node previewrole: PreviewRole
+edge pr -> plan: plan: ship:cfn:diff
+edge deploy -> deployrole: ship:cfn:deploy
+edge drift -> driftrole: ship:cfn:drift
+edge preview -> previewrole: deploy / destroy
+group gha: GitHub Actions = pr, deploy, drift, preview
+group aws: AWS account (ap-northeast-1) = plan, deployrole, driftrole, previewrole
+```
 
-same flake.lock, same pnpm-lock.yaml, same `vp run` tasks on both sides
-no AWS access key is stored anywhere: each job trades a GitHub OIDC token for one-hour credentials
+```figure
+caption: Each of the four roles reaches something different, and only DeployRole and PreviewRole can create a stack
+direction: right
+node plan: PlanRole | pr.yml
+node deployrole: DeployRole | deploy.yml
+node driftrole: DriftRole | drift.yml
+node previewrole: PreviewRole | preview.yml
+node lookup: cdk lookup role | read only
+node cdkdeploy: cdk deploy role | to CloudFormation
+node detect: DetectStackDrift | read only
+node prstack: AihShipApiPr<number> | preview stack
+node cfn: CloudFormation | cfn-exec role creates AihShipApiProd
+edge plan -> lookup
+edge deployrole -> cdkdeploy
+edge driftrole -> detect
+edge previewrole -> prstack
+edge cdkdeploy -> cfn
+group aws: AWS account (ap-northeast-1) = plan, deployrole, driftrole, previewrole, lookup, cdkdeploy, detect, prstack, cfn
 ```
 
 There are three places, left to right.
@@ -156,16 +191,23 @@ The plainest way into AWS from CI is to put an IAM user's access key in a GitHub
 
 With OIDC (OpenID Connect) there is no key to store.
 
-```text
-GitHub Actions job             GitHub OIDC issuer            AWS STS                 IAM role (trust policy)
-  | permissions: id-token: write     |                          |                           |
-  |--- request a token (aud=sts) --->|                          |                           |
-  |<-- signed JWT: iss, aud, sub ----|                          |                           |
-  |--- AssumeRoleWithWebIdentity(role ARN, JWT) --------------->|                           |
-  |                                  |                          |--- signature valid?       |
-  |                                  |                          |--- aud == sts.amazonaws.com?
-  |                                  |                          |--- sub == exactly this? ->|
-  |<-- access key, secret key, session token (valid for 1 hour) |                           |
+```figure
+caption: The job shows STS a token signed by GitHub and gets back credentials that work for one hour
+type: sequence
+actor job: GitHub Actions job | id-token: write
+actor issuer: GitHub OIDC issuer
+actor sts: AWS STS
+actor role: IAM role | trust policy
+step job -> issuer: request a token (aud=sts)
+step issuer --> job: signed JWT: iss, aud, sub
+step job -> sts: AssumeRoleWithWebIdentity
+note job: sends role ARN and JWT
+step sts -> sts: signature valid?
+step sts -> sts: aud == sts.amazonaws.com?
+step sts -> role: sub == exactly this?
+step sts --> job: credentials, valid 1 hour
+note job: access key, secret key
+note job: session token
 ```
 
 The job asks GitHub for a signed token that says who it is, and shows that to AWS STS. STS checks the signature, compares the token with the role's trust policy, and if they match, returns credentials that work for one hour. All GitHub stores is the role's ARN and the account ID. Neither is a secret.
@@ -336,14 +378,23 @@ Put step 4 in the same deploy as step 2, and that deploy can no longer be rolled
 
 We have been talking about a deploy as one event. In fact it is a sequence of dozens of API calls, and it can stop anywhere along it.
 
-```text
-time  CloudFormation stack status              what a caller of the API gets
-t1    UPDATE_IN_PROGRESS                       old code (alias `live` -> version 7)
-t2    (new AWS::Lambda::Version 8 created)     old code
-t3    (alias `live` moved to version 8)        new code
-t4    (another resource fails to update)       new code
-t5    UPDATE_ROLLBACK_IN_PROGRESS              new code, then old code once the alias is put back
-t6    UPDATE_ROLLBACK_COMPLETE                 old code; whatever was written during t3..t5 stays written
+```figure
+caption: Before the stack finishes rolling back, there is a stretch where the new code answers the API's callers
+type: sequence
+actor cfn: CloudFormation stack
+actor caller: API caller
+note cfn: t1: UPDATE_IN_PROGRESS
+note caller: old code (alias live -> version 7)
+step cfn -> cfn: t2: AWS::Lambda::Version 8 created
+note caller: old code
+step cfn -> cfn: t3: alias live moved to version 8
+note caller: new code
+step cfn -x cfn: t4: another resource fails to update
+note caller: new code
+note cfn: t5: UPDATE_ROLLBACK_IN_PROGRESS
+note caller: new code, then old once the alias is back
+note cfn: t6: UPDATE_ROLLBACK_COMPLETE
+note caller: old code; writes from t3..t5 stay written
 ```
 
 This is one example (which resource is updated in which order follows from the dependencies in the template). What matters is t3 to t5. During that time the new code answers production requests. Afterwards the stack says "back to the way it was", but the data written in between has not gone back.

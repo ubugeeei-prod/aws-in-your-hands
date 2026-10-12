@@ -1,9 +1,9 @@
 ---
-title: "04 HTTP API を足す: Lambda と API Gateway HTTP API"
+title: "04 HTTP API: Lambda と API Gateway HTTP API"
 revision: 3
 ---
 
-# 04 HTTP API を足す: Lambda と API Gateway HTTP API
+# 04 HTTP API: Lambda と API Gateway HTTP API
 
 SPA は公開できました。次は API です。
 
@@ -17,19 +17,35 @@ SPA は公開できました。次は API です。
 
 <!-- section: 04.architecture -->
 
-```text
-Client (curl, typed client, later the SPA)
-  |  HTTPS
-  v
-API Gateway HTTP API (ap-northeast-1)
-  |  routes: GET /health, GET|POST /notes, GET|DELETE /notes/{id}
-  |  anything else: 404 from API Gateway, Lambda is not invoked
-  v
-Lambda function (Node.js 24, arm64, 256 MB, timeout 10 s)
-  |  execution role: may write to its own log group, nothing else
-  |  Hono app -> NoteService -> InMemoryNoteRepository (per execution environment)
-  v
-CloudWatch Logs (one JSON line per request, kept 7 days)
+```figure
+caption: API Gateway は route に合うリクエストだけを Lambda 関数に渡し、関数は CloudWatch Logs に書き出します。
+node client: Client | curl、型付き client、のちに SPA
+node health: /health | GET
+node notes: /notes | GET, POST
+node note: /notes/{id} | GET, DELETE
+node other: それ以外 | 404、Lambda は呼ばれない
+node fn: Lambda 関数 | Node.js 24, arm64, 256 MB, timeout 10 s
+node logs: CloudWatch Logs | リクエストごとに JSON 1 行、7 日保持
+edge client -> health: HTTPS
+edge client -> notes
+edge client -> note
+edge client -> other
+edge health -> fn
+edge notes -> fn
+edge note -> fn
+edge fn -> logs: 実行 role: 自分の log group だけ
+group api: API Gateway HTTP API (ap-northeast-1) = health, notes, note, other
+```
+
+```figure
+caption: Lambda 関数の中では、Hono app が NoteService を呼び、NoteService がメモリ上の repository にノートを置きます。
+direction: right
+node hono: Hono app
+node service: NoteService
+node repo: InMemoryNoteRepository | 実行環境ごと
+edge hono -> service
+edge service -> repo
+group fn: Lambda 関数 = hono, service, repo
 ```
 
 登場人物は 3 つです。
@@ -208,12 +224,22 @@ Lambda は、関数を「実行環境（execution environment）」という隔�
 
 さて、何が起きるでしょう。
 
-```text
-time  request            execution environment A      execution environment B
-t1    POST /notes  -->   created; Map = {n1}
-t2    GET /notes   -->   reused;  returns [n1]
-t3    GET /notes   --->  (busy with another request)  created; Map = {}; returns []
-t4    (idle for a while) discarded; n1 is gone
+```figure
+type: sequence
+caption: 実行環境はそれぞれ自分の Map を持つので、同じ GET /notes でも t2 と t3 で答えが違います。
+actor client: Client
+actor a: 実行環境 A
+actor b: 実行環境 B
+step client -> a: t1 POST /notes
+note a: 作られる。Map = {n1}
+step client -> a: t2 GET /notes
+step a --> client: 使い回し。[n1] を返す
+step client -> b: t3 GET /notes
+note a: 別のリクエストを処理中
+note b: 作られる。Map = {}
+step b --> client: [] を返す
+note a: t4 しばらく使われない
+note a: 破棄。n1 は消える
 ```
 
 t3 を見てください。A が別のリクエストを処理している最中に次のリクエストが来ると、Lambda は 2 つ目の箱 B を作ります。B の `Map` は空っぽです。t2 と同じ URL を呼んだのに、答えが違う。

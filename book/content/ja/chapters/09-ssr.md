@@ -1,9 +1,9 @@
 ---
-title: "09 SSR と BFF: Nuxt をリージョンの Lambda で動かす"
+title: "09 SSR: BFF、Nuxt をリージョンの Lambda で動かす"
 revision: 1
 ---
 
-# 09 SSR と BFF: Nuxt をリージョンの Lambda で動かす
+# 09 SSR: BFF、Nuxt をリージョンの Lambda で動かす
 
 03章では、できあがった HTML と JavaScript を S3 に置いて配りました。04章では、リクエストのたびに動く関数を Lambda にのせました。この章はその 2 つを合わせます。Nuxt のアプリを Lambda で動かして、リクエストごとに HTML を組み立てて返します。server-side rendering（SSR）です。
 
@@ -15,21 +15,28 @@ revision: 1
 
 <!-- section: 09.architecture -->
 
-```text
-Browser
-  |  HTTPS
-  v
-CloudFront distribution (edge locations)
-  |- /_nuxt/*        -> S3 bucket (private, OAC)      hashed JS and CSS
-  |- /me, /me/*      -> Lambda function URL (OAC)     never cached, cookies forwarded
-  `- everything else -> Lambda function URL (OAC)     cached only if the response allows it, cookies dropped
-                          |
-                          v
-                 Lambda function (ap-northeast-1, Node.js 24, arm64, 512 MB, timeout 10 s)
-                   Nitro handler: Nuxt renders pages, server routes answer /api/* and /me/*
-                          |
-                          v
-                 CloudWatch Logs (kept 7 days)
+```figure
+caption: CloudFront が path で行き先を 3 つに分け、/_nuxt/* は S3 が、それ以外は Lambda が答える
+node browser: Browser
+node cf: CloudFront distribution | edge locations
+node nuxt: /_nuxt/*
+node me: /me, /me/* | cache しない、cookie を転送
+node other: それ以外 | 応答が許すときだけ cache、cookie は落とす
+node s3: S3 bucket | private, OAC
+node furl: Lambda function URL | OAC
+node nitro: Nitro handler | Nuxt が page を描画、server route が /api/* と /me/* に答える
+node logs: CloudWatch Logs | 7 日保持
+edge browser -> cf: HTTPS
+edge cf -> nuxt
+edge cf -> me
+edge cf -> other
+edge nuxt -> s3: hash 付きの JS と CSS
+edge me -> furl
+edge other -> furl
+edge furl -> nitro
+edge nitro -> logs
+group fn: Lambda function (ap-northeast-1, Node.js 24, arm64, 512 MB, timeout 10 s) = furl, nitro
+mark nitro
 ```
 
 入口は CloudFront の distribution が 1 つ。path を見て、行き先を 3 つに分けます。
@@ -273,15 +280,18 @@ hook が 2 つあるのがポイントです。リクエストが来た時点で
 
 サーバーで HTML を組み立てるなら、サーバーが API を呼ぶことになります。それなら token もサーバーに持たせればいい。ブラウザに渡すのは、それ自体には意味のない session ID だけ。画面のために置かれて、ブラウザの代わりに token を持つサーバーを、backend for frontend（BFF）と呼びます。
 
-```text
-Browser                     BFF (the Nuxt server)                  API behind it
-   |  Cookie: session id         |                                      |
-   |---------------------------->|  session id -> access token          |
-   |                             |------------------------------------->|
-   |                             |  Authorization: Bearer <token>       |
-   |                             |<-------------------------------------|
-   |<----------------------------|  profile                             |
-   |  HTML or JSON, no token     |                                      |
+```figure
+caption: ブラウザが持つのは session ID だけで、access token は BFF が持って API を呼ぶ
+type: sequence
+actor browser: Browser
+actor bff: BFF | Nuxt のサーバー
+actor api: 後ろの API
+step browser -> bff: Cookie: session id
+step bff -> bff: session id -> access token
+step bff -> api: Authorization: Bearer <token>
+step api --> bff: profile
+step bff --> browser: HTML か JSON。token なし
+mark bff
 ```
 
 先に正直に言っておくと、この章の BFF は手元でしか動きません。理由はあとでまとめます。まずコードを。
@@ -506,15 +516,24 @@ cache は、古い内容を返す仕組みでもあります。速さと引き�
 
 60 秒という数字は 1 か所（`SHARED_SECONDS`）にあって、アプリのヘッダーと、CloudFront の `maxTtl` の両方がそこから作られます。
 
-```text
-time   event                               reader in Tokyo         reader in London
-t0     note "A" is published (deploy)
-t0+5   Tokyo reader opens /                Lambda renders; cached
-t0+20  London reader opens /                                       Lambda renders; cached at another edge
-t0+30  note "B" is published (deploy)
-t0+40  both reload                         still without B         still without B
-t0+65  Tokyo reader reloads                Lambda renders; has B
-t0+80  London reader reloads                                       Lambda renders; has B
+```figure
+caption: cache は edge location ごとに別々なので、新しいノートが見え始める時刻は読者によって違う
+type: sequence
+actor tokyo: 東京の読者
+actor lambda: Lambda
+actor london: ロンドンの読者
+note lambda: t0 ノート "A" を公開 (deploy)
+step tokyo -> lambda: t0+5 / を開く
+step lambda --> tokyo: 描画する。cache される
+step london -> lambda: t0+20 / を開く
+step lambda --> london: 描画する。別の edge に cache される
+note lambda: t0+30 ノート "B" を公開 (deploy)
+note tokyo: t0+40 再読み込み: まだ B がない
+note london: t0+40 再読み込み: まだ B がない
+step tokyo -> lambda: t0+65 再読み込み
+step lambda --> tokyo: 描画する。B がある
+step london -> lambda: t0+80 再読み込み
+step lambda --> london: 描画する。B がある
 ```
 
 cache は edge location ごとに別々です。同じ瞬間に、東京の読者は新しい一覧を、ロンドンの読者は古い一覧を見ていることがあります。全員が同時に切り替わる、とは言えません。言えるのは、「どの読者も、60 秒を超えて古いものは見ない」までです。

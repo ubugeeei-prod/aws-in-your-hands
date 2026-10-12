@@ -1,9 +1,9 @@
 ---
-title: "05 ノートを保存する: DynamoDB"
+title: "05 NoSQL: DynamoDB"
 revision: 2
 ---
 
-# 05 ノートを保存する: DynamoDB
+# 05 NoSQL: DynamoDB
 
 04章の API は、ノートをメモリに置いていました。箱が変われば答えが変わるし、しばらくすると消えます。この章で、ちゃんと保存しましょう。
 
@@ -19,19 +19,16 @@ SQL で書きたいデータなら、この章を飛ばして [13章](/ja/chapte
 
 <!-- section: 05.architecture -->
 
-```text
-Client
-  |  HTTPS
-  v
-API Gateway HTTP API
-  |  routes: GET /health, GET|POST /notes, GET|PUT|DELETE /notes/{id}
-  v
-Lambda function (any number of execution environments; they hold no notes)
-  |  execution role: GetItem, PutItem, UpdateItem, DeleteItem, Query on one table
-  |  AWS SDK for JavaScript v3
-  v
-DynamoDB table (ap-northeast-1, on-demand)
-  pk = OWNER#<owner>    sk = NOTE#<note id>    version, title, body, ...
+```figure
+caption: リクエストは API Gateway と Lambda を通り、ノートは DynamoDB の table に保存される
+node client: Client
+node api: API Gateway HTTP API
+node fn: Lambda function (AWS SDK for JavaScript v3) | 実行環境はいくつでも。ノートは持たない
+node table: DynamoDB table (ap-northeast-1, on-demand) | pk = OWNER#<owner>, sk = NOTE#<note id>, version, title, body, ...
+edge client -> api: HTTPS
+edge api -> fn: GET /health, GET|POST /notes, GET|PUT|DELETE /notes/{id}
+edge fn -> table: execution role: GetItem, PutItem, UpdateItem, DeleteItem, Query
+mark table
 ```
 
 04章と違うのは、いちばん下です。状態の持ち主が、ひとつひとつの実行環境から table に変わりました。実行環境がいくつあっても、いつ消えても、もう困りません。
@@ -115,12 +112,24 @@ Cloudflare Workers なら、D1 や KV は binding として `env` に現れま�
 
 2 つのタブで同じノートを開いて、両方で編集して保存する。さて、何が起きるでしょう。
 
-```text
-time  tab A                          tab B                          stored
-t1    GET  -> version 1              GET  -> version 1              v1 "draft"
-t2    PUT expectedVersion=1 -> 200                                  v2 "from A"
-t3                                   PUT expectedVersion=1 -> 409   v2 "from A"
-t4                                   shows A's text next to its own
+```figure
+caption: 2 つのタブが同じ version から保存すると、先の保存だけが通り、後の保存は 409 になる
+type: sequence
+actor a: tab A
+actor store: 保存されているノート
+actor b: tab B
+note store: v1 "draft"
+step a -> store: t1 GET
+step store --> a: version 1
+step b -> store: t1 GET
+step store --> b: version 1
+step a -> store: t2 PUT expectedVersion=1
+step store --> a: 200
+note store: v2 "from A"
+step b -> store: t3 PUT expectedVersion=1
+step store --x b: 409
+note store: v2 "from A"
+note b: t4 A の文面を自分のと並べて表示
 ```
 
 t3 で B の保存を通してしまうと、A の変更は誰にも知られないまま消えます。これを防ぐのが楽観ロック（optimistic locking）です。先に鍵をかけるのではなく、書き込む瞬間に「自分が見ていた版のままか」を確かめます。
@@ -199,13 +208,20 @@ cursor は呼び出し側に渡って、また戻ってきます。戻ってき�
 
 ネットワーク越しの書き込みには、成功と失敗のほかに、3 つ目の結果があります。「分からない」です。
 
-```text
-time  client                               server                 stored
-t1    PUT expectedVersion=1  ----------->  applies the update     v2 "final"
-t2    (response is lost; timeout)  <--x--  200 OK
-t3    was it saved? unknown. retry:
-      PUT expectedVersion=1  ----------->  version is 2, not 1    v2 "final"
-t4    409 conflict, current = v2 "final"
+```figure
+caption: 応答が失われた保存を再試行すると、自分の 1 回目の書き込みが原因で 409 が返る
+type: sequence
+actor client: client
+actor server: server
+step client -> server: t1 PUT expectedVersion=1
+step server -> server: 更新を適用する
+note server: v2 "final"
+step server --x client: t2 200 OK（応答が失われる。timeout）
+step client -> client: t3 保存された？ 分からない。再試行
+step client -> server: t3 PUT expectedVersion=1
+step server -> server: version は 1 ではなく 2
+note server: v2 "final"
+step server --> client: t4 409 conflict, current = v2 "final"
 ```
 
 t2 の時点で、呼び出し側は保存が済んだかどうかを知りません。再試行しなければ、保存されていなかった場合に変更を失います。そこで再試行すると、t4 で 409 が返ってきます。原因は他人の書き込みではなく、**自分の 1 回目の書き込み**です。

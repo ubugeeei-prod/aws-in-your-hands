@@ -15,19 +15,37 @@ revision: 2
 
 <!-- section: book.architecture -->
 
-```text
-book/content/{ja,en}/**/*.md  +  data/*.json  +  examples/** (snippets)
-  |  vp run build:book  (Ox Content, static site generation)
-  v
-book/dist/
-  index.html  404.html  search-index.json
-  ja/.../index.html  en/.../index.html
-  assets/<name>-<hash>.{css,js}
-  |  vp run book:publish  (S3 PutObject; does not touch infrastructure)
-  v
-S3 bucket (private)  <--  CloudFront distribution  <--  Reader
-                            viewer-request: url-rewrite function
-                            403/404 from S3 -> /404.html with status 404
+```figure
+caption: 本文、data、example の snippet から book/dist/ をビルドし、publish が S3 に置く
+node content: book/content/{ja,en}/**/*.md
+node data: data/*.json
+node examples: examples/** | snippets
+node build: vp run build:book | Ox Content, static site generation
+node pages: index.html, 404.html | {ja,en}/.../index.html
+node assets: search-index.json | assets/<name>-<hash>.{css,js}
+node publish: vp run book:publish | S3 PutObject, infrastructure には触らない
+node s3: S3 bucket | private
+edge content -> build
+edge data -> build
+edge examples -> build
+edge build -> pages
+edge build -> assets
+edge pages -> publish
+edge assets -> publish
+edge publish -> s3
+group dist: book/dist/ = pages, assets
+```
+
+```figure
+caption: Reader の request は CloudFront を通って private な S3 bucket に届き、S3 の 403 と 404 は /404.html になって返る
+direction: right
+node reader: Reader
+node cf: CloudFront distribution | viewer-request: url-rewrite function
+node s3: S3 bucket | private
+edge reader -> cf
+edge cf -> s3
+edge s3 --x cf: 403/404
+edge cf --> reader: /404.html, status 404
 ```
 
 本のサイトと、03章の SPA は別のものです。stack も bucket も URL も別々です。
