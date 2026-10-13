@@ -24,9 +24,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 4,
       "translatedRevision": {
-        "en": 3
+        "en": 4
       },
       "checkedAt": "2026-10-11",
       "sourceIds": [
@@ -4535,6 +4535,73 @@
         "nitro-cdkd-property-coverage",
         "kms-pricing",
         "kms-deleting-keys"
+      ],
+      "writing": {
+        "ja": "complete",
+        "en": "complete"
+      },
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "69",
+      "slug": "web-functions",
+      "title": {
+        "ja": "Web Functions: Lambda で HTTP サーバーをそのまま動かす",
+        "en": "Web Functions: Running an HTTP Server on Lambda As It Is"
+      },
+      "prerequisites": ["04"],
+      "services": ["Lambda Web Functions", "S3", "IAM", "CloudWatch Logs", "CloudFormation"],
+      "samplePath": "examples/69-web-functions",
+      "sourceIds": [
+        "webfn-whats-new",
+        "webfn-news-blog",
+        "webfn-dg-overview",
+        "webfn-dg-concepts",
+        "webfn-dg-create",
+        "webfn-dg-revisions",
+        "webfn-dg-deployment",
+        "webfn-dg-endpoints",
+        "webfn-dg-code-s3",
+        "webfn-dg-http",
+        "webfn-dg-networking",
+        "webfn-dg-scaling",
+        "webfn-dg-env-lifecycle",
+        "webfn-dg-runtimes",
+        "webfn-dg-env-vars",
+        "webfn-dg-timeout",
+        "webfn-dg-architecture",
+        "webfn-dg-permissions",
+        "webfn-dg-access-control",
+        "webfn-dg-encryption",
+        "webfn-dg-monitoring",
+        "webfn-dg-metrics",
+        "webfn-dg-logging",
+        "webfn-dg-samples",
+        "webfn-dg-best-practices",
+        "webfn-dg-testing",
+        "webfn-dg-troubleshooting",
+        "webfn-dg-quotas",
+        "webfn-cfn-webfunction",
+        "webfn-cfn-revision",
+        "webfn-cfn-endpoint",
+        "webfn-cdk-types",
+        "webfn-cdkd-providers",
+        "webfn-cdkd-readme",
+        "webfn-cc-supported",
+        "webfn-sdk-client",
+        "webfn-price-list",
+        "webfn-pricing",
+        "webfn-cf-workers-http",
+        "webfn-cf-workers-pricing",
+        "webfn-cf-workers-limits",
+        "webfn-cf-how-workers-works",
+        "webfn-vercel-fluid",
+        "webfn-vercel-fluid-pricing",
+        "webfn-vercel-express"
       ],
       "writing": {
         "ja": "complete",

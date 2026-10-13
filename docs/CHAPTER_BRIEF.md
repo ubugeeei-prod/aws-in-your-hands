@@ -32,7 +32,7 @@
 
 ### 2. 本文: `book/content/ja/chapters/NN-slug.md` と `book/content/en/chapters/NN-slug.md`
 
-新しい章では、この 2 つのファイルはアウトラインから自動生成された planned のページになっています。丸ごと書き換えます（frontmatter の `generated: true` を消す）。いまある 00〜68章（65 は欠番）はすべて書き上がっているので、書き直すときは既存の本文を土台にします。
+新しい章では、この 2 つのファイルはアウトラインから自動生成された planned のページになっています。丸ごと書き換えます（frontmatter の `generated: true` を消す）。いまある 00〜69章（65 は欠番）はすべて書き上がっているので、書き直すときは既存の本文を土台にします。
 
 - 日本語を先に書き、同じ調子で英語にする
 - frontmatter: 日本語は `title: "NN <data/chapters.json の title.ja>"` と `revision: 1`。英語は `title: "NN <title.en>"` と `sourceRevision: 1`

@@ -480,3 +480,8 @@ The term pairs that keep both languages using one word for one concept. API name
 | tablet | Tablet | 66 | One piece of a table in YugabyteDB. A row belongs to one tablet by its primary key, and each tablet has its own set of copies (a Raft group). |
 | replication factor | Replication factor | 66 | The number of copies of each tablet. With three, a majority remains after one node is lost. |
 | 時刻のずれ（clock skew） | Clock skew | 66 | The difference between the clocks of two nodes. YugabyteDB orders transactions with timestamps, so a node whose clock is off by more than the limit (500 ms by default) stops itself. |
+| Web Function | Web Function | 69 | One of Lambda's forms. The code is an HTTP server listening on a port, and one execution environment answers several requests at once. |
+| Event Function | Event Function | 69 | What was simply called a Lambda function until now: a handler that takes one event. Only the name changed, on 2026-10-12. |
+| リビジョン（revision） | revision | 69 | A Web Function's code and settings, fixed at one moment. It cannot be changed afterwards; a change means a new revision. |
+| エンドポイント（Web Function） | endpoint (Web Function) | 69 | A Web Function's HTTPS entry point. It has a domain name, an authentication type, a rate limit and a cap on environments, and routes requests to one or two revisions. |
+| アクティブな CPU 時間 | active CPU time | 69 | The time the code actually spent on a CPU. Time spent waiting for a database or another API is not part of it. |

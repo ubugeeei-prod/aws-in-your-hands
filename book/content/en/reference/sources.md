@@ -27455,6 +27455,534 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - AWS::ECR::PullThroughCacheRule appears nowhere in the package, so it is neither registered nor listed as unsupported
 - Note: Read from dist/ in the installed package. That an unregistered type goes through Cloud Control is chapter 12's reading of register-providers.ts.
 
+### AWS Lambda announces Lambda Web Functions (What's New, posted 2026-10-12)
+
+- ID: `webfn-whats-new`
+- URL: <https://aws.amazon.com/about-aws/whats-new/2026/10/aws-lambda-web-functions/>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Posted on Oct 12, 2026. Code listens on a port and handles HTTP requests as on any HTTP server
+  - Existing Lambda functions are renamed Lambda Event Functions, a naming change only that requires no code changes or redeployments
+  - Web Functions support the Node.js runtime; one warm execution environment serves multiple concurrent requests; responses can be streamed
+  - Available in US East (N. Virginia), US East (Ohio), US West (Oregon), Asia Pacific (Tokyo), and Europe (Ireland)
+  - Can be created with the Lambda API, the console, the AWS CLI, CloudFormation, SAM, CDK, or the SDKs
+
+### Announcing AWS Lambda Web Functions (AWS News Blog)
+
+- ID: `webfn-news-blog`
+- URL: <https://aws.amazon.com/blogs/aws/announcing-aws-lambda-web-functions-for-fast-consistent-web-app-performance-anywhere/>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Up to 128 concurrent requests per execution environment
+  - Web Functions run Node.js 24 (nodejs24.x) on Arm64 at launch
+  - Lambda now has three form factors: Event Functions, Web Functions, and MicroVMs
+  - CloudFront origin access control can be attached to a Web Function endpoint
+
+### AWS Lambda Web Functions (Developer Guide)
+
+- ID: `webfn-dg-overview`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - A Web Function runs a Node.js HTTP server that listens on a port; no Lambda-specific adapter is needed
+  - Code is deployed as a .zip file; Lambda creates an HTTPS endpoint and scales the application, including to zero
+  - Billing dimensions: requests, active CPU time, memory over the life of each execution environment, and data transfer
+  - For event-driven processing such as queue messages or file uploads, the guide says to use Lambda Event Functions
+  - Web Functions currently support Node.js runtimes only
+  - A custom domain or AWS WAF protection needs a CloudFront distribution in front of the endpoint
+
+### Web Functions: Core concepts
+
+- ID: `webfn-dg-concepts`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-how-it-works.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - A Web Function contains revisions (immutable snapshots of code and configuration) and endpoints (which route HTTP traffic to one or two revisions)
+  - Revision states are Pending, Active, Failed; an endpoint has a state and a separate updateStatus (InProgress, Successful, Failed)
+  - An Active revision or endpoint does not confirm that the server starts: Lambda does not check that the server listens
+  - maxEnvironments is an endpoint setting and maxConcurrencyPerEnvironment (1 to 128, default 64) a revision setting
+  - A request can run for 3 to 900 seconds (timeoutSeconds, default 30)
+  - Application code must be safe for concurrent use because one execution environment handles multiple concurrent requests
+
+### Creating a Lambda Web Function
+
+- ID: `webfn-dg-create`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-create.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - aws lambda-web deploy creates the function, its first revision and an endpoint named dev in LatestRevision mode, ApplicationManaged by default
+  - The server must listen on the host and port in AWS_LAMBDA_HTTP_ENDPOINT; the runtime loads index.js at the root of the package unless AWS_LAMBDA_NODEJS_ENTRYPOINT is set
+  - The code bucket must have versioning enabled and a bucket policy granting lambda.amazonaws.com s3:GetObject and s3:GetObjectVersion
+  - Deleting a Web Function also deletes its endpoints and revisions, but not the role, the packages in S3, or the log groups
+  - The endpoint type cannot be changed after creation
+
+### Managing Web Function revisions
+
+- ID: `webfn-dg-revisions`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-revisions.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Every revision property is immutable; a new revision copies nothing from an existing one, and omitted settings take their defaults
+  - Defaults: timeoutSeconds 30, maxConcurrencyPerEnvironment 64, log group /aws/lambda/web/<function-name>, applicationLogLevel INFO
+  - A revision that any endpoint routes traffic to cannot be deleted
+  - Lambda keeps about 50 revisions per Web Function and deletes the oldest ones no endpoint uses; a rollback target removed from all weights can be deleted by this cleanup
+  - A deployment package can be up to 512 MB unzipped
+
+### Web Functions: Deployment patterns
+
+- ID: `webfn-dg-deployment`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-deployment.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - autoDeploymentMode defaults to Disabled; LatestRevision is supported only for HomeRegion endpoints
+  - Revision weights: integers from 1 to 100 that sum to 100, each revision once, at most two revisions, each Active when the weights are set
+  - Weight changes are asynchronous endpoint updates; wait for updateStatus Successful before evaluating
+  - Rollback is one endpoint update that routes all traffic to the earlier revision; in-flight requests on the other revision finish
+  - Web Function metrics have no revision dimension, so a canary is told apart by a revision identifier in logs or custom metrics
+  - A revision is invoked only through an endpoint: test it on a separate endpoint or with a small weight
+
+### Lambda Web Function endpoints
+
+- ID: `webfn-dg-endpoints`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-endpoints.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - A Web Function can have up to 10 endpoints; endpoint types are HomeRegion, MultiRegion, PerRegion and cannot be changed
+  - Domain format <domain-id>.<shard-id>.lambda-web.<region>.on.aws for HomeRegion and PerRegion; Lambda manages the TLS certificate
+  - No custom domain can be attached directly
+  - authType ApplicationManaged forwards every request; IamAuth validates a SigV4 signature and requires lambda:InvokeWebFunctionEndpoint
+  - rateLimit is requests per second for the endpoint as a whole; excess requests receive HTTP 429; a rateLimit of 0 blocks all traffic
+  - A deleted endpoint's domain name is retired and never assigned to another endpoint
+  - MultiRegion uses latency-based routing and performs no health-based failover
+
+### Deploying Web Function code from Amazon S3
+
+- ID: `webfn-dg-code-s3`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-code-s3.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - A .zip package in an S3 bucket is the only way to supply code; Lambda pins a revision to one object version
+  - The bucket policy grants lambda.amazonaws.com s3:GetObject and s3:GetObjectVersion, scoped with aws:SourceArn ArnLike arn:aws:lambda:<region>:<account>:web-function/<name>/revision/*
+  - Deleting the object version a revision uses, or removing Lambda's access, moves the revision to Failed permanently
+  - Requests routed to a Failed revision get HTTP 409 with lambda-web-error-type Platform.RevisionNotActive; Lambda does not shift traffic away
+
+### Web Functions: HTTP requests and responses
+
+- ID: `webfn-dg-http`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-http.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - The endpoint accepts HTTP/1.1 and forwards over HTTP/1.1; HTTP/1.0 gets 505
+  - Supported methods: GET, HEAD, POST, PUT, PATCH, OPTIONS, DELETE
+  - Lambda removes headers whose names begin with lambda-web- and adds lambda-web-request-id and lambda-web-endpoint-name
+  - X-Forwarded-For: Lambda appends the connecting client's address as the last value; earlier values are not validated
+  - The request line and headers can total 128 KiB; beyond that Lambda answers 431
+  - Response headers lambda-web-request-id, lambda-web-logstream, lambda-web-error-type
+
+### Configuring networking for AWS Lambda Web Functions
+
+- ID: `webfn-dg-networking`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-networking.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Endpoint domain names are reachable from the public internet; PrivateLink interface endpoints are not available for them
+  - IamAuth controls who can invoke but does not make the endpoint private at the network layer
+  - Lambda adds no CORS headers; the application or a front door handles preflight
+  - The request path is half-duplex: Lambda forwards the full request body before it delivers the response
+  - WebSocket upgrades are not supported
+  - Without an egress network connector a revision reaches public IPv4 destinations directly and has no route into a VPC; connectors work only with HomeRegion endpoints
+  - When CloudFront is in front, do not forward the viewer's Host header
+
+### Scaling behavior for Lambda Web Functions
+
+- ID: `webfn-dg-scaling`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-scaling.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - An endpoint always scales from zero; there is no minimum or reserved-environment setting
+  - maxEnvironments: optional, 2 to 10,000, per Region. rateLimit: optional, 0, 100 to 1,000 in steps of 100, 2,000 to 10,000 in steps of 1,000
+  - Account quotas per Region: 10,000 RPS per endpoint, 100,000 RPS per account, 2,000 Arm64 vCPUs; each environment uses 2 vCPUs
+  - When an endpoint cannot scale up and all environments are full, Lambda answers 429 immediately and does not queue
+  - Lambda may temporarily exceed maxEnvironments during weight changes and fleet cycling
+  - Lambda sets a dynamic per-environment concurrency limit that never exceeds maxConcurrencyPerEnvironment
+  - With rateLimit 0 Lambda answers 503 with Platform.EndpointDisabled
+
+### Web Functions: Execution environment lifecycle
+
+- ID: `webfn-dg-env-lifecycle`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-env-lifecycle.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - The server must begin listening on AWS_LAMBDA_HTTP_ENDPOINT within 10 seconds
+  - Shutdown: Lambda stops routing, lets in-flight requests finish on a best-effort basis, sends SIGTERM, and terminates after up to 1 second
+  - Lambda cannot guarantee a graceful shutdown in all failure modes
+  - Global state and /tmp persist across requests in an environment; an environment can be removed at any time
+  - Do not store per-request state in global variables; guard shared state modified across await; CPU-intensive synchronous work blocks all requests in the environment
+
+### Lambda Web Function runtimes
+
+- ID: `webfn-dg-runtimes`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-runtimes.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - The only runtime identifier is nodejs24.x; runtime management controls are not supported
+  - Each execution environment has 2 GB of memory; the default V8 heap is 1,024 MB
+  - Endpoints accept HTTPS on port 443 only; Lambda terminates TLS and forwards plain HTTP to the server
+  - AWS_LAMBDA_HTTP_ENDPOINT is host:port; Lambda does not set it on a local computer
+  - No AWS Lambda Web Adapter or other event-to-HTTP adapter is needed
+
+### Web Functions: Environment variables
+
+- ID: `webfn-dg-env-vars`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-revisions-env-vars.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - AWS_LAMBDA_HTTP_ENDPOINT cannot be set in a revision; a list of AWS_* names is reserved and rejected
+  - The runtime does not read the entry point from package.json
+  - Secrets belong in Secrets Manager or Parameter Store, not in environment variables
+  - Web Functions do not receive every variable in the general list of Lambda runtime variables
+
+### Web Functions: Request timeout
+
+- ID: `webfn-dg-timeout`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-revisions-timeout.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - A non-streaming request past the timeout gets HTTP 504 with Runtime.RequestTimeout
+  - For a streaming response the timeout bounds the whole stream; the client keeps the status already sent and gets a truncated body
+
+### Web Functions: Instruction set architecture
+
+- ID: `webfn-dg-architecture`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-configuration-architecture.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Web Functions run only on Arm64, with 2 vCPUs per execution environment; there is no architecture setting
+
+### Lambda Web Function permissions
+
+- ID: `webfn-dg-permissions`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-permissions.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - The execution role trusts lambda.amazonaws.com; the minimum for logging is logs:CreateLogGroup, CreateLogStream, PutLogEvents on the log group and its .local companion
+  - The identity that creates a function or revision needs iam:PassRole on the execution role and read access to the package
+  - A public resource-based policy is rejected with a ValidationException
+  - Web Functions use PutResourcePolicy, GetResourcePolicy, DeleteResourcePolicy, not AddPermission
+
+### Lambda Web Function endpoint access control
+
+- ID: `webfn-dg-access-control`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-endpoint-access-control.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - A same-account caller needs lambda:InvokeWebFunctionEndpoint in an identity-based or the resource-based policy; a cross-account caller needs both
+  - Signed requests use the service name lambda and must include X-Amz-Content-SHA256, also without a body; Lambda does not check the body against it
+  - Lambda removes the Authorization header after validating the signature
+  - CloudFront OAC with origin type lambda and signing behaviour always-amz-auth can front an IamAuth endpoint
+  - An ApplicationManaged endpoint stays publicly reachable at its own domain, even behind CloudFront, and no resource-based policy restricts its callers
+  - Condition keys lambda:Request/WebFunctionAuthType and lambda:Resource/WebFunctionAuthType; an SCP can deny ApplicationManaged endpoints
+
+### Encryption at rest for Web Functions
+
+- ID: `webfn-dg-encryption`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-encryption.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Code artifacts and environment variables are always encrypted at rest, with an AWS owned key by default; a customer managed key is optional
+- Note: Only the overview and the options were read. The key policy procedures were not.
+
+### Monitoring Lambda Web Functions
+
+- ID: `webfn-dg-monitoring`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-monitoring.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Metrics that Lambda publishes in AWS/Lambda/Web and AWS/Lambda/Web/Usage are free
+  - Log events are written to the .local log group and copied to the centralized group; writing is charged once and storage in both groups
+  - Lambda adds no X-Ray trace header and creates no Lambda service segments for Web Functions
+
+### Using CloudWatch metrics with Lambda Web Functions
+
+- ID: `webfn-dg-metrics`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-monitoring-metrics.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Request metrics ExecutedRequests, HTTPResponseStatusClass4XX and 5XX have the dimensions FunctionName and EndpointName, and no revision dimension
+  - Environment metrics include EnvironmentActiveTime, EnvironmentCPUTime, EnvironmentMaxMemoryUsage, EnvironmentConcurrentRequests
+  - Throttle metrics are sparse and are published in AWS/Lambda/Web/Usage
+
+### Web Function logs in Amazon CloudWatch Logs
+
+- ID: `webfn-dg-logging`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-logging.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Lambda writes console output as JSON log events and adds requestId, endpointName and region
+  - An object passed to a console method becomes a JSON object under message; a JSON.stringify string becomes one escaped string
+  - Default log groups are created on the first request with no retention; a custom log group and its .local companion can be created beforehand
+  - platform.requestComplete is a DEBUG system event
+- Note: The sections on CloudWatch Logs features and the full system log schema were not read.
+
+### Web Function sample applications
+
+- ID: `webfn-dg-samples`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-samples.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Every sample uses index.js as the entry file; the Hono sample is an ES module with type=module in package.json
+  - Server-sent events stay open until the application ends the response or the client disconnects
+
+### Best practices for Lambda Web Functions
+
+- ID: `webfn-dg-best-practices`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-best-practices.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Every endpoint is reachable from the internet whatever its authentication type
+  - Use manual revision weights for production endpoints
+  - /tmp is 512 MB and shared by concurrent requests
+  - Retry 429, and 503 without a lambda-web-error-type header, with backoff and jitter, and only idempotent operations
+
+### Testing Lambda Web Functions
+
+- ID: `webfn-dg-testing`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-testing.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Local tests cover most application behaviour; IAM authorization, S3 and KMS access, lifecycle states, scaling, telemetry and multi-Region behaviour need cloud tests
+  - The package test extracts the archive into a clean directory and starts the server from it
+  - Run concurrent requests during local integration tests
+
+### Troubleshooting Lambda Web Functions
+
+- ID: `webfn-dg-troubleshooting`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/web-functions-troubleshooting.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - An unsigned request to an IamAuth endpoint gets HTTP 403
+  - A server that listens on a loopback-only address or another port gives Application.TimeoutListenError or 502 on the first request
+  - ES module import errors mean package.json does not declare the module type; the package is loaded from /var/task
+  - A response written while the request body is still arriving can hang; bodies under about 1 MB fit socket buffers and can mask this
+  - There is no interactive access to an execution environment
+
+### Lambda quotas: Lambda Web Functions
+
+- ID: `webfn-dg-quotas`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Environment variables 32 KB, request headers 128 KiB, /tmp 512 MB, 2 vCPUs and 2 GB per environment, initialization 10 seconds
+  - 1,024 file descriptors and 1,024 processes and threads per environment
+  - The table lists no quota for the size of a request or response body
+  - Direct public egress is IPv4 only; private endpoint access with PrivateLink is not available
+
+### AWS::Lambda::WebFunction (CloudFormation Template Reference)
+
+- ID: `webfn-cfn-webfunction`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-lambda-webfunction.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - The resource type exists in CloudFormation; Ref returns the ARN of the web function
+
+### AWS::Lambda::WebFunctionRevision (CloudFormation Template Reference)
+
+- ID: `webfn-cfn-revision`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-lambda-webfunctionrevision.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Every property (BuildConfig, Description, FunctionName, KmsKeyArn, ServiceConfig) requires replacement on update
+  - Attributes RevisionId, RevisionArn, State, StateReason
+
+### AWS::Lambda::WebFunctionEndpoint (CloudFormation Template Reference)
+
+- ID: `webfn-cfn-endpoint`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-lambda-webfunctionendpoint.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Properties AuthType, Description, EndpointName, EndpointType, FunctionName, Regions, RevisionWeights, ScalingConfig, ThrottleConfig; there is no auto-deployment property
+  - AuthType, RevisionWeights, ScalingConfig and ThrottleConfig update without interruption; EndpointName, EndpointType, FunctionName and Regions require replacement
+  - Attribute DomainName
+
+### aws-cdk-lib 2.273.0: aws-lambda/lib/lambda.generated.d.ts
+
+- ID: `webfn-cdk-types`
+- URL: <https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - lambda.CfnWebFunction, lambda.CfnWebFunctionRevision and lambda.CfnWebFunctionEndpoint exist as L1 constructs, with the property names the stack uses
+  - ServiceConfigProperty has environmentVariables, executionRoleArn, maxConcurrencyPerEnvironment, telemetryConfig, timeoutSeconds
+- Note: Read in the installed package. No L2 construct for Web Functions was found in this version.
+
+### cdkd v0.296.28: src/provisioning/register-providers.ts
+
+- ID: `webfn-cdkd-providers`
+- URL: <https://raw.githubusercontent.com/go-to-k/cdkd/v0.296.28/src/provisioning/register-providers.ts>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - No provider is registered for AWS::Lambda::WebFunction, AWS::Lambda::WebFunctionRevision or AWS::Lambda::WebFunctionEndpoint
+  - Providers are registered for AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::IAM::Role, AWS::IAM::Policy and AWS::Logs::LogGroup
+
+### cdkd v0.296.28: README
+
+- ID: `webfn-cdkd-readme`
+- URL: <https://raw.githubusercontent.com/go-to-k/cdkd/v0.296.28/README.md>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - cdkd is for dev/test workflows; the README says to use the AWS CDK CLI in production
+  - cdkd has an SDK provider path and a Cloud Control fallback path
+
+### Cloud Control API: Resource types that support Cloud Control API
+
+- ID: `webfn-cc-supported`
+- URL: <https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - On 2026-10-13 the list has no AWS::Lambda::WebFunction, WebFunctionRevision or WebFunctionEndpoint
+- Note: The list may trail the service. It was not checked with a call to the API.
+
+### @aws-sdk/client-lambda-web on npm (3.1149.0 installed, 3.1150.0 tarball listed)
+
+- ID: `webfn-sdk-client`
+- URL: <https://www.npmjs.com/package/@aws-sdk/client-lambda-web>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Version 3.1149.0, the version this repository pins, has one command: GetWebAccountSettings
+  - Version 3.1150.0, published 2026-10-12, has CreateWebFunction, CreateWebFunctionRevision, UpdateWebFunctionEndpoint and the rest
+
+### AWS Price List bulk API: AWSLambda, ap-northeast-1 (published 2026-10-12T22:32:57Z)
+
+- ID: `webfn-price-list`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - APN1-Lambda-Web-Request-ARM: USD 0.0000003 per request
+  - APN1-Lambda-Web-vCPU-Second-ARM: USD 0.0000322421 per vCPU-second
+  - APN1-Lambda-Web-Memory-GB-Second-ARM: USD 0.0000042688 per GB-second
+  - No Web Functions usage type has a USD 0 tier
+
+### AWS Lambda Pricing: Web Functions
+
+- ID: `webfn-pricing`
+- URL: <https://aws.amazon.com/lambda/pricing/>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Web Functions are priced on requests, active CPU time, consumed memory, and standard AWS data transfer; compute is billed at 1 ms granularity
+  - Each execution environment is billed for the memory it consumes for as long as it runs, including time between requests
+  - The examples exclude the free tier and data transfer; the section does not say whether a free tier applies to Web Functions
+  - The examples assume one execution environment running for the whole month
+
+### Cloudflare Workers: node:http
+
+- ID: `webfn-cf-workers-http`
+- URL: <https://developers.cloudflare.com/workers/runtime-apis/nodejs/http/>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - http.createServer works in Workers with nodejs_compat and enable_nodejs_http_server_modules, enabled automatically from compatibility date 2025-09-01
+  - httpServerHandler from cloudflare:node routes Worker requests to a Node.js server; the port is a routing key
+
+### Cloudflare Workers: Pricing
+
+- ID: `webfn-cf-workers-pricing`
+- URL: <https://developers.cloudflare.com/workers/platform/pricing/>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Workers Paid: USD 5 a month minimum, 10 million requests and 30 million CPU milliseconds included, then USD 0.30 per million requests and USD 0.02 per million CPU milliseconds
+  - No charge for duration, and no additional charges for data transfer or bandwidth
+  - Free plan: 100,000 requests a day and 10 ms of CPU time per invocation
+
+### Cloudflare Workers: Limits
+
+- ID: `webfn-cf-workers-limits`
+- URL: <https://developers.cloudflare.com/workers/platform/limits/>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - 128 MB of memory per isolate
+  - CPU time per HTTP request up to 5 minutes on the paid plan (default 30 seconds); no hard limit on duration for HTTP-triggered Workers
+
+### Cloudflare Workers: How Workers works
+
+- ID: `webfn-cf-how-workers-works`
+- URL: <https://developers.cloudflare.com/workers/reference/how-workers-works/>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - A single Workers instance may handle multiple requests, including concurrent ones, in a single-threaded event loop
+  - Cloudflare recommends not using or mutating global state
+
+### Vercel: Fluid compute
+
+- ID: `webfn-vercel-fluid`
+- URL: <https://vercel.com/docs/fluid-compute>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Multiple invocations share one function instance (optimized concurrency) with the Node.js and Python runtimes
+  - Enabled by default for new projects since 2025-04-23
+  - Default and maximum duration 300 s on Hobby; 300 s default and 800 s maximum on Pro and Enterprise
+
+### Vercel: Fluid compute pricing
+
+- ID: `webfn-vercel-fluid-pricing`
+- URL: <https://vercel.com/docs/functions/usage-and-pricing>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - Billed on Active CPU, Provisioned Memory for the instance lifetime, and Invocations
+  - Tokyo (hnd1): USD 0.202 per Active CPU hour and USD 0.0167 per GB-hour of provisioned memory; invocations USD 0.60 per million on Pro
+  - Hobby includes 4 hours of Active CPU, 360 GB-hours of memory and 1 million invocations
+
+### Vercel: Express on Vercel
+
+- ID: `webfn-vercel-express`
+- URL: <https://vercel.com/docs/frameworks/backend/express>
+- Checked: 2026-10-13
+- Chapters: 69
+- Claims this source supports:
+  - An Express application can export the app or use a port listener (app.listen)
+  - It becomes a single Vercel Function and uses Fluid compute by default
+
 ## Sources not re-read yet (starting points for later chapters)
 
 ### nix develop

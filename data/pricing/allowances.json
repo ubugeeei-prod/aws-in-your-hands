@@ -829,6 +829,18 @@
     {
       "priceId": "ecr.signing",
       "reason": "No free allowance for managed signing was found; none is applied."
+    },
+    {
+      "priceId": "lambda.web.request.arm",
+      "reason": "The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13)."
+    },
+    {
+      "priceId": "lambda.web.vcpu.arm",
+      "reason": "The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13)."
+    },
+    {
+      "priceId": "lambda.web.memory.arm",
+      "reason": "The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13)."
     }
   ]
 }

@@ -68,5 +68,6 @@
   "examples/64-isolates",
   "examples/67-firecracker",
   "examples/68-nitro",
-  "examples/66-distributed-sql"
+  "examples/66-distributed-sql",
+  "examples/69-web-functions"
 ]

@@ -11584,6 +11584,192 @@
       "boundary": "local",
       "criteria": ["distributed", "test"],
       "verification": "local"
+    },
+    {
+      "id": "69.overview",
+      "sources": ["examples/69-web-functions/src/index.ts"],
+      "tasks": ["dev:webfn"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "69.picture",
+      "sources": ["examples/69-web-functions/infra/lib/web-functions-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.when-not",
+      "sources": ["examples/69-web-functions"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.model",
+      "sources": ["examples/69-web-functions/src/index.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.server",
+      "sources": [
+        "examples/69-web-functions/src/listen.ts",
+        "examples/69-web-functions/src/serve.ts",
+        "examples/69-web-functions/src/index.ts",
+        "examples/69-web-functions/test/listen.test.ts",
+        "examples/69-web-functions/test/shutdown.test.ts"
+      ],
+      "tasks": ["dev:webfn", "webfn:demo"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "69.concurrency",
+      "sources": [
+        "examples/69-web-functions/src/app.ts",
+        "examples/69-web-functions/test/server.test.ts",
+        "examples/69-web-functions/test/harness.ts"
+      ],
+      "tasks": ["webfn:demo"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "69.http",
+      "sources": [
+        "examples/69-web-functions/src/app.ts",
+        "examples/69-web-functions/src/log.ts",
+        "examples/69-web-functions/test/app.test.ts",
+        "examples/69-web-functions/test/server.test.ts"
+      ],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "69.stack",
+      "sources": [
+        "examples/69-web-functions/infra/lib/web-functions-stack.ts",
+        "examples/69-web-functions/infra/test/web-functions-stack.test.ts",
+        "examples/69-web-functions/src/names.ts",
+        "examples/69-web-functions/src/release.ts"
+      ],
+      "tasks": ["webfn:cfn:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "69.local",
+      "sources": [
+        "examples/69-web-functions/src/index.ts",
+        "examples/69-web-functions/scripts/demo.ts",
+        "examples/69-web-functions/scripts/build.ts",
+        "examples/69-web-functions/src/zip.ts",
+        "examples/69-web-functions/test/package.test.ts"
+      ],
+      "tasks": ["dev:webfn", "webfn:demo", "webfn:package", "webfn:cfn:synth"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "69.laptop-limits",
+      "sources": ["examples/69-web-functions/test"],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.tool",
+      "sources": [
+        "examples/69-web-functions/scripts/cdk.ts",
+        "examples/69-web-functions/src/cdk-args.ts",
+        "examples/69-web-functions/test/cdk-args.test.ts"
+      ],
+      "tasks": ["webfn:cfn:synth", "webfn:cfn:diff", "webfn:cfn:deploy"],
+      "boundary": "cloud",
+      "criteria": ["drift", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.deploy",
+      "sources": [
+        "examples/69-web-functions/scripts/upload.ts",
+        "examples/69-web-functions/scripts/smoke.ts",
+        "examples/69-web-functions/src/sign.ts",
+        "examples/69-web-functions/test/sign.test.ts"
+      ],
+      "tasks": ["webfn:cfn:deploy", "webfn:upload", "webfn:smoke"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.rollout",
+      "sources": [
+        "examples/69-web-functions/src/release.ts",
+        "examples/69-web-functions/test/release.test.ts",
+        "examples/69-web-functions/infra/test/web-functions-stack.test.ts"
+      ],
+      "tasks": ["webfn:cfn:diff", "webfn:cfn:deploy", "webfn:smoke"],
+      "boundary": "cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.costs",
+      "sources": ["data/pricing/scenarios.json"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.pitfalls",
+      "sources": [
+        "examples/69-web-functions/src/app.ts",
+        "examples/69-web-functions/src/cdk-args.ts"
+      ],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.production",
+      "sources": ["examples/69-web-functions/infra/lib/web-functions-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.elsewhere",
+      "sources": ["examples/69-web-functions"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.cleanup",
+      "sources": ["examples/69-web-functions/scripts/empty.ts"],
+      "tasks": ["webfn:empty", "webfn:cfn:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

@@ -6055,6 +6055,116 @@
         "ja": "00章から 68章まで（65 は欠番）がそろった状態で通過。format と lint（awscdk-lint を含む）、型検査、テスト 5,044 件（ほかに 5 件は条件が合わずスキップ）、全 CDK アプリの synth、54 個の bundle の読み込み、本のビルド、668 ページのリンク検査。AWS には触れていない",
         "en": "Passed with chapters 00 to 68 in place (there is no 65). Format and lint (awscdk-lint included), type check, 5,044 tests (5 more skipped because their conditions were not met), synthesis of every CDK app, 54 bundles loaded, the book build, and the link check over 668 pages. Nothing touched AWS"
       }
+    },
+    {
+      "scope": "69",
+      "command": "vp test run examples/69-web-functions",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-13",
+      "note": {
+        "ja": "9 ファイル、68 件。実際のソケットで待ち受けるサーバーに 2 つのリクエストを重ねて、リクエスト単位の値が混ざらないことと、モジュールスコープの変数に置いた版では混ざること。AWS_LAMBDA_HTTP_ENDPOINT の読み取り、Lambda が付けたリクエスト ID の採用、プリフライト、宣言された長さが上限を超えるアップロードに本文を最後まで受け取ってから 413 を返すこと、SIGTERM のあとの停止（開いているリクエストを待つ場合と、時間切れで切る場合）、zip の書き出しと読み戻し、アーカイブだけを展開した空のディレクトリからサーバーが起動して SIGTERM で 1 秒以内に終了すること、リリースの指定と重みの計算、エンドポイントの上限の検証、CDK CLI への引数、SigV4 の署名に x-amz-content-sha256 が入ること、スタックの assertion。本文の読み切りを外すとアップロードのテストが 1 件落ちることも確かめた",
+        "en": "9 files, 68 tests. Two overlapping requests against a server on a real socket do not see each other's per-request state, and do with the version that keeps it in module scope. Reading AWS_LAMBDA_HTTP_ENDPOINT, adopting the request ID Lambda assigned, the preflight, answering 413 to an upload whose declared length is over the limit only after the whole body has arrived, stopping after SIGTERM (waiting for an open request, and cutting it when time runs out), writing and reading back the zip, starting the server from an empty directory holding only the archive and stopping within a second of SIGTERM, release flags and weights, validation of the endpoint limits, the arguments for the CDK CLI, x-amz-content-sha256 in the SigV4 signature, and stack assertions. Removing the body read made one upload test fail"
+      }
+    },
+    {
+      "scope": "69",
+      "command": "tsc --noEmit -p examples/69-web-functions",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-13",
+      "note": {
+        "ja": "型検査が通った",
+        "en": "The type check passed"
+      }
+    },
+    {
+      "scope": "69",
+      "command": "vp run webfn:demo",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-13",
+      "note": {
+        "ja": "エントリファイルを別プロセスで起動し、AWS_LAMBDA_HTTP_ENDPOINT のアドレスで待ち受けるまでの時間、同時に送った 50 件が自分のリクエスト ID で返ること、SIGTERM から終了までの時間と終了コード 0 を出力で確認。手元の Mac での値で、Lambda の実行環境のものではない",
+        "en": "Started the entry file as its own process and read from the output the time until it listened on the address in AWS_LAMBDA_HTTP_ENDPOINT, that 50 requests sent at once each came back under their own request ID, and the time from SIGTERM to exit with code 0. Values from a Mac, not from a Lambda execution environment"
+      }
+    },
+    {
+      "scope": "69",
+      "command": "vp run webfn:package",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-13",
+      "note": {
+        "ja": "dist/function.zip（8.3 KiB）ができ、2 回続けて同じ sha256 になることを確認",
+        "en": "dist/function.zip (8.3 KiB) is written, with the same sha256 twice in a row"
+      }
+    },
+    {
+      "scope": "69",
+      "command": "vp run webfn:cfn:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-13",
+      "note": {
+        "ja": "AWS CDK CLI 2.1145.0 で、リリースなし、stable だけ、canary つきの 3 通りを synth。CLI に同梱の検証は AWS::Lambda::WebFunction など 3 種類を「Unknown resource type」と警告する（エラーではない）。canary に重みが無い指定は synth の前に止まる",
+        "en": "Synthesized with AWS CDK CLI 2.1145.0 in three shapes: no release, stable only, and with a canary. The CLI's bundled validation warns 'Unknown resource type' for the three AWS::Lambda::WebFunction types (a warning, not an error). A canary without a weight stops before synth"
+      }
+    },
+    {
+      "scope": "69",
+      "command": "vp run webfn:cfn:deploy --foundation",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "CloudFormation にスタックを作る。実行していない。CLI に同梱の検証が知らないリソースの種類を、CloudFormation が受け付けることも確かめていない",
+        "en": "Creates the stack through CloudFormation. Not run. That CloudFormation accepts resource types the CLI's bundled validation does not know was not confirmed either"
+      }
+    },
+    {
+      "scope": "69",
+      "command": "vp run webfn:upload",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "パッケージをコードバケットに置き、バージョン ID を得る。実行していない",
+        "en": "Puts the package in the code bucket and prints its version ID. Not run"
+      }
+    },
+    {
+      "scope": "69",
+      "command": "vp run webfn:cfn:deploy -c stable=<version>",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "リビジョンとエンドポイントを作る。実行していない。index.js が ES モジュールとして読み込まれること、10 秒以内に待ち受けが始まること、ログの形も未確認",
+        "en": "Creates the revision and the endpoint. Not run. That index.js loads as an ES module, that the server listens within 10 seconds, and the shape of the logs are unconfirmed as well"
+      }
+    },
+    {
+      "scope": "69",
+      "command": "vp run webfn:smoke",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "署名なしのリクエストが断られること、署名したリクエストでノートを作って消せること、x-aih-release ごとの応答数。実行していない",
+        "en": "That an unsigned request is refused, that signed requests create and delete a note, and the count of answers per x-aih-release. Not run"
+      }
+    },
+    {
+      "scope": "69",
+      "command": "vp run webfn:cfn:diff / webfn:empty / webfn:cfn:destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "差分の確認、バケットを空にする操作、スタックの削除。実行していない",
+        "en": "The diff, emptying the bucket, and deleting the stack. Not run"
+      }
     }
   ],
   "open": [
@@ -9169,6 +9279,83 @@
       "resume": {
         "ja": "ECS のドキュメントで service revision の説明を読み、ロールバック先のリビジョンがダイジェストを持つかを確かめる。mutable なリポジトリで実際にタグを動かしてロールバックさせ、動いたタスクの imageDigest を aws ecs describe-tasks で見る。",
         "en": "Read the ECS documentation on service revisions to see whether the revision rolled back to carries digests. On a mutable repository, move a tag, force a rollback, and read imageDigest from aws ecs describe-tasks."
+      }
+    },
+    {
+      "id": "webfn-deploy",
+      "summary": {
+        "ja": "69章: スタックを AWS にデプロイしていない。CloudFormation が 3 種類の Web Function のリソースをこのテンプレートで作れること、バンドルした index.js が nodejs24.x で起動すること、IamAuth のエンドポイントが署名なしのリクエストを 403 で断ること、ログが JSON の message にオブジェクトとして入ること、SIGTERM が届くことを、実物で確かめていない。",
+        "en": "Chapter 69: the stack has not been deployed. Not confirmed on AWS: that CloudFormation creates the three Web Function resource types from this template, that the bundled index.js starts on nodejs24.x, that the IamAuth endpoint answers 403 to an unsigned request, that a log entry arrives as an object under message, and that SIGTERM is delivered."
+      },
+      "resume": {
+        "ja": "vp run ship:cfn:bootstrap（未実行なら）、vp run webfn:cfn:deploy --foundation、vp run webfn:upload、vp run webfn:cfn:deploy -c stable=<version>、vp run webfn:smoke の順に実行する。リビジョンが Failed なら CloudFormation のイベントの StateReason を読む。エンドポイントが Active なのに 502 なら、/aih/web-notes.local のシステムログで platform.initReport を見る。",
+        "en": "Run vp run ship:cfn:bootstrap (if never run), vp run webfn:cfn:deploy --foundation, vp run webfn:upload, vp run webfn:cfn:deploy -c stable=<version>, and vp run webfn:smoke, in that order. If the revision is Failed, read StateReason in the CloudFormation events. If the endpoint is Active and answers 502, read platform.initReport in the system logs of /aih/web-notes.local."
+      }
+    },
+    {
+      "id": "webfn-rollout",
+      "summary": {
+        "ja": "69章: canary の追加、昇格、ロールバックを CloudFormation 経由で実行していない。昇格のとき CloudFormation がエンドポイントの重みを先に更新してから古いリビジョンを消すこと、消したリビジョンを同じオブジェクトのバージョンから作り直せることを確かめていない。",
+        "en": "Chapter 69: adding a canary, promoting it, and rolling back have not been run through CloudFormation. Not confirmed: that on promotion CloudFormation updates the endpoint's weights before it deletes the old revision, and that a deleted revision can be created again from the same object version."
+      },
+      "resume": {
+        "ja": "2 回 vp run webfn:upload して 2 つのバージョン ID を得る。-c stable=<v1> -c canary=<v2> -c canaryWeight=10 でデプロイし、vp run webfn:smoke --count 100 で x-aih-release の割合を見る。-c stable=<v2> で昇格し、CloudFormation のイベントの順序を読む。-c stable=<v1> で戻す。",
+        "en": "Run vp run webfn:upload twice for two version IDs. Deploy with -c stable=<v1> -c canary=<v2> -c canaryWeight=10 and read the share of each x-aih-release from vp run webfn:smoke --count 100. Promote with -c stable=<v2> and read the order of the CloudFormation events. Go back with -c stable=<v1>."
+      }
+    },
+    {
+      "id": "webfn-cdkd-provider",
+      "summary": {
+        "ja": "69章: cdkd 0.296.28 には AWS::Lambda::WebFunction、WebFunctionRevision、WebFunctionEndpoint のプロバイダーが無く、Cloud Control API の対応リソースの一覧にも 2026-10-13 時点で載っていないので、このスタックだけ AWS CDK CLI と CloudFormation を使っている。Cloud Control API を実際に呼んでは確かめていない。",
+        "en": "Chapter 69: cdkd 0.296.28 has no provider for AWS::Lambda::WebFunction, WebFunctionRevision or WebFunctionEndpoint, and the Cloud Control API's list of supported resources did not have them on 2026-10-13, so this one stack uses the AWS CDK CLI and CloudFormation. This was not checked with a call to the Cloud Control API."
+      },
+      "resume": {
+        "ja": "cdkd の新しい版の src/provisioning/register-providers.ts と、Cloud Control API の対応リソースの一覧を読み直す。どちらかに 3 種類が入ったら、固定する版を上げ、タスクを infra(\"webfn\", ...) に置き換え、infra/test の CLOUDFORMATION_ONLY を直す。",
+        "en": "Read src/provisioning/register-providers.ts of a newer cdkd and the Cloud Control API's list again. Once either has the three types, raise the pinned version, replace the tasks with infra(\"webfn\", ...), and correct CLOUDFORMATION_ONLY in infra/test."
+      }
+    },
+    {
+      "id": "webfn-sdk-client",
+      "summary": {
+        "ja": "69章: 固定している @aws-sdk/client-lambda-web 3.1149.0 には GetWebAccountSettings しか無く、リビジョンの作成や重みの変更を SDK から呼べない。2026-10-12 公開の 3.1150.0 には操作が揃っている。そのため重みの変更も CloudFormation のデプロイで行っている。",
+        "en": "Chapter 69: the pinned @aws-sdk/client-lambda-web 3.1149.0 has only GetWebAccountSettings, so creating a revision or changing weights cannot be called from the SDK. Version 3.1150.0, published 2026-10-12, has the operations. Weight changes therefore go through a CloudFormation deploy as well."
+      },
+      "resume": {
+        "ja": "@aws-sdk/* の固定を 3.1150.0 以上に上げるときに、UpdateWebFunctionEndpoint で重みだけを変えるスクリプトを足すかどうかを決める。足すなら、CloudFormation が持つ RevisionWeights とのドリフトをどう扱うかを先に決める。",
+        "en": "When the pin on @aws-sdk/* moves to 3.1150.0 or later, decide whether to add a script that changes only the weights with UpdateWebFunctionEndpoint. If so, decide first how the drift from the RevisionWeights CloudFormation holds is handled."
+      }
+    },
+    {
+      "id": "webfn-environment-lifetime",
+      "summary": {
+        "ja": "69章: リクエストが途切れたあと実行環境がどれだけ残るかが、公式ドキュメントに書かれていない。メモリの料金は環境が存在するあいだ続くので、通信量の少ない月の金額はこの長さで決まる。シナリオは「1 か月動き続ける」と置いている。",
+        "en": "Chapter 69: how long an execution environment stays after requests stop is not documented. Memory is billed for as long as an environment exists, so a low-traffic month's bill depends on it. The scenarios assume an environment that runs all month."
+      },
+      "resume": {
+        "ja": "デプロイ後、AWS/Lambda/Web の EnvironmentActiveTime と AWS/Lambda/Web/Usage の EndpointActiveEnvironments を、リクエストを止めてから 1 時間ほど見る。請求書の APN1-Lambda-Web-Memory-GB-Second-ARM の数量と照らし合わせ、シナリオの仮定を直す。",
+        "en": "After a deploy, watch EnvironmentActiveTime in AWS/Lambda/Web and EndpointActiveEnvironments in AWS/Lambda/Web/Usage for about an hour after requests stop. Compare with the quantity of APN1-Lambda-Web-Memory-GB-Second-ARM on the bill and correct the scenarios' assumption."
+      }
+    },
+    {
+      "id": "webfn-free-tier",
+      "summary": {
+        "ja": "69章: Web Functions に無料利用枠があるかを確認できていない。料金ページの計算例は「無料利用枠を除く」と書くだけで、枠の内容を示していない。Price List にも 0 ドルの段が無い。金額はすべて定価で出している。",
+        "en": "Chapter 69: whether Web Functions have a free tier could not be confirmed. The pricing page's examples say only that they exclude the free tier, without stating one, and the price list has no USD 0 tier. Every amount is at list price."
+      },
+      "resume": {
+        "ja": "https://aws.amazon.com/lambda/pricing/ の Web Functions の節と AWS Free Tier のページを読み直す。枠が明記されたら、断片の unknownAllowances を allowances に移す。",
+        "en": "Read the Web Functions section of https://aws.amazon.com/lambda/pricing/ and the AWS Free Tier page again. Once an allowance is stated, move the entries from unknownAllowances to allowances in the fragment."
+      }
+    },
+    {
+      "id": "webfn-body-limits",
+      "summary": {
+        "ja": "69章: リクエストとレスポンスの本文の大きさの上限が、読んだ範囲の公式ドキュメント（HTTP の節、クォータの表）に無い。ヘッダーの 128 KiB だけが書かれている。また、長さを宣言しないチャンク転送で上限を超えるアップロードには、04章の部品が本文の途中で 413 を返す。Lambda の経路でこれが応答として届くかは確かめていない。",
+        "en": "Chapter 69: the pages read (the HTTP section and the quota tables) give no limit on the size of a request or response body, only 128 KiB for headers. Also, for a chunked upload over the limit that declares no length, chapter 04's kit answers 413 partway through the body. Whether that answer is delivered on Lambda's path was not confirmed."
+      },
+      "resume": {
+        "ja": "デプロイ後、長さを宣言した 2 MB の POST と、チャンク転送の 2 MB の POST を署名して送り、状態コードと lambda-web-error-type を記録する。チャンク転送で応答が届かなければ、本文を読み切る処理を 04章の body.ts の側に入れる相談をする。",
+        "en": "After a deploy, send a signed 2 MB POST with a declared length and one with chunked transfer, and record the status and lambda-web-error-type. If the chunked one gets no answer, raise moving the read-to-the-end into chapter 04's body.ts."
       }
     }
   ]

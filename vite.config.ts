@@ -136,6 +136,7 @@ const chapterSynthTasks = [
   "firecracker:infra:synth",
   "nitro:infra:synth",
   "distsql:infra:synth",
+  "webfn:cfn:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -1864,6 +1865,39 @@ export default defineConfig({
         cwd: "examples/66-distributed-sql",
       }),
       // <<< chapter 66
+
+      // >>> chapter 69
+      // ---- chapter 69: Web Functions -------------------------------------
+      // The notes API as a Node.js server on 127.0.0.1:8787, restarted on change. No AWS.
+      "dev:webfn": fresh("node --watch --env-file-if-exists=.env src/index.ts", {
+        cwd: "examples/69-web-functions",
+      }),
+      // The entry file as its own process: fifty requests at once, then a SIGTERM. No AWS.
+      "webfn:demo": fresh("node scripts/demo.ts", { cwd: "examples/69-web-functions" }),
+      // Writes dist/function.zip, the archive a revision is made from. Local.
+      "webfn:package": fresh("node scripts/package.ts", { cwd: "examples/69-web-functions" }),
+      // cdkd 0.296.28 has no provider for AWS::Lambda::WebFunction, so this stack goes through
+      // the AWS CDK CLI and CloudFormation, as chapter 20 does. Local: writes cdk.out.
+      "webfn:cfn:synth": fresh(`${node} examples/69-web-functions/scripts/cdk.ts synth`),
+      // Template against the deployed template. Takes the same -c flags as the deploy.
+      "webfn:cfn:diff": live(`${node} examples/69-web-functions/scripts/cdk.ts diff`),
+      // --foundation before the first upload, -c stable=<S3 version ID> after it.
+      // With neither, it refuses to run.
+      "webfn:cfn:deploy": live(`${node} examples/69-web-functions/scripts/cdk.ts deploy`),
+      "webfn:cfn:destroy": live(`${node} examples/69-web-functions/scripts/cdk.ts destroy`),
+      // Builds the package and puts it in the code bucket. Prints the S3 version ID.
+      "webfn:upload": live("node --env-file-if-exists=../../.env scripts/upload.ts", {
+        cwd: "examples/69-web-functions",
+      }),
+      // Signed requests to the endpoint: creates and deletes a note, counts answers per upload.
+      "webfn:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/69-web-functions",
+      }),
+      // Counts the object versions in the code bucket. Deletes them all only with --yes.
+      "webfn:empty": live("node --env-file-if-exists=../../.env scripts/empty.ts", {
+        cwd: "examples/69-web-functions",
+      }),
+      // <<< chapter 69
 
       // ---- chapter task blocks are inserted above this line ----
 

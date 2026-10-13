@@ -5652,6 +5652,69 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-11T12:44:40Z",
       "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "lambda.web.request.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "8T8U85RF3YJJJUXB",
+      "usageType": "APN1-Lambda-Web-Request-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Request",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000003000",
+          "description": "$0.0000003 per Request for Lambda-Web-Request-ARM in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-12T22:32:57Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "lambda.web.vcpu.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "QXYRXMJGDG6CRB4V",
+      "usageType": "APN1-Lambda-Web-vCPU-Second-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "vCPU-Seconds",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000322421",
+          "description": "$0.0000322421 per vCPU-Second for Lambda-Web-vCPU-Second-ARM in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-12T22:32:57Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "lambda.web.memory.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "3HKFHA72EMGMXCBA",
+      "usageType": "APN1-Lambda-Web-Memory-GB-Second-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Seconds",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000042688",
+          "description": "$0.0000042688 per GB-Second for Lambda-Web-Memory-GB-Second-ARM in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-12T22:32:57Z",
+      "checkedAt": "2026-10-13"
     }
   ]
 }

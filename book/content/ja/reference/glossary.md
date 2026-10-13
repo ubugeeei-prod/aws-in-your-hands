@@ -480,3 +480,8 @@ generated: true
 | tablet | Tablet | 66 | YugabyteDB がテーブルを分けた 1 かけら。行は主キーでどれか 1 つの tablet に入り、tablet ごとに写しの組（Raft のグループ）がある。 |
 | replication factor | Replication factor | 66 | 1 つの tablet の写しの数。3 なら、ノードを 1 つ失っても過半数が残る。 |
 | 時刻のずれ（clock skew） | Clock skew | 66 | ノードどうしの時計の差。YugabyteDB は時刻をトランザクションの順序づけに使うので、差が上限（既定で 500 ミリ秒）を超えたノードは自分で止まる。 |
+| Web Function | Web Function | 69 | Lambda の形のひとつ。コードはポートで待ち受ける HTTP サーバーで、1 つの実行環境が複数のリクエストを同時に処理する。 |
+| Event Function | Event Function | 69 | これまで単に Lambda 関数と呼んできたもの。イベントを 1 つ受け取るハンドラーで、2026-10-12 に名前だけが変わった。 |
+| リビジョン（revision） | revision | 69 | Web Function のコードと設定を、ある時点で固めたもの。作った後は変えられず、変えるときは新しいリビジョンを作る。 |
+| エンドポイント（Web Function） | endpoint (Web Function) | 69 | Web Function の HTTPS の入口。ドメイン名、認証の方式、レート制限、環境数の上限を持ち、リクエストを 1 つか 2 つのリビジョンに振り分ける。 |
+| アクティブな CPU 時間 | active CPU time | 69 | コードが実際に CPU を使っていた時間。データベースや外部の API の応答を待っている時間は入らない。 |

@@ -81,7 +81,7 @@ const groups: SidebarItem[] = [
   { text: { ja: "AI を深める", en: "Deeper into AI" }, items: pick(36, 56, 50, 57) },
   {
     text: { ja: "動かす場所を深める", en: "Deeper into Compute" },
-    items: pick(29, 35, 41, 52, 34),
+    items: pick(29, 35, 41, 52, 34, 69),
   },
   { text: { ja: "守る、備える", en: "Protect and Prepare" }, items: pick(42, 46, 44, 28, 40) },
   { text: { ja: "磨く", en: "Tune It" }, items: pick(31, 32, 55) },

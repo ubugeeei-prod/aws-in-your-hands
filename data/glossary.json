@@ -4689,6 +4689,56 @@
         "ja": "ノードどうしの時計の差。YugabyteDB は時刻をトランザクションの順序づけに使うので、差が上限（既定で 500 ミリ秒）を超えたノードは自分で止まる。",
         "en": "The difference between the clocks of two nodes. YugabyteDB orders transactions with timestamps, so a node whose clock is off by more than the limit (500 ms by default) stops itself."
       }
+    },
+    {
+      "id": "web-function",
+      "ja": "Web Function",
+      "en": "Web Function",
+      "firstUse": "69",
+      "definition": {
+        "ja": "Lambda の形のひとつ。コードはポートで待ち受ける HTTP サーバーで、1 つの実行環境が複数のリクエストを同時に処理する。",
+        "en": "One of Lambda's forms. The code is an HTTP server listening on a port, and one execution environment answers several requests at once."
+      }
+    },
+    {
+      "id": "event-function",
+      "ja": "Event Function",
+      "en": "Event Function",
+      "firstUse": "69",
+      "definition": {
+        "ja": "これまで単に Lambda 関数と呼んできたもの。イベントを 1 つ受け取るハンドラーで、2026-10-12 に名前だけが変わった。",
+        "en": "What was simply called a Lambda function until now: a handler that takes one event. Only the name changed, on 2026-10-12."
+      }
+    },
+    {
+      "id": "web-function-revision",
+      "ja": "リビジョン（revision）",
+      "en": "revision",
+      "firstUse": "69",
+      "definition": {
+        "ja": "Web Function のコードと設定を、ある時点で固めたもの。作った後は変えられず、変えるときは新しいリビジョンを作る。",
+        "en": "A Web Function's code and settings, fixed at one moment. It cannot be changed afterwards; a change means a new revision."
+      }
+    },
+    {
+      "id": "web-function-endpoint",
+      "ja": "エンドポイント（Web Function）",
+      "en": "endpoint (Web Function)",
+      "firstUse": "69",
+      "definition": {
+        "ja": "Web Function の HTTPS の入口。ドメイン名、認証の方式、レート制限、環境数の上限を持ち、リクエストを 1 つか 2 つのリビジョンに振り分ける。",
+        "en": "A Web Function's HTTPS entry point. It has a domain name, an authentication type, a rate limit and a cap on environments, and routes requests to one or two revisions."
+      }
+    },
+    {
+      "id": "active-cpu-time",
+      "ja": "アクティブな CPU 時間",
+      "en": "active CPU time",
+      "firstUse": "69",
+      "definition": {
+        "ja": "コードが実際に CPU を使っていた時間。データベースや外部の API の応答を待っている時間は入らない。",
+        "en": "The time the code actually spent on a CPU. Time spent waiting for a database or another API is not part of it."
+      }
     }
   ]
 }

@@ -563,6 +563,16 @@ generated: true
 | 52 | `vp run ecr:lifecycle:compare` | AWS | 未実行 | - | ECR の lifecycle policy preview を実行していない。evaluator と ECR の結果を比べていない |
 | 52 | `vp run ecr:scan:gate` | AWS | 未実行 | - | 実際の検査結果を読んでいない |
 | 68 | `vp run check:all` | ローカル | 成功 | 2026-10-13 | 00章から 68章まで（65 は欠番）がそろった状態で通過。format と lint（awscdk-lint を含む）、型検査、テスト 5,044 件（ほかに 5 件は条件が合わずスキップ）、全 CDK アプリの synth、54 個の bundle の読み込み、本のビルド、668 ページのリンク検査。AWS には触れていない |
+| 69 | `vp test run examples/69-web-functions` | ローカル | 成功 | 2026-10-13 | 9 ファイル、68 件。実際のソケットで待ち受けるサーバーに 2 つのリクエストを重ねて、リクエスト単位の値が混ざらないことと、モジュールスコープの変数に置いた版では混ざること。AWS_LAMBDA_HTTP_ENDPOINT の読み取り、Lambda が付けたリクエスト ID の採用、プリフライト、宣言された長さが上限を超えるアップロードに本文を最後まで受け取ってから 413 を返すこと、SIGTERM のあとの停止（開いているリクエストを待つ場合と、時間切れで切る場合）、zip の書き出しと読み戻し、アーカイブだけを展開した空のディレクトリからサーバーが起動して SIGTERM で 1 秒以内に終了すること、リリースの指定と重みの計算、エンドポイントの上限の検証、CDK CLI への引数、SigV4 の署名に x-amz-content-sha256 が入ること、スタックの assertion。本文の読み切りを外すとアップロードのテストが 1 件落ちることも確かめた |
+| 69 | `tsc --noEmit -p examples/69-web-functions` | ローカル | 成功 | 2026-10-13 | 型検査が通った |
+| 69 | `vp run webfn:demo` | ローカル | 成功 | 2026-10-13 | エントリファイルを別プロセスで起動し、AWS_LAMBDA_HTTP_ENDPOINT のアドレスで待ち受けるまでの時間、同時に送った 50 件が自分のリクエスト ID で返ること、SIGTERM から終了までの時間と終了コード 0 を出力で確認。手元の Mac での値で、Lambda の実行環境のものではない |
+| 69 | `vp run webfn:package` | ローカル | 成功 | 2026-10-13 | dist/function.zip（8.3 KiB）ができ、2 回続けて同じ sha256 になることを確認 |
+| 69 | `vp run webfn:cfn:synth` | ローカル | 成功 | 2026-10-13 | AWS CDK CLI 2.1145.0 で、リリースなし、stable だけ、canary つきの 3 通りを synth。CLI に同梱の検証は AWS::Lambda::WebFunction など 3 種類を「Unknown resource type」と警告する（エラーではない）。canary に重みが無い指定は synth の前に止まる |
+| 69 | `vp run webfn:cfn:deploy --foundation` | AWS | 未実行 | - | CloudFormation にスタックを作る。実行していない。CLI に同梱の検証が知らないリソースの種類を、CloudFormation が受け付けることも確かめていない |
+| 69 | `vp run webfn:upload` | AWS | 未実行 | - | パッケージをコードバケットに置き、バージョン ID を得る。実行していない |
+| 69 | `vp run webfn:cfn:deploy -c stable=<version>` | AWS | 未実行 | - | リビジョンとエンドポイントを作る。実行していない。index.js が ES モジュールとして読み込まれること、10 秒以内に待ち受けが始まること、ログの形も未確認 |
+| 69 | `vp run webfn:smoke` | AWS | 未実行 | - | 署名なしのリクエストが断られること、署名したリクエストでノートを作って消せること、x-aih-release ごとの応答数。実行していない |
+| 69 | `vp run webfn:cfn:diff / webfn:empty / webfn:cfn:destroy` | AWS | 未実行 | - | 差分の確認、バケットを空にする操作、スタックの削除。実行していない |
 
 ## 未解決事項と再開手順
 
@@ -2263,3 +2273,45 @@ pull through cache のルールをデプロイしていない。cdkd 0.296.28 �
 ECS がタグをダイジェストに解決するのはデプロイごとだとドキュメントから読んだが、circuit breaker によるロールバックが、前のデプロイで解決したダイジェストを使うのか、タグを解決し直すのかは確認できていない。
 
 再開手順: ECS のドキュメントで service revision の説明を読み、ロールバック先のリビジョンがダイジェストを持つかを確かめる。mutable なリポジトリで実際にタグを動かしてロールバックさせ、動いたタスクの imageDigest を aws ecs describe-tasks で見る。
+
+### webfn-deploy
+
+69章: スタックを AWS にデプロイしていない。CloudFormation が 3 種類の Web Function のリソースをこのテンプレートで作れること、バンドルした index.js が nodejs24.x で起動すること、IamAuth のエンドポイントが署名なしのリクエストを 403 で断ること、ログが JSON の message にオブジェクトとして入ること、SIGTERM が届くことを、実物で確かめていない。
+
+再開手順: vp run ship:cfn:bootstrap（未実行なら）、vp run webfn:cfn:deploy --foundation、vp run webfn:upload、vp run webfn:cfn:deploy -c stable=<version>、vp run webfn:smoke の順に実行する。リビジョンが Failed なら CloudFormation のイベントの StateReason を読む。エンドポイントが Active なのに 502 なら、/aih/web-notes.local のシステムログで platform.initReport を見る。
+
+### webfn-rollout
+
+69章: canary の追加、昇格、ロールバックを CloudFormation 経由で実行していない。昇格のとき CloudFormation がエンドポイントの重みを先に更新してから古いリビジョンを消すこと、消したリビジョンを同じオブジェクトのバージョンから作り直せることを確かめていない。
+
+再開手順: 2 回 vp run webfn:upload して 2 つのバージョン ID を得る。-c stable=<v1> -c canary=<v2> -c canaryWeight=10 でデプロイし、vp run webfn:smoke --count 100 で x-aih-release の割合を見る。-c stable=<v2> で昇格し、CloudFormation のイベントの順序を読む。-c stable=<v1> で戻す。
+
+### webfn-cdkd-provider
+
+69章: cdkd 0.296.28 には AWS::Lambda::WebFunction、WebFunctionRevision、WebFunctionEndpoint のプロバイダーが無く、Cloud Control API の対応リソースの一覧にも 2026-10-13 時点で載っていないので、このスタックだけ AWS CDK CLI と CloudFormation を使っている。Cloud Control API を実際に呼んでは確かめていない。
+
+再開手順: cdkd の新しい版の src/provisioning/register-providers.ts と、Cloud Control API の対応リソースの一覧を読み直す。どちらかに 3 種類が入ったら、固定する版を上げ、タスクを infra("webfn", ...) に置き換え、infra/test の CLOUDFORMATION_ONLY を直す。
+
+### webfn-sdk-client
+
+69章: 固定している @aws-sdk/client-lambda-web 3.1149.0 には GetWebAccountSettings しか無く、リビジョンの作成や重みの変更を SDK から呼べない。2026-10-12 公開の 3.1150.0 には操作が揃っている。そのため重みの変更も CloudFormation のデプロイで行っている。
+
+再開手順: @aws-sdk/* の固定を 3.1150.0 以上に上げるときに、UpdateWebFunctionEndpoint で重みだけを変えるスクリプトを足すかどうかを決める。足すなら、CloudFormation が持つ RevisionWeights とのドリフトをどう扱うかを先に決める。
+
+### webfn-environment-lifetime
+
+69章: リクエストが途切れたあと実行環境がどれだけ残るかが、公式ドキュメントに書かれていない。メモリの料金は環境が存在するあいだ続くので、通信量の少ない月の金額はこの長さで決まる。シナリオは「1 か月動き続ける」と置いている。
+
+再開手順: デプロイ後、AWS/Lambda/Web の EnvironmentActiveTime と AWS/Lambda/Web/Usage の EndpointActiveEnvironments を、リクエストを止めてから 1 時間ほど見る。請求書の APN1-Lambda-Web-Memory-GB-Second-ARM の数量と照らし合わせ、シナリオの仮定を直す。
+
+### webfn-free-tier
+
+69章: Web Functions に無料利用枠があるかを確認できていない。料金ページの計算例は「無料利用枠を除く」と書くだけで、枠の内容を示していない。Price List にも 0 ドルの段が無い。金額はすべて定価で出している。
+
+再開手順: https://aws.amazon.com/lambda/pricing/ の Web Functions の節と AWS Free Tier のページを読み直す。枠が明記されたら、断片の unknownAllowances を allowances に移す。
+
+### webfn-body-limits
+
+69章: リクエストとレスポンスの本文の大きさの上限が、読んだ範囲の公式ドキュメント（HTTP の節、クォータの表）に無い。ヘッダーの 128 KiB だけが書かれている。また、長さを宣言しないチャンク転送で上限を超えるアップロードには、04章の部品が本文の途中で 413 を返す。Lambda の経路でこれが応答として届くかは確かめていない。
+
+再開手順: デプロイ後、長さを宣言した 2 MB の POST と、チャンク転送の 2 MB の POST を署名して送り、状態コードと lambda-web-error-type を記録する。チャンク転送で応答が届かなければ、本文を読み切る処理を 04章の body.ts の側に入れる相談をする。

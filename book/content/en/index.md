@@ -21,10 +21,10 @@ The goal is that, when you finish, you can explain these things about what you b
 
 ## What is written, and what has been checked
 
-There are 68 chapters, numbered 00 through 68 with no chapter 65. Every one has its text and its samples. Written is not the same as run and checked, though, and the checking goes only as far as what runs on a local machine.
+There are 69 chapters, numbered 00 through 69 with no chapter 65. Every one has its text and its samples. Written is not the same as run and checked, though, and the checking goes only as far as what runs on a local machine.
 
 - From [00 Introduction](/en/chapters/00-welcome.md) to [24 Self-hosting](/en/chapters/24-celld.md), every chapter passes the local checks (`vp run check:all`). Those checks are formatting and lint, type checks, tests, CDK synth, loading the Lambda bundles, and building the book and checking its links
-- For the 43 chapters from 25 on, tests and other checks were run locally chapter by chapter. What was run differs by chapter. With all 68 chapters in place, `vp run check:all` passes as well (2026-10-13)
+- For the 44 chapters from 25 on, tests and other checks were run locally chapter by chapter. What was run differs by chapter. With all 69 chapters in place, `vp run check:all` passes as well (2026-10-13)
 - No chapter has been deployed to AWS or run there, not even once. The post-deployment steps in the text are prepared, but they have not been run through
 - This book's own site is not published yet either, and it has no public URL
 

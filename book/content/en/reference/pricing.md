@@ -5116,6 +5116,99 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 1.35** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `datatransfer.tokyo-osaka`
 
+## Web Function: deployed, but never called for a month
+
+ID: `webfn-idle` / chapter: [69 Web Functions: Running an HTTP Server on Lambda As It Is](/en/chapters/69-web-functions.md)
+
+Assumptions:
+
+- No requests. The endpoint scales to zero and no execution environment runs
+- One version of the package (8.3 KiB) in S3
+- No logs are written. Metrics are free
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 0 | GB-Mo | one 8.3 KiB package, in GB-months | 0.000000 | - | 0.000000 |
+
+- List subtotal: **USD 0.00** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`
+
+## Web Function: 1,000,000 requests a month, CPU busy throughout
+
+ID: `webfn-small` / chapter: [69 Web Functions: Running an HTTP Server on Lambda As It Is](/en/chapters/69-web-functions.md)
+
+Assumptions:
+
+- The same traffic as chapter 04's 1,000,000 requests a month, 50 ms per request
+- One execution environment is assumed to run for the whole month (730 hours = 2,628,000 seconds). AWS's own pricing examples make the same assumption; when an idle environment is removed is not documented
+- The environment is assumed to use 0.15 GB of memory (not measured; the lightest example on the pricing page uses 0.14 GB)
+- 0.5 KB of logs per request (chapter 04's assumption), written once and stored for 7 days in two log groups, .local and the centralized one
+- List price before any free tier. Whether Web Functions have one could not be confirmed
+- Data transfer out for responses is not included, as in chapter 04's scenario
+- CPU time equals the 50 ms of duration (an upper bound: no waiting at all)
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `lambda.web.request.arm` | 1,000,000 | Request | 1,000,000 requests | 0.30 | - | 0.30 |
+| `lambda.web.vcpu.arm` | 50,000 | vCPU-Seconds | 1,000,000 x 0.05 s of CPU | 1.61 | - | 1.61 |
+| `lambda.web.memory.arm` | 394,200 | GB-Seconds | 0.15 GB x 2,628,000 s | 1.68 | - | 1.68 |
+| `logs.ingest.standard` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB, written once | 0.36 | 5 | 0 |
+| `logs.storage` | 0.222 | GB-Mo | 0.477 GB x 7/30, kept in two log groups, in GB-months | 0.01 | 5 | 0 |
+| `s3.standard.storage` | 0 | GB-Mo | one 8.3 KiB package, in GB-months | 0.000000 | - | 0.000000 |
+
+- List subtotal: **USD 3.96** / month
+- Subtotal after monthly free allowance: **USD 3.59** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`, `lambda.web.request.arm`, `lambda.web.vcpu.arm`, `lambda.web.memory.arm`
+
+## Web Function: 1,000,000 requests a month, mostly waiting
+
+ID: `webfn-small-io` / chapter: [69 Web Functions: Running an HTTP Server on Lambda As It Is](/en/chapters/69-web-functions.md)
+
+Assumptions:
+
+- The same traffic as chapter 04's 1,000,000 requests a month, 50 ms per request
+- One execution environment is assumed to run for the whole month (730 hours = 2,628,000 seconds). AWS's own pricing examples make the same assumption; when an idle environment is removed is not documented
+- The environment is assumed to use 0.15 GB of memory (not measured; the lightest example on the pricing page uses 0.14 GB)
+- 0.5 KB of logs per request (chapter 04's assumption), written once and stored for 7 days in two log groups, .local and the centralized one
+- List price before any free tier. Whether Web Functions have one could not be confirmed
+- Data transfer out for responses is not included, as in chapter 04's scenario
+- 12 ms of CPU in each 50 ms (the ratio of example 3 on the pricing page; not measured for this app)
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `lambda.web.request.arm` | 1,000,000 | Request | 1,000,000 requests | 0.30 | - | 0.30 |
+| `lambda.web.vcpu.arm` | 12,000 | vCPU-Seconds | 1,000,000 x 0.012 s of CPU | 0.39 | - | 0.39 |
+| `lambda.web.memory.arm` | 394,200 | GB-Seconds | 0.15 GB x 2,628,000 s | 1.68 | - | 1.68 |
+| `logs.ingest.standard` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB, written once | 0.36 | 5 | 0 |
+| `logs.storage` | 0.222 | GB-Mo | 0.477 GB x 7/30, kept in two log groups, in GB-months | 0.01 | 5 | 0 |
+| `s3.standard.storage` | 0 | GB-Mo | one 8.3 KiB package, in GB-months | 0.000000 | - | 0.000000 |
+
+- List subtotal: **USD 2.74** / month
+- Subtotal after monthly free allowance: **USD 2.37** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`, `lambda.web.request.arm`, `lambda.web.vcpu.arm`, `lambda.web.memory.arm`
+
+## Web Function: a month at both brakes
+
+ID: `webfn-ceiling` / chapter: [69 Web Functions: Running an HTTP Server on Lambda As It Is](/en/chapters/69-web-functions.md)
+
+Assumptions:
+
+- The rateLimit of 100 requests a second for the whole month: 100 x 2,628,000 = 262,800,000 requests
+- Both environments of maxEnvironments run all month, each using its 2 vCPUs fully and 2 GB of memory
+- Lambda may exceed maxEnvironments for a while for operational reasons. That is not included
+- Logs and data transfer are not included, and at this volume neither is small
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `lambda.web.request.arm` | 262,800,000 | Request | 100 requests/s x 2,628,000 s | 78.84 | - | 78.84 |
+| `lambda.web.vcpu.arm` | 10,512,000 | vCPU-Seconds | 2 environments x 2 vCPUs x 2,628,000 s | 338.93 | - | 338.93 |
+| `lambda.web.memory.arm` | 10,512,000 | GB-Seconds | 2 environments x 2 GB x 2,628,000 s | 44.87 | - | 44.87 |
+
+- List subtotal: **USD 462.64** / month
+- Subtotal after monthly free allowance: **USD 462.64** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `lambda.web.request.arm`, `lambda.web.vcpu.arm`, `lambda.web.memory.arm`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -5370,6 +5463,9 @@ Assumptions:
 | `ecr.signing` | ap-northeast-1 | APN1-AsyncActions-ImageSigning | Count | 0 - ∞: 0.0200000000 | 2026-09-11 | 2026-10-13 |
 | `inspector.image.initial-scan` | ap-northeast-1 | APN1-container-image-initial-scan | Resource-assessment | 0 - ∞: 0.1100000000 | 2026-09-11 | 2026-10-13 |
 | `inspector.image.rescan` | ap-northeast-1 | APN1-container-image-re-scan | Resource-assessment | 0 - ∞: 0.0100000000 | 2026-09-11 | 2026-10-13 |
+| `lambda.web.request.arm` | ap-northeast-1 | APN1-Lambda-Web-Request-ARM | Request | 0 - ∞: 0.0000003000 | 2026-10-12 | 2026-10-13 |
+| `lambda.web.vcpu.arm` | ap-northeast-1 | APN1-Lambda-Web-vCPU-Second-ARM | vCPU-Seconds | 0 - ∞: 0.0000322421 | 2026-10-12 | 2026-10-13 |
+| `lambda.web.memory.arm` | ap-northeast-1 | APN1-Lambda-Web-Memory-GB-Second-ARM | GB-Seconds | 0 - ∞: 0.0000042688 | 2026-10-12 | 2026-10-13 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -5561,3 +5657,6 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `ecr.storage.archive`: No free allowance for archive storage was found; none is applied.
 - `ecr.archive.retrieval`: No free allowance for archive retrieval was found; none is applied.
 - `ecr.signing`: No free allowance for managed signing was found; none is applied.
+- `lambda.web.request.arm`: The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13).
+- `lambda.web.vcpu.arm`: The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13).
+- `lambda.web.memory.arm`: The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13).

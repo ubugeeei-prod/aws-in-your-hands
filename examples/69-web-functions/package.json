@@ -1,0 +1,23 @@
+{
+  "name": "@aih/example-69-web-functions",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aih/example-04-http-api": "workspace:*",
+    "@aih/example-20-shipping": "workspace:*",
+    "@aih/example-35-lambda-managed-instances": "workspace:*",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@aws-crypto/sha256-js": "5.2.0",
+    "@aws-sdk/client-s3": "3.1149.0",
+    "@aws-sdk/credential-provider-node": "3.972.85",
+    "@smithy/signature-v4": "5.7.4",
+    "esbuild": "0.28.2",
+    "vite-plus": "1.1.0"
+  }
+}

@@ -5116,6 +5116,99 @@ ID: `ecr-replicate-osaka` / 章: [52 ECR: tag と digest、lifecycle、scan、�
 - 毎月の無料枠適用後の小計: **USD 1.35** / 月
 - 無料枠を確認できず、何も引いていない単価: `datatransfer.tokyo-osaka`
 
+## Web Function: デプロイ済みで呼ばれない月
+
+ID: `webfn-idle` / 章: [69 Web Functions: Lambda で HTTP サーバーをそのまま動かす](/ja/chapters/69-web-functions.md)
+
+前提:
+
+- リクエストゼロ。エンドポイントはゼロまでスケールし、実行環境は 1 つも動かない
+- S3 にパッケージが 1 版（8.3 KiB）
+- ログは書かれない。メトリクスは無料
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 0 | GB-Mo | one 8.3 KiB package, in GB-months | 0.000000 | - | 0.000000 |
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
+
+## Web Function: 月 100 万リクエスト、CPU を使いどおし
+
+ID: `webfn-small` / 章: [69 Web Functions: Lambda で HTTP サーバーをそのまま動かす](/ja/chapters/69-web-functions.md)
+
+前提:
+
+- 04章の「月 100 万リクエスト」と同じ通信量。1 リクエストの実行時間は 50 ミリ秒
+- 実行環境が 1 つ、1 か月（730 時間 = 2,628,000 秒）動き続けると仮定する。AWS の料金ページの計算例と同じ置き方で、リクエストが途切れたときに環境がいつ消えるかは公式ドキュメントに書かれていない
+- 環境が使うメモリは 0.15 GB と仮定する（計測していない。料金ページの軽い例は 0.14 GB）
+- 1 リクエストあたりログ 0.5 KB（04章と同じ仮定）。書き込みは 1 回、保存は .local と集約先の 2 つのロググループに 7 日ずつ
+- 無料利用枠を引く前の定価。Web Functions に無料利用枠があるかは確認できていない
+- 応答のデータ転送料金は含めていない（未算入。04章のシナリオと同じ）
+- CPU 時間は実行時間と同じ 50 ミリ秒（上限の見積もり。待ち時間が無い場合）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `lambda.web.request.arm` | 1,000,000 | Request | 1,000,000 requests | 0.30 | - | 0.30 |
+| `lambda.web.vcpu.arm` | 50,000 | vCPU-Seconds | 1,000,000 x 0.05 s of CPU | 1.61 | - | 1.61 |
+| `lambda.web.memory.arm` | 394,200 | GB-Seconds | 0.15 GB x 2,628,000 s | 1.68 | - | 1.68 |
+| `logs.ingest.standard` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB, written once | 0.36 | 5 | 0 |
+| `logs.storage` | 0.222 | GB-Mo | 0.477 GB x 7/30, kept in two log groups, in GB-months | 0.01 | 5 | 0 |
+| `s3.standard.storage` | 0 | GB-Mo | one 8.3 KiB package, in GB-months | 0.000000 | - | 0.000000 |
+
+- 定価の小計: **USD 3.96** / 月
+- 毎月の無料枠適用後の小計: **USD 3.59** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `lambda.web.request.arm`, `lambda.web.vcpu.arm`, `lambda.web.memory.arm`
+
+## Web Function: 月 100 万リクエスト、ほとんどが待ち時間
+
+ID: `webfn-small-io` / 章: [69 Web Functions: Lambda で HTTP サーバーをそのまま動かす](/ja/chapters/69-web-functions.md)
+
+前提:
+
+- 04章の「月 100 万リクエスト」と同じ通信量。1 リクエストの実行時間は 50 ミリ秒
+- 実行環境が 1 つ、1 か月（730 時間 = 2,628,000 秒）動き続けると仮定する。AWS の料金ページの計算例と同じ置き方で、リクエストが途切れたときに環境がいつ消えるかは公式ドキュメントに書かれていない
+- 環境が使うメモリは 0.15 GB と仮定する（計測していない。料金ページの軽い例は 0.14 GB）
+- 1 リクエストあたりログ 0.5 KB（04章と同じ仮定）。書き込みは 1 回、保存は .local と集約先の 2 つのロググループに 7 日ずつ
+- 無料利用枠を引く前の定価。Web Functions に無料利用枠があるかは確認できていない
+- 応答のデータ転送料金は含めていない（未算入。04章のシナリオと同じ）
+- CPU 時間は 50 ミリ秒のうち 12 ミリ秒（料金ページの計算例 3 と同じ割合。このアプリでは計測していない）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `lambda.web.request.arm` | 1,000,000 | Request | 1,000,000 requests | 0.30 | - | 0.30 |
+| `lambda.web.vcpu.arm` | 12,000 | vCPU-Seconds | 1,000,000 x 0.012 s of CPU | 0.39 | - | 0.39 |
+| `lambda.web.memory.arm` | 394,200 | GB-Seconds | 0.15 GB x 2,628,000 s | 1.68 | - | 1.68 |
+| `logs.ingest.standard` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB, written once | 0.36 | 5 | 0 |
+| `logs.storage` | 0.222 | GB-Mo | 0.477 GB x 7/30, kept in two log groups, in GB-months | 0.01 | 5 | 0 |
+| `s3.standard.storage` | 0 | GB-Mo | one 8.3 KiB package, in GB-months | 0.000000 | - | 0.000000 |
+
+- 定価の小計: **USD 2.74** / 月
+- 毎月の無料枠適用後の小計: **USD 2.37** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `lambda.web.request.arm`, `lambda.web.vcpu.arm`, `lambda.web.memory.arm`
+
+## Web Function: 2 つのブレーキいっぱいで 1 か月
+
+ID: `webfn-ceiling` / 章: [69 Web Functions: Lambda で HTTP サーバーをそのまま動かす](/ja/chapters/69-web-functions.md)
+
+前提:
+
+- rateLimit の 100 リクエスト毎秒が 1 か月続く: 100 x 2,628,000 = 262,800,000 リクエスト
+- maxEnvironments の 2 環境が 1 か月動き続け、どちらも 2 vCPU を使い切り、2 GB を使う
+- Lambda は運用上の理由で maxEnvironments を一時的に超えることがある。その分は含めていない
+- ログとデータ転送は未算入。この量ではどちらも小さくない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `lambda.web.request.arm` | 262,800,000 | Request | 100 requests/s x 2,628,000 s | 78.84 | - | 78.84 |
+| `lambda.web.vcpu.arm` | 10,512,000 | vCPU-Seconds | 2 environments x 2 vCPUs x 2,628,000 s | 338.93 | - | 338.93 |
+| `lambda.web.memory.arm` | 10,512,000 | GB-Seconds | 2 environments x 2 GB x 2,628,000 s | 44.87 | - | 44.87 |
+
+- 定価の小計: **USD 462.64** / 月
+- 毎月の無料枠適用後の小計: **USD 462.64** / 月
+- 無料枠を確認できず、何も引いていない単価: `lambda.web.request.arm`, `lambda.web.vcpu.arm`, `lambda.web.memory.arm`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -5370,6 +5463,9 @@ ID: `ecr-replicate-osaka` / 章: [52 ECR: tag と digest、lifecycle、scan、�
 | `ecr.signing` | ap-northeast-1 | APN1-AsyncActions-ImageSigning | Count | 0 - ∞: 0.0200000000 | 2026-09-11 | 2026-10-13 |
 | `inspector.image.initial-scan` | ap-northeast-1 | APN1-container-image-initial-scan | Resource-assessment | 0 - ∞: 0.1100000000 | 2026-09-11 | 2026-10-13 |
 | `inspector.image.rescan` | ap-northeast-1 | APN1-container-image-re-scan | Resource-assessment | 0 - ∞: 0.0100000000 | 2026-09-11 | 2026-10-13 |
+| `lambda.web.request.arm` | ap-northeast-1 | APN1-Lambda-Web-Request-ARM | Request | 0 - ∞: 0.0000003000 | 2026-10-12 | 2026-10-13 |
+| `lambda.web.vcpu.arm` | ap-northeast-1 | APN1-Lambda-Web-vCPU-Second-ARM | vCPU-Seconds | 0 - ∞: 0.0000322421 | 2026-10-12 | 2026-10-13 |
+| `lambda.web.memory.arm` | ap-northeast-1 | APN1-Lambda-Web-Memory-GB-Second-ARM | GB-Seconds | 0 - ∞: 0.0000042688 | 2026-10-12 | 2026-10-13 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -5561,3 +5657,6 @@ ID: `ecr-replicate-osaka` / 章: [52 ECR: tag と digest、lifecycle、scan、�
 - `ecr.storage.archive`: No free allowance for archive storage was found; none is applied.
 - `ecr.archive.retrieval`: No free allowance for archive retrieval was found; none is applied.
 - `ecr.signing`: No free allowance for managed signing was found; none is applied.
+- `lambda.web.request.arm`: The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13).
+- `lambda.web.vcpu.arm`: The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13).
+- `lambda.web.memory.arm`: The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13).

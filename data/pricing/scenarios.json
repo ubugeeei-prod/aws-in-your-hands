@@ -9734,6 +9734,192 @@
           "basis": "100 images x 0.15 GB"
         }
       ]
+    },
+    {
+      "id": "webfn-idle",
+      "chapter": "69",
+      "title": {
+        "ja": "Web Function: デプロイ済みで呼ばれない月",
+        "en": "Web Function: deployed, but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "リクエストゼロ。エンドポイントはゼロまでスケールし、実行環境は 1 つも動かない",
+          "S3 にパッケージが 1 版（8.3 KiB）",
+          "ログは書かれない。メトリクスは無料"
+        ],
+        "en": [
+          "No requests. The endpoint scales to zero and no execution environment runs",
+          "One version of the package (8.3 KiB) in S3",
+          "No logs are written. Metrics are free"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.000008,
+          "basis": "one 8.3 KiB package, in GB-months"
+        }
+      ]
+    },
+    {
+      "id": "webfn-small",
+      "chapter": "69",
+      "title": {
+        "ja": "Web Function: 月 100 万リクエスト、CPU を使いどおし",
+        "en": "Web Function: 1,000,000 requests a month, CPU busy throughout"
+      },
+      "assumptions": {
+        "ja": [
+          "04章の「月 100 万リクエスト」と同じ通信量。1 リクエストの実行時間は 50 ミリ秒",
+          "実行環境が 1 つ、1 か月（730 時間 = 2,628,000 秒）動き続けると仮定する。AWS の料金ページの計算例と同じ置き方で、リクエストが途切れたときに環境がいつ消えるかは公式ドキュメントに書かれていない",
+          "環境が使うメモリは 0.15 GB と仮定する（計測していない。料金ページの軽い例は 0.14 GB）",
+          "1 リクエストあたりログ 0.5 KB（04章と同じ仮定）。書き込みは 1 回、保存は .local と集約先の 2 つのロググループに 7 日ずつ",
+          "無料利用枠を引く前の定価。Web Functions に無料利用枠があるかは確認できていない",
+          "応答のデータ転送料金は含めていない（未算入。04章のシナリオと同じ）",
+          "CPU 時間は実行時間と同じ 50 ミリ秒（上限の見積もり。待ち時間が無い場合）"
+        ],
+        "en": [
+          "The same traffic as chapter 04's 1,000,000 requests a month, 50 ms per request",
+          "One execution environment is assumed to run for the whole month (730 hours = 2,628,000 seconds). AWS's own pricing examples make the same assumption; when an idle environment is removed is not documented",
+          "The environment is assumed to use 0.15 GB of memory (not measured; the lightest example on the pricing page uses 0.14 GB)",
+          "0.5 KB of logs per request (chapter 04's assumption), written once and stored for 7 days in two log groups, .local and the centralized one",
+          "List price before any free tier. Whether Web Functions have one could not be confirmed",
+          "Data transfer out for responses is not included, as in chapter 04's scenario",
+          "CPU time equals the 50 ms of duration (an upper bound: no waiting at all)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.web.request.arm",
+          "quantity": 1000000,
+          "basis": "1,000,000 requests"
+        },
+        {
+          "priceId": "lambda.web.vcpu.arm",
+          "quantity": 50000,
+          "basis": "1,000,000 x 0.05 s of CPU"
+        },
+        {
+          "priceId": "lambda.web.memory.arm",
+          "quantity": 394200,
+          "basis": "0.15 GB x 2,628,000 s"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.477,
+          "basis": "1,000,000 x 0.5 KB, in GB, written once"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.222,
+          "basis": "0.477 GB x 7/30, kept in two log groups, in GB-months"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.000008,
+          "basis": "one 8.3 KiB package, in GB-months"
+        }
+      ]
+    },
+    {
+      "id": "webfn-small-io",
+      "chapter": "69",
+      "title": {
+        "ja": "Web Function: 月 100 万リクエスト、ほとんどが待ち時間",
+        "en": "Web Function: 1,000,000 requests a month, mostly waiting"
+      },
+      "assumptions": {
+        "ja": [
+          "04章の「月 100 万リクエスト」と同じ通信量。1 リクエストの実行時間は 50 ミリ秒",
+          "実行環境が 1 つ、1 か月（730 時間 = 2,628,000 秒）動き続けると仮定する。AWS の料金ページの計算例と同じ置き方で、リクエストが途切れたときに環境がいつ消えるかは公式ドキュメントに書かれていない",
+          "環境が使うメモリは 0.15 GB と仮定する（計測していない。料金ページの軽い例は 0.14 GB）",
+          "1 リクエストあたりログ 0.5 KB（04章と同じ仮定）。書き込みは 1 回、保存は .local と集約先の 2 つのロググループに 7 日ずつ",
+          "無料利用枠を引く前の定価。Web Functions に無料利用枠があるかは確認できていない",
+          "応答のデータ転送料金は含めていない（未算入。04章のシナリオと同じ）",
+          "CPU 時間は 50 ミリ秒のうち 12 ミリ秒（料金ページの計算例 3 と同じ割合。このアプリでは計測していない）"
+        ],
+        "en": [
+          "The same traffic as chapter 04's 1,000,000 requests a month, 50 ms per request",
+          "One execution environment is assumed to run for the whole month (730 hours = 2,628,000 seconds). AWS's own pricing examples make the same assumption; when an idle environment is removed is not documented",
+          "The environment is assumed to use 0.15 GB of memory (not measured; the lightest example on the pricing page uses 0.14 GB)",
+          "0.5 KB of logs per request (chapter 04's assumption), written once and stored for 7 days in two log groups, .local and the centralized one",
+          "List price before any free tier. Whether Web Functions have one could not be confirmed",
+          "Data transfer out for responses is not included, as in chapter 04's scenario",
+          "12 ms of CPU in each 50 ms (the ratio of example 3 on the pricing page; not measured for this app)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.web.request.arm",
+          "quantity": 1000000,
+          "basis": "1,000,000 requests"
+        },
+        {
+          "priceId": "lambda.web.vcpu.arm",
+          "quantity": 12000,
+          "basis": "1,000,000 x 0.012 s of CPU"
+        },
+        {
+          "priceId": "lambda.web.memory.arm",
+          "quantity": 394200,
+          "basis": "0.15 GB x 2,628,000 s"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.477,
+          "basis": "1,000,000 x 0.5 KB, in GB, written once"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.222,
+          "basis": "0.477 GB x 7/30, kept in two log groups, in GB-months"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.000008,
+          "basis": "one 8.3 KiB package, in GB-months"
+        }
+      ]
+    },
+    {
+      "id": "webfn-ceiling",
+      "chapter": "69",
+      "title": {
+        "ja": "Web Function: 2 つのブレーキいっぱいで 1 か月",
+        "en": "Web Function: a month at both brakes"
+      },
+      "assumptions": {
+        "ja": [
+          "rateLimit の 100 リクエスト毎秒が 1 か月続く: 100 x 2,628,000 = 262,800,000 リクエスト",
+          "maxEnvironments の 2 環境が 1 か月動き続け、どちらも 2 vCPU を使い切り、2 GB を使う",
+          "Lambda は運用上の理由で maxEnvironments を一時的に超えることがある。その分は含めていない",
+          "ログとデータ転送は未算入。この量ではどちらも小さくない"
+        ],
+        "en": [
+          "The rateLimit of 100 requests a second for the whole month: 100 x 2,628,000 = 262,800,000 requests",
+          "Both environments of maxEnvironments run all month, each using its 2 vCPUs fully and 2 GB of memory",
+          "Lambda may exceed maxEnvironments for a while for operational reasons. That is not included",
+          "Logs and data transfer are not included, and at this volume neither is small"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.web.request.arm",
+          "quantity": 262800000,
+          "basis": "100 requests/s x 2,628,000 s"
+        },
+        {
+          "priceId": "lambda.web.vcpu.arm",
+          "quantity": 10512000,
+          "basis": "2 environments x 2 vCPUs x 2,628,000 s"
+        },
+        {
+          "priceId": "lambda.web.memory.arm",
+          "quantity": 10512000,
+          "basis": "2 environments x 2 GB x 2,628,000 s"
+        }
+      ]
     }
   ]
 }

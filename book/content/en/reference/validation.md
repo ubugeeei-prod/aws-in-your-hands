@@ -563,6 +563,16 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 52 | `vp run ecr:lifecycle:compare` | AWS | not run | - | ECR's lifecycle policy preview was not run. The evaluator has not been compared with ECR |
 | 52 | `vp run ecr:scan:gate` | AWS | not run | - | No real scan result was read |
 | 68 | `vp run check:all` | local | passed | 2026-10-13 | Passed with chapters 00 to 68 in place (there is no 65). Format and lint (awscdk-lint included), type check, 5,044 tests (5 more skipped because their conditions were not met), synthesis of every CDK app, 54 bundles loaded, the book build, and the link check over 668 pages. Nothing touched AWS |
+| 69 | `vp test run examples/69-web-functions` | local | passed | 2026-10-13 | 9 files, 68 tests. Two overlapping requests against a server on a real socket do not see each other's per-request state, and do with the version that keeps it in module scope. Reading AWS_LAMBDA_HTTP_ENDPOINT, adopting the request ID Lambda assigned, the preflight, answering 413 to an upload whose declared length is over the limit only after the whole body has arrived, stopping after SIGTERM (waiting for an open request, and cutting it when time runs out), writing and reading back the zip, starting the server from an empty directory holding only the archive and stopping within a second of SIGTERM, release flags and weights, validation of the endpoint limits, the arguments for the CDK CLI, x-amz-content-sha256 in the SigV4 signature, and stack assertions. Removing the body read made one upload test fail |
+| 69 | `tsc --noEmit -p examples/69-web-functions` | local | passed | 2026-10-13 | The type check passed |
+| 69 | `vp run webfn:demo` | local | passed | 2026-10-13 | Started the entry file as its own process and read from the output the time until it listened on the address in AWS_LAMBDA_HTTP_ENDPOINT, that 50 requests sent at once each came back under their own request ID, and the time from SIGTERM to exit with code 0. Values from a Mac, not from a Lambda execution environment |
+| 69 | `vp run webfn:package` | local | passed | 2026-10-13 | dist/function.zip (8.3 KiB) is written, with the same sha256 twice in a row |
+| 69 | `vp run webfn:cfn:synth` | local | passed | 2026-10-13 | Synthesized with AWS CDK CLI 2.1145.0 in three shapes: no release, stable only, and with a canary. The CLI's bundled validation warns 'Unknown resource type' for the three AWS::Lambda::WebFunction types (a warning, not an error). A canary without a weight stops before synth |
+| 69 | `vp run webfn:cfn:deploy --foundation` | AWS | not run | - | Creates the stack through CloudFormation. Not run. That CloudFormation accepts resource types the CLI's bundled validation does not know was not confirmed either |
+| 69 | `vp run webfn:upload` | AWS | not run | - | Puts the package in the code bucket and prints its version ID. Not run |
+| 69 | `vp run webfn:cfn:deploy -c stable=<version>` | AWS | not run | - | Creates the revision and the endpoint. Not run. That index.js loads as an ES module, that the server listens within 10 seconds, and the shape of the logs are unconfirmed as well |
+| 69 | `vp run webfn:smoke` | AWS | not run | - | That an unsigned request is refused, that signed requests create and delete a note, and the count of answers per x-aih-release. Not run |
+| 69 | `vp run webfn:cfn:diff / webfn:empty / webfn:cfn:destroy` | AWS | not run | - | The diff, emptying the bucket, and deleting the stack. Not run |
 
 ## Open items and how to resume
 
@@ -2263,3 +2273,45 @@ To resume: Deploy with vp run ecr:infra:deploy -c pullThroughCache=on -c githubR
 The documentation says ECS resolves tags to digests per deployment. Whether a circuit breaker rollback reuses the digests of the earlier deployment or resolves the tag again was not confirmed.
 
 To resume: Read the ECS documentation on service revisions to see whether the revision rolled back to carries digests. On a mutable repository, move a tag, force a rollback, and read imageDigest from aws ecs describe-tasks.
+
+### webfn-deploy
+
+Chapter 69: the stack has not been deployed. Not confirmed on AWS: that CloudFormation creates the three Web Function resource types from this template, that the bundled index.js starts on nodejs24.x, that the IamAuth endpoint answers 403 to an unsigned request, that a log entry arrives as an object under message, and that SIGTERM is delivered.
+
+To resume: Run vp run ship:cfn:bootstrap (if never run), vp run webfn:cfn:deploy --foundation, vp run webfn:upload, vp run webfn:cfn:deploy -c stable=<version>, and vp run webfn:smoke, in that order. If the revision is Failed, read StateReason in the CloudFormation events. If the endpoint is Active and answers 502, read platform.initReport in the system logs of /aih/web-notes.local.
+
+### webfn-rollout
+
+Chapter 69: adding a canary, promoting it, and rolling back have not been run through CloudFormation. Not confirmed: that on promotion CloudFormation updates the endpoint's weights before it deletes the old revision, and that a deleted revision can be created again from the same object version.
+
+To resume: Run vp run webfn:upload twice for two version IDs. Deploy with -c stable=<v1> -c canary=<v2> -c canaryWeight=10 and read the share of each x-aih-release from vp run webfn:smoke --count 100. Promote with -c stable=<v2> and read the order of the CloudFormation events. Go back with -c stable=<v1>.
+
+### webfn-cdkd-provider
+
+Chapter 69: cdkd 0.296.28 has no provider for AWS::Lambda::WebFunction, WebFunctionRevision or WebFunctionEndpoint, and the Cloud Control API's list of supported resources did not have them on 2026-10-13, so this one stack uses the AWS CDK CLI and CloudFormation. This was not checked with a call to the Cloud Control API.
+
+To resume: Read src/provisioning/register-providers.ts of a newer cdkd and the Cloud Control API's list again. Once either has the three types, raise the pinned version, replace the tasks with infra("webfn", ...), and correct CLOUDFORMATION_ONLY in infra/test.
+
+### webfn-sdk-client
+
+Chapter 69: the pinned @aws-sdk/client-lambda-web 3.1149.0 has only GetWebAccountSettings, so creating a revision or changing weights cannot be called from the SDK. Version 3.1150.0, published 2026-10-12, has the operations. Weight changes therefore go through a CloudFormation deploy as well.
+
+To resume: When the pin on @aws-sdk/* moves to 3.1150.0 or later, decide whether to add a script that changes only the weights with UpdateWebFunctionEndpoint. If so, decide first how the drift from the RevisionWeights CloudFormation holds is handled.
+
+### webfn-environment-lifetime
+
+Chapter 69: how long an execution environment stays after requests stop is not documented. Memory is billed for as long as an environment exists, so a low-traffic month's bill depends on it. The scenarios assume an environment that runs all month.
+
+To resume: After a deploy, watch EnvironmentActiveTime in AWS/Lambda/Web and EndpointActiveEnvironments in AWS/Lambda/Web/Usage for about an hour after requests stop. Compare with the quantity of APN1-Lambda-Web-Memory-GB-Second-ARM on the bill and correct the scenarios' assumption.
+
+### webfn-free-tier
+
+Chapter 69: whether Web Functions have a free tier could not be confirmed. The pricing page's examples say only that they exclude the free tier, without stating one, and the price list has no USD 0 tier. Every amount is at list price.
+
+To resume: Read the Web Functions section of https://aws.amazon.com/lambda/pricing/ and the AWS Free Tier page again. Once an allowance is stated, move the entries from unknownAllowances to allowances in the fragment.
+
+### webfn-body-limits
+
+Chapter 69: the pages read (the HTTP section and the quota tables) give no limit on the size of a request or response body, only 128 KiB for headers. Also, for a chunked upload over the limit that declares no length, chapter 04's kit answers 413 partway through the body. Whether that answer is delivered on Lambda's path was not confirmed.
+
+To resume: After a deploy, send a signed 2 MB POST with a declared length and one with chunked transfer, and record the status and lambda-web-error-type. If the chunked one gets no answer, raise moving the read-to-the-end into chapter 04's body.ts.

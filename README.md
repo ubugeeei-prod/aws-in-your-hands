@@ -12,9 +12,9 @@ An online book for developers who know TypeScript, HTTP, Git, and web developmen
 | | State |
 | --- | --- |
 | The book as a whole | **Under review.** Subject to change until the review is finished |
-| Chapters 00–68 (68 in all; there is no 65) | Prose and examples in both languages. **No chapter has ever been deployed to, or run against, AWS** |
+| Chapters 00–69 (69 in all; there is no 65) | Prose and examples in both languages. **No chapter has ever been deployed to, or run against, AWS** |
 | Chapters 00–24 | Meant to be read in order. The local checks (`vp run check:all`) pass |
-| Chapters 25–68 | Standalone chapters grouped by subject. Tests and other checks were run locally chapter by chapter. `check:all` also passes with all 68 chapters in place (2026-10-13, [`data/validation.json`](data/validation.json)) |
+| Chapters 25–69 | Standalone chapters grouped by subject. Tests and other checks were run locally chapter by chapter. `check:all` also passes with all 69 chapters in place (2026-10-13, [`data/validation.json`](data/validation.json)) |
 | Book site | Builds locally. **Not deployed; no public URL** |
 
 Written does not mean run and checked. What was checked locally differs by chapter and is listed in "Verification notes for this chapter" at the end of each one. What was run, and what is still open, is recorded in [`data/validation.json`](data/validation.json), the source of the book's Validation Record page.

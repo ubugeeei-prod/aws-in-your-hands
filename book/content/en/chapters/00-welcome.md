@@ -1,6 +1,6 @@
 ---
 title: "00 Introduction: What You Will Build and How to Read"
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 00 Introduction: What You Will Build and How to Read
@@ -43,7 +43,7 @@ edge s3 -> sqs: 08 S3 event
 edge sqs -> lambda: 08
 ```
 
-There are 68 chapters, numbered 00 through 68 with no chapter 65. All of them are written.
+There are 69 chapters, numbered 00 through 69 with no chapter 65. All of them are written.
 
 The features are not stacked into one large sample, though. Each chapter has its own `examples/<chapter number>-<name>/` directory, which holds only what that chapter needs for its explanation. Among the chapters up to 24, four can be worked through apart from the notes app: email ([chapter 15](/en/chapters/15-email.md)), AI ([chapter 17](/en/chapters/17-ai.md)), live streaming ([chapter 18](/en/chapters/18-live.md)), and celld ([chapter 24](/en/chapters/24-celld.md)).
 
@@ -63,7 +63,7 @@ Chapters from 25 on stand on their own. Each one names the chapters it builds on
 | Deeper into Data | 30, 59, 60, 39, 58, 53, 38 |
 | Analyze | 26, 49, 43, 27 |
 | Deeper into AI | 36, 56, 50, 57 |
-| Deeper into Compute | 29, 35, 41, 52, 34 |
+| Deeper into Compute | 29, 35, 41, 52, 34, 69 |
 | Protect and Prepare | 42, 46, 44, 28, 40 |
 | Tune It | 31, 32, 55 |
 | Developer Tools | 48, 37, 45, 62, 63 |

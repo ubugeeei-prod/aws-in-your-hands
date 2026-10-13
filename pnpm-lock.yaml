@@ -2624,6 +2624,49 @@ importers:
         specifier: 1.1.0
         version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
 
+  examples/69-web-functions:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-20-shipping':
+        specifier: workspace:*
+        version: link:../20-shipping
+      '@aih/example-35-lambda-managed-instances':
+        specifier: workspace:*
+        version: link:../35-lambda-managed-instances
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@aws-crypto/sha256-js':
+        specifier: 5.2.0
+        version: 5.2.0
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/credential-provider-node':
+        specifier: 3.972.85
+        version: 3.972.85
+      '@smithy/signature-v4':
+        specifier: 5.7.4
+        version: 5.7.4
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
   tools:
     dependencies:
       '@aws-sdk/client-cloudfront':

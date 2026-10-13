@@ -1,0 +1,1308 @@
+{
+  "chapterId": "69",
+  "manifest": {
+    "id": "69",
+    "slug": "web-functions",
+    "title": {
+      "ja": "Web Functions: Lambda で HTTP サーバーをそのまま動かす",
+      "en": "Web Functions: Running an HTTP Server on Lambda As It Is"
+    },
+    "prerequisites": ["04"],
+    "services": ["Lambda Web Functions", "S3", "IAM", "CloudWatch Logs", "CloudFormation"],
+    "samplePath": "examples/69-web-functions",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "webfn-whats-new",
+      "webfn-news-blog",
+      "webfn-dg-overview",
+      "webfn-dg-concepts",
+      "webfn-dg-create",
+      "webfn-dg-revisions",
+      "webfn-dg-deployment",
+      "webfn-dg-endpoints",
+      "webfn-dg-code-s3",
+      "webfn-dg-http",
+      "webfn-dg-networking",
+      "webfn-dg-scaling",
+      "webfn-dg-env-lifecycle",
+      "webfn-dg-runtimes",
+      "webfn-dg-env-vars",
+      "webfn-dg-timeout",
+      "webfn-dg-architecture",
+      "webfn-dg-permissions",
+      "webfn-dg-access-control",
+      "webfn-dg-encryption",
+      "webfn-dg-monitoring",
+      "webfn-dg-metrics",
+      "webfn-dg-logging",
+      "webfn-dg-samples",
+      "webfn-dg-best-practices",
+      "webfn-dg-testing",
+      "webfn-dg-troubleshooting",
+      "webfn-dg-quotas",
+      "webfn-cfn-webfunction",
+      "webfn-cfn-revision",
+      "webfn-cfn-endpoint",
+      "webfn-cdk-types",
+      "webfn-cdkd-providers",
+      "webfn-cdkd-readme",
+      "webfn-cc-supported",
+      "webfn-sdk-client",
+      "webfn-price-list",
+      "webfn-pricing",
+      "webfn-cf-workers-http",
+      "webfn-cf-workers-pricing",
+      "webfn-cf-workers-limits",
+      "webfn-cf-how-workers-works",
+      "webfn-vercel-fluid",
+      "webfn-vercel-fluid-pricing",
+      "webfn-vercel-express"
+    ]
+  },
+  "sources": [
+    {
+      "id": "webfn-whats-new",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/10/aws-lambda-web-functions/",
+      "title": "AWS Lambda announces Lambda Web Functions (What's New, posted 2026-10-12)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Posted on Oct 12, 2026. Code listens on a port and handles HTTP requests as on any HTTP server",
+        "Existing Lambda functions are renamed Lambda Event Functions, a naming change only that requires no code changes or redeployments",
+        "Web Functions support the Node.js runtime; one warm execution environment serves multiple concurrent requests; responses can be streamed",
+        "Available in US East (N. Virginia), US East (Ohio), US West (Oregon), Asia Pacific (Tokyo), and Europe (Ireland)",
+        "Can be created with the Lambda API, the console, the AWS CLI, CloudFormation, SAM, CDK, or the SDKs"
+      ]
+    },
+    {
+      "id": "webfn-news-blog",
+      "url": "https://aws.amazon.com/blogs/aws/announcing-aws-lambda-web-functions-for-fast-consistent-web-app-performance-anywhere/",
+      "title": "Announcing AWS Lambda Web Functions (AWS News Blog)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Up to 128 concurrent requests per execution environment",
+        "Web Functions run Node.js 24 (nodejs24.x) on Arm64 at launch",
+        "Lambda now has three form factors: Event Functions, Web Functions, and MicroVMs",
+        "CloudFront origin access control can be attached to a Web Function endpoint"
+      ]
+    },
+    {
+      "id": "webfn-dg-overview",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions.html",
+      "title": "AWS Lambda Web Functions (Developer Guide)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Web Function runs a Node.js HTTP server that listens on a port; no Lambda-specific adapter is needed",
+        "Code is deployed as a .zip file; Lambda creates an HTTPS endpoint and scales the application, including to zero",
+        "Billing dimensions: requests, active CPU time, memory over the life of each execution environment, and data transfer",
+        "For event-driven processing such as queue messages or file uploads, the guide says to use Lambda Event Functions",
+        "Web Functions currently support Node.js runtimes only",
+        "A custom domain or AWS WAF protection needs a CloudFront distribution in front of the endpoint"
+      ]
+    },
+    {
+      "id": "webfn-dg-concepts",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-how-it-works.html",
+      "title": "Web Functions: Core concepts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Web Function contains revisions (immutable snapshots of code and configuration) and endpoints (which route HTTP traffic to one or two revisions)",
+        "Revision states are Pending, Active, Failed; an endpoint has a state and a separate updateStatus (InProgress, Successful, Failed)",
+        "An Active revision or endpoint does not confirm that the server starts: Lambda does not check that the server listens",
+        "maxEnvironments is an endpoint setting and maxConcurrencyPerEnvironment (1 to 128, default 64) a revision setting",
+        "A request can run for 3 to 900 seconds (timeoutSeconds, default 30)",
+        "Application code must be safe for concurrent use because one execution environment handles multiple concurrent requests"
+      ]
+    },
+    {
+      "id": "webfn-dg-create",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-create.html",
+      "title": "Creating a Lambda Web Function",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "aws lambda-web deploy creates the function, its first revision and an endpoint named dev in LatestRevision mode, ApplicationManaged by default",
+        "The server must listen on the host and port in AWS_LAMBDA_HTTP_ENDPOINT; the runtime loads index.js at the root of the package unless AWS_LAMBDA_NODEJS_ENTRYPOINT is set",
+        "The code bucket must have versioning enabled and a bucket policy granting lambda.amazonaws.com s3:GetObject and s3:GetObjectVersion",
+        "Deleting a Web Function also deletes its endpoints and revisions, but not the role, the packages in S3, or the log groups",
+        "The endpoint type cannot be changed after creation"
+      ]
+    },
+    {
+      "id": "webfn-dg-revisions",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-revisions.html",
+      "title": "Managing Web Function revisions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every revision property is immutable; a new revision copies nothing from an existing one, and omitted settings take their defaults",
+        "Defaults: timeoutSeconds 30, maxConcurrencyPerEnvironment 64, log group /aws/lambda/web/<function-name>, applicationLogLevel INFO",
+        "A revision that any endpoint routes traffic to cannot be deleted",
+        "Lambda keeps about 50 revisions per Web Function and deletes the oldest ones no endpoint uses; a rollback target removed from all weights can be deleted by this cleanup",
+        "A deployment package can be up to 512 MB unzipped"
+      ]
+    },
+    {
+      "id": "webfn-dg-deployment",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-deployment.html",
+      "title": "Web Functions: Deployment patterns",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "autoDeploymentMode defaults to Disabled; LatestRevision is supported only for HomeRegion endpoints",
+        "Revision weights: integers from 1 to 100 that sum to 100, each revision once, at most two revisions, each Active when the weights are set",
+        "Weight changes are asynchronous endpoint updates; wait for updateStatus Successful before evaluating",
+        "Rollback is one endpoint update that routes all traffic to the earlier revision; in-flight requests on the other revision finish",
+        "Web Function metrics have no revision dimension, so a canary is told apart by a revision identifier in logs or custom metrics",
+        "A revision is invoked only through an endpoint: test it on a separate endpoint or with a small weight"
+      ]
+    },
+    {
+      "id": "webfn-dg-endpoints",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-endpoints.html",
+      "title": "Lambda Web Function endpoints",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Web Function can have up to 10 endpoints; endpoint types are HomeRegion, MultiRegion, PerRegion and cannot be changed",
+        "Domain format <domain-id>.<shard-id>.lambda-web.<region>.on.aws for HomeRegion and PerRegion; Lambda manages the TLS certificate",
+        "No custom domain can be attached directly",
+        "authType ApplicationManaged forwards every request; IamAuth validates a SigV4 signature and requires lambda:InvokeWebFunctionEndpoint",
+        "rateLimit is requests per second for the endpoint as a whole; excess requests receive HTTP 429; a rateLimit of 0 blocks all traffic",
+        "A deleted endpoint's domain name is retired and never assigned to another endpoint",
+        "MultiRegion uses latency-based routing and performs no health-based failover"
+      ]
+    },
+    {
+      "id": "webfn-dg-code-s3",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-code-s3.html",
+      "title": "Deploying Web Function code from Amazon S3",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A .zip package in an S3 bucket is the only way to supply code; Lambda pins a revision to one object version",
+        "The bucket policy grants lambda.amazonaws.com s3:GetObject and s3:GetObjectVersion, scoped with aws:SourceArn ArnLike arn:aws:lambda:<region>:<account>:web-function/<name>/revision/*",
+        "Deleting the object version a revision uses, or removing Lambda's access, moves the revision to Failed permanently",
+        "Requests routed to a Failed revision get HTTP 409 with lambda-web-error-type Platform.RevisionNotActive; Lambda does not shift traffic away"
+      ]
+    },
+    {
+      "id": "webfn-dg-http",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-http.html",
+      "title": "Web Functions: HTTP requests and responses",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The endpoint accepts HTTP/1.1 and forwards over HTTP/1.1; HTTP/1.0 gets 505",
+        "Supported methods: GET, HEAD, POST, PUT, PATCH, OPTIONS, DELETE",
+        "Lambda removes headers whose names begin with lambda-web- and adds lambda-web-request-id and lambda-web-endpoint-name",
+        "X-Forwarded-For: Lambda appends the connecting client's address as the last value; earlier values are not validated",
+        "The request line and headers can total 128 KiB; beyond that Lambda answers 431",
+        "Response headers lambda-web-request-id, lambda-web-logstream, lambda-web-error-type"
+      ]
+    },
+    {
+      "id": "webfn-dg-networking",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-networking.html",
+      "title": "Configuring networking for AWS Lambda Web Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Endpoint domain names are reachable from the public internet; PrivateLink interface endpoints are not available for them",
+        "IamAuth controls who can invoke but does not make the endpoint private at the network layer",
+        "Lambda adds no CORS headers; the application or a front door handles preflight",
+        "The request path is half-duplex: Lambda forwards the full request body before it delivers the response",
+        "WebSocket upgrades are not supported",
+        "Without an egress network connector a revision reaches public IPv4 destinations directly and has no route into a VPC; connectors work only with HomeRegion endpoints",
+        "When CloudFront is in front, do not forward the viewer's Host header"
+      ]
+    },
+    {
+      "id": "webfn-dg-scaling",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-scaling.html",
+      "title": "Scaling behavior for Lambda Web Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An endpoint always scales from zero; there is no minimum or reserved-environment setting",
+        "maxEnvironments: optional, 2 to 10,000, per Region. rateLimit: optional, 0, 100 to 1,000 in steps of 100, 2,000 to 10,000 in steps of 1,000",
+        "Account quotas per Region: 10,000 RPS per endpoint, 100,000 RPS per account, 2,000 Arm64 vCPUs; each environment uses 2 vCPUs",
+        "When an endpoint cannot scale up and all environments are full, Lambda answers 429 immediately and does not queue",
+        "Lambda may temporarily exceed maxEnvironments during weight changes and fleet cycling",
+        "Lambda sets a dynamic per-environment concurrency limit that never exceeds maxConcurrencyPerEnvironment",
+        "With rateLimit 0 Lambda answers 503 with Platform.EndpointDisabled"
+      ]
+    },
+    {
+      "id": "webfn-dg-env-lifecycle",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-env-lifecycle.html",
+      "title": "Web Functions: Execution environment lifecycle",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The server must begin listening on AWS_LAMBDA_HTTP_ENDPOINT within 10 seconds",
+        "Shutdown: Lambda stops routing, lets in-flight requests finish on a best-effort basis, sends SIGTERM, and terminates after up to 1 second",
+        "Lambda cannot guarantee a graceful shutdown in all failure modes",
+        "Global state and /tmp persist across requests in an environment; an environment can be removed at any time",
+        "Do not store per-request state in global variables; guard shared state modified across await; CPU-intensive synchronous work blocks all requests in the environment"
+      ]
+    },
+    {
+      "id": "webfn-dg-runtimes",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-runtimes.html",
+      "title": "Lambda Web Function runtimes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The only runtime identifier is nodejs24.x; runtime management controls are not supported",
+        "Each execution environment has 2 GB of memory; the default V8 heap is 1,024 MB",
+        "Endpoints accept HTTPS on port 443 only; Lambda terminates TLS and forwards plain HTTP to the server",
+        "AWS_LAMBDA_HTTP_ENDPOINT is host:port; Lambda does not set it on a local computer",
+        "No AWS Lambda Web Adapter or other event-to-HTTP adapter is needed"
+      ]
+    },
+    {
+      "id": "webfn-dg-env-vars",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-revisions-env-vars.html",
+      "title": "Web Functions: Environment variables",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS_LAMBDA_HTTP_ENDPOINT cannot be set in a revision; a list of AWS_* names is reserved and rejected",
+        "The runtime does not read the entry point from package.json",
+        "Secrets belong in Secrets Manager or Parameter Store, not in environment variables",
+        "Web Functions do not receive every variable in the general list of Lambda runtime variables"
+      ]
+    },
+    {
+      "id": "webfn-dg-timeout",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-revisions-timeout.html",
+      "title": "Web Functions: Request timeout",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A non-streaming request past the timeout gets HTTP 504 with Runtime.RequestTimeout",
+        "For a streaming response the timeout bounds the whole stream; the client keeps the status already sent and gets a truncated body"
+      ]
+    },
+    {
+      "id": "webfn-dg-architecture",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-configuration-architecture.html",
+      "title": "Web Functions: Instruction set architecture",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Web Functions run only on Arm64, with 2 vCPUs per execution environment; there is no architecture setting"
+      ]
+    },
+    {
+      "id": "webfn-dg-permissions",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-permissions.html",
+      "title": "Lambda Web Function permissions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The execution role trusts lambda.amazonaws.com; the minimum for logging is logs:CreateLogGroup, CreateLogStream, PutLogEvents on the log group and its .local companion",
+        "The identity that creates a function or revision needs iam:PassRole on the execution role and read access to the package",
+        "A public resource-based policy is rejected with a ValidationException",
+        "Web Functions use PutResourcePolicy, GetResourcePolicy, DeleteResourcePolicy, not AddPermission"
+      ]
+    },
+    {
+      "id": "webfn-dg-access-control",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-endpoint-access-control.html",
+      "title": "Lambda Web Function endpoint access control",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A same-account caller needs lambda:InvokeWebFunctionEndpoint in an identity-based or the resource-based policy; a cross-account caller needs both",
+        "Signed requests use the service name lambda and must include X-Amz-Content-SHA256, also without a body; Lambda does not check the body against it",
+        "Lambda removes the Authorization header after validating the signature",
+        "CloudFront OAC with origin type lambda and signing behaviour always-amz-auth can front an IamAuth endpoint",
+        "An ApplicationManaged endpoint stays publicly reachable at its own domain, even behind CloudFront, and no resource-based policy restricts its callers",
+        "Condition keys lambda:Request/WebFunctionAuthType and lambda:Resource/WebFunctionAuthType; an SCP can deny ApplicationManaged endpoints"
+      ]
+    },
+    {
+      "id": "webfn-dg-encryption",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-encryption.html",
+      "title": "Encryption at rest for Web Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Code artifacts and environment variables are always encrypted at rest, with an AWS owned key by default; a customer managed key is optional"
+      ],
+      "note": "Only the overview and the options were read. The key policy procedures were not."
+    },
+    {
+      "id": "webfn-dg-monitoring",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-monitoring.html",
+      "title": "Monitoring Lambda Web Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Metrics that Lambda publishes in AWS/Lambda/Web and AWS/Lambda/Web/Usage are free",
+        "Log events are written to the .local log group and copied to the centralized group; writing is charged once and storage in both groups",
+        "Lambda adds no X-Ray trace header and creates no Lambda service segments for Web Functions"
+      ]
+    },
+    {
+      "id": "webfn-dg-metrics",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-monitoring-metrics.html",
+      "title": "Using CloudWatch metrics with Lambda Web Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Request metrics ExecutedRequests, HTTPResponseStatusClass4XX and 5XX have the dimensions FunctionName and EndpointName, and no revision dimension",
+        "Environment metrics include EnvironmentActiveTime, EnvironmentCPUTime, EnvironmentMaxMemoryUsage, EnvironmentConcurrentRequests",
+        "Throttle metrics are sparse and are published in AWS/Lambda/Web/Usage"
+      ]
+    },
+    {
+      "id": "webfn-dg-logging",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-logging.html",
+      "title": "Web Function logs in Amazon CloudWatch Logs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda writes console output as JSON log events and adds requestId, endpointName and region",
+        "An object passed to a console method becomes a JSON object under message; a JSON.stringify string becomes one escaped string",
+        "Default log groups are created on the first request with no retention; a custom log group and its .local companion can be created beforehand",
+        "platform.requestComplete is a DEBUG system event"
+      ],
+      "note": "The sections on CloudWatch Logs features and the full system log schema were not read."
+    },
+    {
+      "id": "webfn-dg-samples",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-samples.html",
+      "title": "Web Function sample applications",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every sample uses index.js as the entry file; the Hono sample is an ES module with type=module in package.json",
+        "Server-sent events stay open until the application ends the response or the client disconnects"
+      ]
+    },
+    {
+      "id": "webfn-dg-best-practices",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-best-practices.html",
+      "title": "Best practices for Lambda Web Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every endpoint is reachable from the internet whatever its authentication type",
+        "Use manual revision weights for production endpoints",
+        "/tmp is 512 MB and shared by concurrent requests",
+        "Retry 429, and 503 without a lambda-web-error-type header, with backoff and jitter, and only idempotent operations"
+      ]
+    },
+    {
+      "id": "webfn-dg-testing",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-testing.html",
+      "title": "Testing Lambda Web Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Local tests cover most application behaviour; IAM authorization, S3 and KMS access, lifecycle states, scaling, telemetry and multi-Region behaviour need cloud tests",
+        "The package test extracts the archive into a clean directory and starts the server from it",
+        "Run concurrent requests during local integration tests"
+      ]
+    },
+    {
+      "id": "webfn-dg-troubleshooting",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/web-functions-troubleshooting.html",
+      "title": "Troubleshooting Lambda Web Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An unsigned request to an IamAuth endpoint gets HTTP 403",
+        "A server that listens on a loopback-only address or another port gives Application.TimeoutListenError or 502 on the first request",
+        "ES module import errors mean package.json does not declare the module type; the package is loaded from /var/task",
+        "A response written while the request body is still arriving can hang; bodies under about 1 MB fit socket buffers and can mask this",
+        "There is no interactive access to an execution environment"
+      ]
+    },
+    {
+      "id": "webfn-dg-quotas",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html",
+      "title": "Lambda quotas: Lambda Web Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Environment variables 32 KB, request headers 128 KiB, /tmp 512 MB, 2 vCPUs and 2 GB per environment, initialization 10 seconds",
+        "1,024 file descriptors and 1,024 processes and threads per environment",
+        "The table lists no quota for the size of a request or response body",
+        "Direct public egress is IPv4 only; private endpoint access with PrivateLink is not available"
+      ]
+    },
+    {
+      "id": "webfn-cfn-webfunction",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-lambda-webfunction.html",
+      "title": "AWS::Lambda::WebFunction (CloudFormation Template Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The resource type exists in CloudFormation; Ref returns the ARN of the web function"
+      ]
+    },
+    {
+      "id": "webfn-cfn-revision",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-lambda-webfunctionrevision.html",
+      "title": "AWS::Lambda::WebFunctionRevision (CloudFormation Template Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every property (BuildConfig, Description, FunctionName, KmsKeyArn, ServiceConfig) requires replacement on update",
+        "Attributes RevisionId, RevisionArn, State, StateReason"
+      ]
+    },
+    {
+      "id": "webfn-cfn-endpoint",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-lambda-webfunctionendpoint.html",
+      "title": "AWS::Lambda::WebFunctionEndpoint (CloudFormation Template Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Properties AuthType, Description, EndpointName, EndpointType, FunctionName, Regions, RevisionWeights, ScalingConfig, ThrottleConfig; there is no auto-deployment property",
+        "AuthType, RevisionWeights, ScalingConfig and ThrottleConfig update without interruption; EndpointName, EndpointType, FunctionName and Regions require replacement",
+        "Attribute DomainName"
+      ]
+    },
+    {
+      "id": "webfn-cdk-types",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-lambda/lib/lambda.generated.d.ts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "lambda.CfnWebFunction, lambda.CfnWebFunctionRevision and lambda.CfnWebFunctionEndpoint exist as L1 constructs, with the property names the stack uses",
+        "ServiceConfigProperty has environmentVariables, executionRoleArn, maxConcurrencyPerEnvironment, telemetryConfig, timeoutSeconds"
+      ],
+      "note": "Read in the installed package. No L2 construct for Web Functions was found in this version."
+    },
+    {
+      "id": "webfn-cdkd-providers",
+      "url": "https://raw.githubusercontent.com/go-to-k/cdkd/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: src/provisioning/register-providers.ts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "No provider is registered for AWS::Lambda::WebFunction, AWS::Lambda::WebFunctionRevision or AWS::Lambda::WebFunctionEndpoint",
+        "Providers are registered for AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::IAM::Role, AWS::IAM::Policy and AWS::Logs::LogGroup"
+      ]
+    },
+    {
+      "id": "webfn-cdkd-readme",
+      "url": "https://raw.githubusercontent.com/go-to-k/cdkd/v0.296.28/README.md",
+      "title": "cdkd v0.296.28: README",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "cdkd is for dev/test workflows; the README says to use the AWS CDK CLI in production",
+        "cdkd has an SDK provider path and a Cloud Control fallback path"
+      ]
+    },
+    {
+      "id": "webfn-cc-supported",
+      "url": "https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html",
+      "title": "Cloud Control API: Resource types that support Cloud Control API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On 2026-10-13 the list has no AWS::Lambda::WebFunction, WebFunctionRevision or WebFunctionEndpoint"
+      ],
+      "note": "The list may trail the service. It was not checked with a call to the API."
+    },
+    {
+      "id": "webfn-sdk-client",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-lambda-web",
+      "title": "@aws-sdk/client-lambda-web on npm (3.1149.0 installed, 3.1150.0 tarball listed)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Version 3.1149.0, the version this repository pins, has one command: GetWebAccountSettings",
+        "Version 3.1150.0, published 2026-10-12, has CreateWebFunction, CreateWebFunctionRevision, UpdateWebFunctionEndpoint and the rest"
+      ]
+    },
+    {
+      "id": "webfn-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AWSLambda, ap-northeast-1 (published 2026-10-12T22:32:57Z)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN1-Lambda-Web-Request-ARM: USD 0.0000003 per request",
+        "APN1-Lambda-Web-vCPU-Second-ARM: USD 0.0000322421 per vCPU-second",
+        "APN1-Lambda-Web-Memory-GB-Second-ARM: USD 0.0000042688 per GB-second",
+        "No Web Functions usage type has a USD 0 tier"
+      ]
+    },
+    {
+      "id": "webfn-pricing",
+      "url": "https://aws.amazon.com/lambda/pricing/",
+      "title": "AWS Lambda Pricing: Web Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Web Functions are priced on requests, active CPU time, consumed memory, and standard AWS data transfer; compute is billed at 1 ms granularity",
+        "Each execution environment is billed for the memory it consumes for as long as it runs, including time between requests",
+        "The examples exclude the free tier and data transfer; the section does not say whether a free tier applies to Web Functions",
+        "The examples assume one execution environment running for the whole month"
+      ]
+    },
+    {
+      "id": "webfn-cf-workers-http",
+      "url": "https://developers.cloudflare.com/workers/runtime-apis/nodejs/http/",
+      "title": "Cloudflare Workers: node:http",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "http.createServer works in Workers with nodejs_compat and enable_nodejs_http_server_modules, enabled automatically from compatibility date 2025-09-01",
+        "httpServerHandler from cloudflare:node routes Worker requests to a Node.js server; the port is a routing key"
+      ]
+    },
+    {
+      "id": "webfn-cf-workers-pricing",
+      "url": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "title": "Cloudflare Workers: Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Workers Paid: USD 5 a month minimum, 10 million requests and 30 million CPU milliseconds included, then USD 0.30 per million requests and USD 0.02 per million CPU milliseconds",
+        "No charge for duration, and no additional charges for data transfer or bandwidth",
+        "Free plan: 100,000 requests a day and 10 ms of CPU time per invocation"
+      ]
+    },
+    {
+      "id": "webfn-cf-workers-limits",
+      "url": "https://developers.cloudflare.com/workers/platform/limits/",
+      "title": "Cloudflare Workers: Limits",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "128 MB of memory per isolate",
+        "CPU time per HTTP request up to 5 minutes on the paid plan (default 30 seconds); no hard limit on duration for HTTP-triggered Workers"
+      ]
+    },
+    {
+      "id": "webfn-cf-how-workers-works",
+      "url": "https://developers.cloudflare.com/workers/reference/how-workers-works/",
+      "title": "Cloudflare Workers: How Workers works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A single Workers instance may handle multiple requests, including concurrent ones, in a single-threaded event loop",
+        "Cloudflare recommends not using or mutating global state"
+      ]
+    },
+    {
+      "id": "webfn-vercel-fluid",
+      "url": "https://vercel.com/docs/fluid-compute",
+      "title": "Vercel: Fluid compute",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Multiple invocations share one function instance (optimized concurrency) with the Node.js and Python runtimes",
+        "Enabled by default for new projects since 2025-04-23",
+        "Default and maximum duration 300 s on Hobby; 300 s default and 800 s maximum on Pro and Enterprise"
+      ]
+    },
+    {
+      "id": "webfn-vercel-fluid-pricing",
+      "url": "https://vercel.com/docs/functions/usage-and-pricing",
+      "title": "Vercel: Fluid compute pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Billed on Active CPU, Provisioned Memory for the instance lifetime, and Invocations",
+        "Tokyo (hnd1): USD 0.202 per Active CPU hour and USD 0.0167 per GB-hour of provisioned memory; invocations USD 0.60 per million on Pro",
+        "Hobby includes 4 hours of Active CPU, 360 GB-hours of memory and 1 million invocations"
+      ]
+    },
+    {
+      "id": "webfn-vercel-express",
+      "url": "https://vercel.com/docs/frameworks/backend/express",
+      "title": "Vercel: Express on Vercel",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An Express application can export the app or use a port listener (app.listen)",
+        "It becomes a single Vercel Function and uses Fluid compute by default"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "web-function",
+      "ja": "Web Function",
+      "en": "Web Function",
+      "firstUse": "69",
+      "definition": {
+        "ja": "Lambda の形のひとつ。コードはポートで待ち受ける HTTP サーバーで、1 つの実行環境が複数のリクエストを同時に処理する。",
+        "en": "One of Lambda's forms. The code is an HTTP server listening on a port, and one execution environment answers several requests at once."
+      }
+    },
+    {
+      "id": "event-function",
+      "ja": "Event Function",
+      "en": "Event Function",
+      "firstUse": "69",
+      "definition": {
+        "ja": "これまで単に Lambda 関数と呼んできたもの。イベントを 1 つ受け取るハンドラーで、2026-10-12 に名前だけが変わった。",
+        "en": "What was simply called a Lambda function until now: a handler that takes one event. Only the name changed, on 2026-10-12."
+      }
+    },
+    {
+      "id": "web-function-revision",
+      "ja": "リビジョン（revision）",
+      "en": "revision",
+      "firstUse": "69",
+      "definition": {
+        "ja": "Web Function のコードと設定を、ある時点で固めたもの。作った後は変えられず、変えるときは新しいリビジョンを作る。",
+        "en": "A Web Function's code and settings, fixed at one moment. It cannot be changed afterwards; a change means a new revision."
+      }
+    },
+    {
+      "id": "web-function-endpoint",
+      "ja": "エンドポイント（Web Function）",
+      "en": "endpoint (Web Function)",
+      "firstUse": "69",
+      "definition": {
+        "ja": "Web Function の HTTPS の入口。ドメイン名、認証の方式、1 秒あたりのリクエスト数の上限、実行環境の数の上限を持ち、リクエストを 1 つか 2 つのリビジョンに振り分ける。",
+        "en": "A Web Function's HTTPS entry point. It has a domain name, an authentication type, a cap on requests per second and a cap on environments, and routes requests to one or two revisions."
+      }
+    },
+    {
+      "id": "active-cpu-time",
+      "ja": "アクティブな CPU 時間",
+      "en": "active CPU time",
+      "firstUse": "69",
+      "definition": {
+        "ja": "コードが実際に CPU を使っていた時間。データベースや外部の API の応答を待っている時間は入らない。",
+        "en": "The time the code actually spent on a CPU. Time spent waiting for a database or another API is not part of it."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "69.overview",
+      "sources": ["examples/69-web-functions/src/index.ts"],
+      "tasks": ["dev:webfn"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "69.picture",
+      "sources": ["examples/69-web-functions/infra/lib/web-functions-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.when-not",
+      "sources": ["examples/69-web-functions"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.model",
+      "sources": ["examples/69-web-functions/src/index.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.server",
+      "sources": [
+        "examples/69-web-functions/src/listen.ts",
+        "examples/69-web-functions/src/serve.ts",
+        "examples/69-web-functions/src/index.ts",
+        "examples/69-web-functions/test/listen.test.ts",
+        "examples/69-web-functions/test/shutdown.test.ts"
+      ],
+      "tasks": ["dev:webfn", "webfn:demo"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "69.concurrency",
+      "sources": [
+        "examples/69-web-functions/src/app.ts",
+        "examples/69-web-functions/test/server.test.ts",
+        "examples/69-web-functions/test/harness.ts"
+      ],
+      "tasks": ["webfn:demo"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "69.http",
+      "sources": [
+        "examples/69-web-functions/src/app.ts",
+        "examples/69-web-functions/src/log.ts",
+        "examples/69-web-functions/test/app.test.ts",
+        "examples/69-web-functions/test/server.test.ts"
+      ],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "69.stack",
+      "sources": [
+        "examples/69-web-functions/infra/lib/web-functions-stack.ts",
+        "examples/69-web-functions/infra/test/web-functions-stack.test.ts",
+        "examples/69-web-functions/src/names.ts",
+        "examples/69-web-functions/src/release.ts"
+      ],
+      "tasks": ["webfn:cfn:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "69.local",
+      "sources": [
+        "examples/69-web-functions/src/index.ts",
+        "examples/69-web-functions/scripts/demo.ts",
+        "examples/69-web-functions/scripts/build.ts",
+        "examples/69-web-functions/src/zip.ts",
+        "examples/69-web-functions/test/package.test.ts"
+      ],
+      "tasks": ["dev:webfn", "webfn:demo", "webfn:package", "webfn:cfn:synth"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "69.laptop-limits",
+      "sources": ["examples/69-web-functions/test"],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.tool",
+      "sources": [
+        "examples/69-web-functions/scripts/cdk.ts",
+        "examples/69-web-functions/src/cdk-args.ts",
+        "examples/69-web-functions/test/cdk-args.test.ts"
+      ],
+      "tasks": ["webfn:cfn:synth", "webfn:cfn:diff", "webfn:cfn:deploy"],
+      "boundary": "cloud",
+      "criteria": ["drift", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.deploy",
+      "sources": [
+        "examples/69-web-functions/scripts/upload.ts",
+        "examples/69-web-functions/scripts/smoke.ts",
+        "examples/69-web-functions/src/sign.ts",
+        "examples/69-web-functions/test/sign.test.ts"
+      ],
+      "tasks": ["webfn:cfn:deploy", "webfn:upload", "webfn:smoke"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.rollout",
+      "sources": [
+        "examples/69-web-functions/src/release.ts",
+        "examples/69-web-functions/test/release.test.ts",
+        "examples/69-web-functions/infra/test/web-functions-stack.test.ts"
+      ],
+      "tasks": ["webfn:cfn:diff", "webfn:cfn:deploy", "webfn:smoke"],
+      "boundary": "cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.costs",
+      "sources": ["data/pricing/scenarios.json"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.pitfalls",
+      "sources": [
+        "examples/69-web-functions/src/app.ts",
+        "examples/69-web-functions/src/cdk-args.ts"
+      ],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.production",
+      "sources": ["examples/69-web-functions/infra/lib/web-functions-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.elsewhere",
+      "sources": ["examples/69-web-functions"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "69.cleanup",
+      "sources": ["examples/69-web-functions/scripts/empty.ts"],
+      "tasks": ["webfn:empty", "webfn:cfn:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "lambda.web.request.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "8T8U85RF3YJJJUXB",
+      "usageType": "APN1-Lambda-Web-Request-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Request",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000003000",
+          "description": "$0.0000003 per Request for Lambda-Web-Request-ARM in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-12T22:32:57Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "lambda.web.vcpu.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "QXYRXMJGDG6CRB4V",
+      "usageType": "APN1-Lambda-Web-vCPU-Second-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "vCPU-Seconds",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000322421",
+          "description": "$0.0000322421 per vCPU-Second for Lambda-Web-vCPU-Second-ARM in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-12T22:32:57Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "lambda.web.memory.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "3HKFHA72EMGMXCBA",
+      "usageType": "APN1-Lambda-Web-Memory-GB-Second-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Seconds",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000042688",
+          "description": "$0.0000042688 per GB-Second for Lambda-Web-Memory-GB-Second-ARM in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-12T22:32:57Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "lambda.web.request.arm",
+      "reason": "The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13)."
+    },
+    {
+      "priceId": "lambda.web.vcpu.arm",
+      "reason": "The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13)."
+    },
+    {
+      "priceId": "lambda.web.memory.arm",
+      "reason": "The Web Functions section of the Lambda pricing page names no free tier (its examples say only that they exclude the free tier), and the price list has no USD 0 tier for this usage type (read 2026-10-13)."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "webfn-idle",
+      "chapter": "69",
+      "title": {
+        "ja": "Web Function: デプロイ済みで呼ばれない月",
+        "en": "Web Function: deployed, but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "リクエストゼロ。エンドポイントはゼロまでスケールし、実行環境は 1 つも動かない",
+          "S3 にパッケージが 1 版（8.3 KiB）",
+          "ログは書かれない。メトリクスは無料"
+        ],
+        "en": [
+          "No requests. The endpoint scales to zero and no execution environment runs",
+          "One version of the package (8.3 KiB) in S3",
+          "No logs are written. Metrics are free"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.000008,
+          "basis": "one 8.3 KiB package, in GB-months"
+        }
+      ]
+    },
+    {
+      "id": "webfn-small",
+      "chapter": "69",
+      "title": {
+        "ja": "Web Function: 月 100 万リクエスト、CPU を使いどおし",
+        "en": "Web Function: 1,000,000 requests a month, CPU busy throughout"
+      },
+      "assumptions": {
+        "ja": [
+          "04章の「月 100 万リクエスト」と同じ通信量。1 リクエストの実行時間は 50 ミリ秒",
+          "実行環境が 1 つ、1 か月（730 時間 = 2,628,000 秒）動き続けると仮定する。AWS の料金ページの計算例と同じ置き方で、リクエストが途切れたときに環境がいつ消えるかは公式ドキュメントに書かれていない",
+          "環境が使うメモリは 0.15 GB と仮定する（計測していない。料金ページの軽い例は 0.14 GB）",
+          "1 リクエストあたりログ 0.5 KB（04章と同じ仮定）。書き込みは 1 回、保存は .local と集約先の 2 つのロググループに 7 日ずつ",
+          "無料利用枠を引く前の定価。Web Functions に無料利用枠があるかは確認できていない",
+          "応答のデータ転送料金は含めていない（未算入。04章のシナリオと同じ）",
+          "CPU 時間は実行時間と同じ 50 ミリ秒（上限の見積もり。待ち時間が無い場合）"
+        ],
+        "en": [
+          "The same traffic as chapter 04's 1,000,000 requests a month, 50 ms per request",
+          "One execution environment is assumed to run for the whole month (730 hours = 2,628,000 seconds). AWS's own pricing examples make the same assumption; when an idle environment is removed is not documented",
+          "The environment is assumed to use 0.15 GB of memory (not measured; the lightest example on the pricing page uses 0.14 GB)",
+          "0.5 KB of logs per request (chapter 04's assumption), written once and stored for 7 days in two log groups, .local and the centralized one",
+          "List price before any free tier. Whether Web Functions have one could not be confirmed",
+          "Data transfer out for responses is not included, as in chapter 04's scenario",
+          "CPU time equals the 50 ms of duration (an upper bound: no waiting at all)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.web.request.arm",
+          "quantity": 1000000,
+          "basis": "1,000,000 requests"
+        },
+        {
+          "priceId": "lambda.web.vcpu.arm",
+          "quantity": 50000,
+          "basis": "1,000,000 x 0.05 s of CPU"
+        },
+        {
+          "priceId": "lambda.web.memory.arm",
+          "quantity": 394200,
+          "basis": "0.15 GB x 2,628,000 s"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.477,
+          "basis": "1,000,000 x 0.5 KB, in GB, written once"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.222,
+          "basis": "0.477 GB x 7/30, kept in two log groups, in GB-months"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.000008,
+          "basis": "one 8.3 KiB package, in GB-months"
+        }
+      ]
+    },
+    {
+      "id": "webfn-small-io",
+      "chapter": "69",
+      "title": {
+        "ja": "Web Function: 月 100 万リクエスト、ほとんどが待ち時間",
+        "en": "Web Function: 1,000,000 requests a month, mostly waiting"
+      },
+      "assumptions": {
+        "ja": [
+          "04章の「月 100 万リクエスト」と同じ通信量。1 リクエストの実行時間は 50 ミリ秒",
+          "実行環境が 1 つ、1 か月（730 時間 = 2,628,000 秒）動き続けると仮定する。AWS の料金ページの計算例と同じ置き方で、リクエストが途切れたときに環境がいつ消えるかは公式ドキュメントに書かれていない",
+          "環境が使うメモリは 0.15 GB と仮定する（計測していない。料金ページの軽い例は 0.14 GB）",
+          "1 リクエストあたりログ 0.5 KB（04章と同じ仮定）。書き込みは 1 回、保存は .local と集約先の 2 つのロググループに 7 日ずつ",
+          "無料利用枠を引く前の定価。Web Functions に無料利用枠があるかは確認できていない",
+          "応答のデータ転送料金は含めていない（未算入。04章のシナリオと同じ）",
+          "CPU 時間は 50 ミリ秒のうち 12 ミリ秒（料金ページの計算例 3 と同じ割合。このアプリでは計測していない）"
+        ],
+        "en": [
+          "The same traffic as chapter 04's 1,000,000 requests a month, 50 ms per request",
+          "One execution environment is assumed to run for the whole month (730 hours = 2,628,000 seconds). AWS's own pricing examples make the same assumption; when an idle environment is removed is not documented",
+          "The environment is assumed to use 0.15 GB of memory (not measured; the lightest example on the pricing page uses 0.14 GB)",
+          "0.5 KB of logs per request (chapter 04's assumption), written once and stored for 7 days in two log groups, .local and the centralized one",
+          "List price before any free tier. Whether Web Functions have one could not be confirmed",
+          "Data transfer out for responses is not included, as in chapter 04's scenario",
+          "12 ms of CPU in each 50 ms (the ratio of example 3 on the pricing page; not measured for this app)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.web.request.arm",
+          "quantity": 1000000,
+          "basis": "1,000,000 requests"
+        },
+        {
+          "priceId": "lambda.web.vcpu.arm",
+          "quantity": 12000,
+          "basis": "1,000,000 x 0.012 s of CPU"
+        },
+        {
+          "priceId": "lambda.web.memory.arm",
+          "quantity": 394200,
+          "basis": "0.15 GB x 2,628,000 s"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.477,
+          "basis": "1,000,000 x 0.5 KB, in GB, written once"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.222,
+          "basis": "0.477 GB x 7/30, kept in two log groups, in GB-months"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.000008,
+          "basis": "one 8.3 KiB package, in GB-months"
+        }
+      ]
+    },
+    {
+      "id": "webfn-ceiling",
+      "chapter": "69",
+      "title": {
+        "ja": "Web Function: 2 つのブレーキいっぱいで 1 か月",
+        "en": "Web Function: a month at both brakes"
+      },
+      "assumptions": {
+        "ja": [
+          "rateLimit の 100 リクエスト毎秒が 1 か月続く: 100 x 2,628,000 = 262,800,000 リクエスト",
+          "maxEnvironments の 2 環境が 1 か月動き続け、どちらも 2 vCPU を使い切り、2 GB を使う",
+          "Lambda は運用上の理由で maxEnvironments を一時的に超えることがある。その分は含めていない",
+          "ログとデータ転送は未算入。この量ではどちらも小さくない"
+        ],
+        "en": [
+          "The rateLimit of 100 requests a second for the whole month: 100 x 2,628,000 = 262,800,000 requests",
+          "Both environments of maxEnvironments run all month, each using its 2 vCPUs fully and 2 GB of memory",
+          "Lambda may exceed maxEnvironments for a while for operational reasons. That is not included",
+          "Logs and data transfer are not included, and at this volume neither is small"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.web.request.arm",
+          "quantity": 262800000,
+          "basis": "100 requests/s x 2,628,000 s"
+        },
+        {
+          "priceId": "lambda.web.vcpu.arm",
+          "quantity": 10512000,
+          "basis": "2 environments x 2 vCPUs x 2,628,000 s"
+        },
+        {
+          "priceId": "lambda.web.memory.arm",
+          "quantity": 10512000,
+          "basis": "2 environments x 2 GB x 2,628,000 s"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "69",
+        "command": "vp test run examples/69-web-functions",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "9 ファイル、68 件。実際のソケットで待ち受けるサーバーに 2 つのリクエストを重ねて、リクエスト単位の値が混ざらないことと、モジュールスコープの変数に置いた版では混ざること。AWS_LAMBDA_HTTP_ENDPOINT の読み取り、Lambda が付けたリクエスト ID の採用、プリフライト、宣言された長さが上限を超えるアップロードに本文を最後まで受け取ってから 413 を返すこと、SIGTERM のあとの停止（開いているリクエストを待つ場合と、時間切れで切る場合）、zip の書き出しと読み戻し、アーカイブだけを展開した空のディレクトリからサーバーが起動して SIGTERM で 1 秒以内に終了すること、リリースの指定と重みの計算、エンドポイントの上限の検証、CDK CLI への引数、SigV4 の署名に x-amz-content-sha256 が入ること、スタックの assertion。本文の読み切りを外すとアップロードのテストが 1 件落ちることも確かめた",
+          "en": "9 files, 68 tests. Two overlapping requests against a server on a real socket do not see each other's per-request state, and do with the version that keeps it in module scope. Reading AWS_LAMBDA_HTTP_ENDPOINT, adopting the request ID Lambda assigned, the preflight, answering 413 to an upload whose declared length is over the limit only after the whole body has arrived, stopping after SIGTERM (waiting for an open request, and cutting it when time runs out), writing and reading back the zip, starting the server from an empty directory holding only the archive and stopping within a second of SIGTERM, release flags and weights, validation of the endpoint limits, the arguments for the CDK CLI, x-amz-content-sha256 in the SigV4 signature, and stack assertions. Removing the body read made one upload test fail"
+        }
+      },
+      {
+        "scope": "69",
+        "command": "tsc --noEmit -p examples/69-web-functions",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査が通った",
+          "en": "The type check passed"
+        }
+      },
+      {
+        "scope": "69",
+        "command": "vp run webfn:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "エントリファイルを別プロセスで起動し、AWS_LAMBDA_HTTP_ENDPOINT のアドレスで待ち受けるまでの時間、同時に送った 50 件が自分のリクエスト ID で返ること、SIGTERM から終了までの時間と終了コード 0 を出力で確認。手元の Mac での値で、Lambda の実行環境のものではない",
+          "en": "Started the entry file as its own process and read from the output the time until it listened on the address in AWS_LAMBDA_HTTP_ENDPOINT, that 50 requests sent at once each came back under their own request ID, and the time from SIGTERM to exit with code 0. Values from a Mac, not from a Lambda execution environment"
+        }
+      },
+      {
+        "scope": "69",
+        "command": "vp run webfn:package",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "dist/function.zip（8.3 KiB）ができ、2 回続けて同じ sha256 になることを確認",
+          "en": "dist/function.zip (8.3 KiB) is written, with the same sha256 twice in a row"
+        }
+      },
+      {
+        "scope": "69",
+        "command": "vp run webfn:cfn:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "AWS CDK CLI 2.1145.0 で、リリースなし、stable だけ、canary つきの 3 通りを synth。CLI に同梱の検証は AWS::Lambda::WebFunction など 3 種類を「Unknown resource type」と警告する（エラーではない）。canary に重みが無い指定は synth の前に止まる",
+          "en": "Synthesized with AWS CDK CLI 2.1145.0 in three shapes: no release, stable only, and with a canary. The CLI's bundled validation warns 'Unknown resource type' for the three AWS::Lambda::WebFunction types (a warning, not an error). A canary without a weight stops before synth"
+        }
+      },
+      {
+        "scope": "69",
+        "command": "vp run webfn:cfn:deploy --foundation",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "CloudFormation にスタックを作る。実行していない。CLI に同梱の検証が知らないリソースの種類を、CloudFormation が受け付けることも確かめていない",
+          "en": "Creates the stack through CloudFormation. Not run. That CloudFormation accepts resource types the CLI's bundled validation does not know was not confirmed either"
+        }
+      },
+      {
+        "scope": "69",
+        "command": "vp run webfn:upload",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "パッケージをコードバケットに置き、バージョン ID を得る。実行していない",
+          "en": "Puts the package in the code bucket and prints its version ID. Not run"
+        }
+      },
+      {
+        "scope": "69",
+        "command": "vp run webfn:cfn:deploy -c stable=<version>",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "リビジョンとエンドポイントを作る。実行していない。index.js が ES モジュールとして読み込まれること、10 秒以内に待ち受けが始まること、ログの形も未確認",
+          "en": "Creates the revision and the endpoint. Not run. That index.js loads as an ES module, that the server listens within 10 seconds, and the shape of the logs are unconfirmed as well"
+        }
+      },
+      {
+        "scope": "69",
+        "command": "vp run webfn:smoke",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "署名なしのリクエストが断られること、署名したリクエストでノートを作って消せること、x-aih-release ごとの応答数。実行していない",
+          "en": "That an unsigned request is refused, that signed requests create and delete a note, and the count of answers per x-aih-release. Not run"
+        }
+      },
+      {
+        "scope": "69",
+        "command": "vp run webfn:cfn:diff / webfn:empty / webfn:cfn:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "差分の確認、バケットを空にする操作、スタックの削除。実行していない",
+          "en": "The diff, emptying the bucket, and deleting the stack. Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "webfn-deploy",
+        "summary": {
+          "ja": "69章: スタックを AWS にデプロイしていない。CloudFormation が 3 種類の Web Function のリソースをこのテンプレートで作れること、バンドルした index.js が nodejs24.x で起動すること、IamAuth のエンドポイントが署名なしのリクエストを 403 で断ること、ログが JSON の message にオブジェクトとして入ること、SIGTERM が届くことを、実物で確かめていない。",
+          "en": "Chapter 69: the stack has not been deployed. Not confirmed on AWS: that CloudFormation creates the three Web Function resource types from this template, that the bundled index.js starts on nodejs24.x, that the IamAuth endpoint answers 403 to an unsigned request, that a log entry arrives as an object under message, and that SIGTERM is delivered."
+        },
+        "resume": {
+          "ja": "vp run ship:cfn:bootstrap（未実行なら）、vp run webfn:cfn:deploy --foundation、vp run webfn:upload、vp run webfn:cfn:deploy -c stable=<version>、vp run webfn:smoke の順に実行する。リビジョンが Failed なら CloudFormation のイベントの StateReason を読む。エンドポイントが Active なのに 502 なら、/aih/web-notes.local のシステムログで platform.initReport を見る。",
+          "en": "Run vp run ship:cfn:bootstrap (if never run), vp run webfn:cfn:deploy --foundation, vp run webfn:upload, vp run webfn:cfn:deploy -c stable=<version>, and vp run webfn:smoke, in that order. If the revision is Failed, read StateReason in the CloudFormation events. If the endpoint is Active and answers 502, read platform.initReport in the system logs of /aih/web-notes.local."
+        }
+      },
+      {
+        "id": "webfn-rollout",
+        "summary": {
+          "ja": "69章: canary の追加、昇格、ロールバックを CloudFormation 経由で実行していない。昇格のとき CloudFormation がエンドポイントの重みを先に更新してから古いリビジョンを消すこと、消したリビジョンを同じオブジェクトのバージョンから作り直せることを確かめていない。",
+          "en": "Chapter 69: adding a canary, promoting it, and rolling back have not been run through CloudFormation. Not confirmed: that on promotion CloudFormation updates the endpoint's weights before it deletes the old revision, and that a deleted revision can be created again from the same object version."
+        },
+        "resume": {
+          "ja": "2 回 vp run webfn:upload して 2 つのバージョン ID を得る。-c stable=<v1> -c canary=<v2> -c canaryWeight=10 でデプロイし、vp run webfn:smoke --count 100 で x-aih-release の割合を見る。-c stable=<v2> で昇格し、CloudFormation のイベントの順序を読む。-c stable=<v1> で戻す。",
+          "en": "Run vp run webfn:upload twice for two version IDs. Deploy with -c stable=<v1> -c canary=<v2> -c canaryWeight=10 and read the share of each x-aih-release from vp run webfn:smoke --count 100. Promote with -c stable=<v2> and read the order of the CloudFormation events. Go back with -c stable=<v1>."
+        }
+      },
+      {
+        "id": "webfn-cdkd-provider",
+        "summary": {
+          "ja": "69章: cdkd 0.296.28 には AWS::Lambda::WebFunction、WebFunctionRevision、WebFunctionEndpoint のプロバイダーが無く、Cloud Control API の対応リソースの一覧にも 2026-10-13 時点で載っていないので、このスタックだけ AWS CDK CLI と CloudFormation を使っている。Cloud Control API を実際に呼んでは確かめていない。",
+          "en": "Chapter 69: cdkd 0.296.28 has no provider for AWS::Lambda::WebFunction, WebFunctionRevision or WebFunctionEndpoint, and the Cloud Control API's list of supported resources did not have them on 2026-10-13, so this one stack uses the AWS CDK CLI and CloudFormation. This was not checked with a call to the Cloud Control API."
+        },
+        "resume": {
+          "ja": "cdkd の新しい版の src/provisioning/register-providers.ts と、Cloud Control API の対応リソースの一覧を読み直す。どちらかに 3 種類が入ったら、固定する版を上げ、タスクを infra(\"webfn\", ...) に置き換え、infra/test の CLOUDFORMATION_ONLY を直す。",
+          "en": "Read src/provisioning/register-providers.ts of a newer cdkd and the Cloud Control API's list again. Once either has the three types, raise the pinned version, replace the tasks with infra(\"webfn\", ...), and correct CLOUDFORMATION_ONLY in infra/test."
+        }
+      },
+      {
+        "id": "webfn-sdk-client",
+        "summary": {
+          "ja": "69章: 固定している @aws-sdk/client-lambda-web 3.1149.0 には GetWebAccountSettings しか無く、リビジョンの作成や重みの変更を SDK から呼べない。2026-10-12 公開の 3.1150.0 には操作が揃っている。そのため重みの変更も CloudFormation のデプロイで行っている。",
+          "en": "Chapter 69: the pinned @aws-sdk/client-lambda-web 3.1149.0 has only GetWebAccountSettings, so creating a revision or changing weights cannot be called from the SDK. Version 3.1150.0, published 2026-10-12, has the operations. Weight changes therefore go through a CloudFormation deploy as well."
+        },
+        "resume": {
+          "ja": "@aws-sdk/* の固定を 3.1150.0 以上に上げるときに、UpdateWebFunctionEndpoint で重みだけを変えるスクリプトを足すかどうかを決める。足すなら、CloudFormation が持つ RevisionWeights とのドリフトをどう扱うかを先に決める。",
+          "en": "When the pin on @aws-sdk/* moves to 3.1150.0 or later, decide whether to add a script that changes only the weights with UpdateWebFunctionEndpoint. If so, decide first how the drift from the RevisionWeights CloudFormation holds is handled."
+        }
+      },
+      {
+        "id": "webfn-environment-lifetime",
+        "summary": {
+          "ja": "69章: リクエストが途切れたあと実行環境がどれだけ残るかが、公式ドキュメントに書かれていない。メモリの料金は環境が存在するあいだ続くので、通信量の少ない月の金額はこの長さで決まる。シナリオは「1 か月動き続ける」と置いている。",
+          "en": "Chapter 69: how long an execution environment stays after requests stop is not documented. Memory is billed for as long as an environment exists, so a low-traffic month's bill depends on it. The scenarios assume an environment that runs all month."
+        },
+        "resume": {
+          "ja": "デプロイ後、AWS/Lambda/Web の EnvironmentActiveTime と AWS/Lambda/Web/Usage の EndpointActiveEnvironments を、リクエストを止めてから 1 時間ほど見る。請求書の APN1-Lambda-Web-Memory-GB-Second-ARM の数量と照らし合わせ、シナリオの仮定を直す。",
+          "en": "After a deploy, watch EnvironmentActiveTime in AWS/Lambda/Web and EndpointActiveEnvironments in AWS/Lambda/Web/Usage for about an hour after requests stop. Compare with the quantity of APN1-Lambda-Web-Memory-GB-Second-ARM on the bill and correct the scenarios' assumption."
+        }
+      },
+      {
+        "id": "webfn-free-tier",
+        "summary": {
+          "ja": "69章: Web Functions に無料利用枠があるかを確認できていない。料金ページの計算例は「無料利用枠を除く」と書くだけで、枠の内容を示していない。Price List にも 0 ドルの段が無い。金額はすべて定価で出している。",
+          "en": "Chapter 69: whether Web Functions have a free tier could not be confirmed. The pricing page's examples say only that they exclude the free tier, without stating one, and the price list has no USD 0 tier. Every amount is at list price."
+        },
+        "resume": {
+          "ja": "https://aws.amazon.com/lambda/pricing/ の Web Functions の節と AWS Free Tier のページを読み直す。枠が明記されたら、断片の unknownAllowances を allowances に移す。",
+          "en": "Read the Web Functions section of https://aws.amazon.com/lambda/pricing/ and the AWS Free Tier page again. Once an allowance is stated, move the entries from unknownAllowances to allowances in the fragment."
+        }
+      },
+      {
+        "id": "webfn-body-limits",
+        "summary": {
+          "ja": "69章: リクエストとレスポンスの本文の大きさの上限が、読んだ範囲の公式ドキュメント（HTTP の節、クォータの表）に無い。ヘッダーの 128 KiB だけが書かれている。また、長さを宣言しないチャンク転送で上限を超えるアップロードには、04章の部品が本文の途中で 413 を返す。Lambda の経路でこれが応答として届くかは確かめていない。",
+          "en": "Chapter 69: the pages read (the HTTP section and the quota tables) give no limit on the size of a request or response body, only 128 KiB for headers. Also, for a chunked upload over the limit that declares no length, chapter 04's kit answers 413 partway through the body. Whether that answer is delivered on Lambda's path was not confirmed."
+        },
+        "resume": {
+          "ja": "デプロイ後、長さを宣言した 2 MB の POST と、チャンク転送の 2 MB の POST を署名して送り、状態コードと lambda-web-error-type を記録する。チャンク転送で応答が届かなければ、本文を読み切る処理を 04章の body.ts の側に入れる相談をする。",
+          "en": "After a deploy, send a signed 2 MB POST with a declared length and one with chunked transfer, and record the status and lambda-web-error-type. If the chunked one gets no answer, raise moving the read-to-the-end into chapter 04's body.ts."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 69: Web Functions -------------------------------------\n      // The notes API as a Node.js server on 127.0.0.1:8787, restarted on change. No AWS.\n      \"dev:webfn\": fresh(\"node --watch --env-file-if-exists=.env src/index.ts\", {\n        cwd: \"examples/69-web-functions\",\n      }),\n      // The entry file as its own process: fifty requests at once, then a SIGTERM. No AWS.\n      \"webfn:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/69-web-functions\" }),\n      // Writes dist/function.zip, the archive a revision is made from. Local.\n      \"webfn:package\": fresh(\"node scripts/package.ts\", { cwd: \"examples/69-web-functions\" }),\n      // cdkd 0.296.28 has no provider for AWS::Lambda::WebFunction, so this stack goes through\n      // the AWS CDK CLI and CloudFormation, as chapter 20 does. Local: writes cdk.out.\n      \"webfn:cfn:synth\": fresh(`${node} examples/69-web-functions/scripts/cdk.ts synth`),\n      // Template against the deployed template. Takes the same -c flags as the deploy.\n      \"webfn:cfn:diff\": live(`${node} examples/69-web-functions/scripts/cdk.ts diff`),\n      // --foundation before the first upload, -c stable=<S3 version ID> after it.\n      // With neither, it refuses to run.\n      \"webfn:cfn:deploy\": live(`${node} examples/69-web-functions/scripts/cdk.ts deploy`),\n      \"webfn:cfn:destroy\": live(`${node} examples/69-web-functions/scripts/cdk.ts destroy`),\n      // Builds the package and puts it in the code bucket. Prints the S3 version ID.\n      \"webfn:upload\": live(\"node --env-file-if-exists=../../.env scripts/upload.ts\", {\n        cwd: \"examples/69-web-functions\",\n      }),\n      // Signed requests to the endpoint: creates and deletes a note, counts answers per upload.\n      \"webfn:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", {\n        cwd: \"examples/69-web-functions\",\n      }),\n      // Counts the object versions in the code bucket. Deletes them all only with --yes.\n      \"webfn:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty.ts\", {\n        cwd: \"examples/69-web-functions\",\n      }),",
+    "synth": ["webfn:cfn:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/69-web-functions"]
+  }
+}
