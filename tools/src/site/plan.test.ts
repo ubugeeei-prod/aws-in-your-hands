@@ -37,6 +37,17 @@ describe("publish plan", () => {
     expect(result.uploadPages.map((upload) => upload.key)).toEqual(["index.html", "ja/index.html"]);
   });
 
+  it("publishes the book's Markdown sources with revalidation", () => {
+    const result = plan({
+      local: [local("index.html"), local("ja/chapters/00-welcome.md")],
+    });
+    expect(result.uploadPages).toContainEqual({
+      key: "ja/chapters/00-welcome.md",
+      contentType: "text/markdown; charset=utf-8",
+      cacheControl: REVALIDATE,
+    });
+  });
+
   it("skips unchanged files", () => {
     const result = plan({
       local: [local("index.html"), local("ja/index.html", "new")],

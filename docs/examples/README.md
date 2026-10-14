@@ -1,7 +1,14 @@
 # CI configuration examples
 
-These files are examples, not active workflows: nothing in this repository runs them. To use
-one, copy it to `.github/workflows/` and adjust the marked values.
+The files in this directory are examples, not active workflows. The repository's active
+[`check` workflow](../../.github/workflows/check.yml) runs `vp run check:all` on pull requests and
+pushes to `main`, without contacting AWS. To enable one of the AWS workflows below, copy it to
+`.github/workflows/` and adjust the marked values.
+
+In CI, the `check` task formats the whole repository and lints one chapter or top-level directory
+at a time. The CDK lint plugin keeps a TypeScript backend for each project until the lint process
+exits. Splitting the lint invocations bounds memory usage on hosted runners. The file selection
+includes tracked and untracked files, and the same lint rules apply to every group.
 
 None of them has been executed.
 

@@ -186,7 +186,7 @@ export default defineConfig({
     tasks: {
       // ---- checks that need nothing but this checkout -------------------
       // Format and lint. Type checking is the two tasks below.
-      check: { command: "vp check" },
+      check: { command: "node tools/src/checks/check.ts" },
       // tools/src/checks/typecheck.ts says why this is not `vp check`.
       typecheck: fresh("node tools/src/checks/typecheck.ts"),
       // Vize gets only the Vue app (src/). The CDK code under infra/ goes through tsc above.
