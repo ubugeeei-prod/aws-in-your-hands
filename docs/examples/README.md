@@ -1,7 +1,9 @@
 # CI configuration examples
 
-These files are examples, not active workflows: nothing in this repository runs them. To use
-one, copy it to `.github/workflows/` and adjust the marked values.
+The files in this directory are examples, not active workflows. The repository's active
+[`check` workflow](../../.github/workflows/check.yml) runs `vp run check:all` on pull requests and
+pushes to `main`, without contacting AWS. To enable one of the AWS workflows below, copy it to
+`.github/workflows/` and adjust the marked values.
 
 None of them has been executed.
 
